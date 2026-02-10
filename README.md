@@ -30,6 +30,11 @@
 ```bash
 $ yarn install
 ```
+## Run DB in postgres
+```bash
+$ docker-compose up -d
+```
+
 
 ## Compile and run the project
 

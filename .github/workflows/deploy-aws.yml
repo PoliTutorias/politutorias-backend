@@ -183,18 +183,19 @@ jobs:
           # Desplegar a staging
           eb deploy ${{ env.EB_ENV_STAGING }} --label "ver-${{ github.run_number }}" --timeout 20
 
-      - name: "Ejecutar Seed Staging"
-        run: |
-          echo "Esperando 120s a que el servidor arranque después del deploy..."
-          sleep 120
-          URL_STAGING="http://${{ env.EB_ENV_STAGING }}.eba-qnyktbf8.us-east-1.elasticbeanstalk.com"
-          echo "Ejecutando Seed en: $URL_STAGING"
-          curl -X POST "$URL_STAGING/api/admin/seed" \
-            -H "x-api-key: super-clave-secreta-para-seed" \
-            -H "Content-Type: application/json" \
-            --max-time 300 \
-            --retry 5 \
-            --retry-delay 10
+      # TODO: Descomentar cuando se implemente el endpoint /api/admin/seed
+      # - name: "Ejecutar Seed Staging"
+      #   run: |
+      #     echo "Esperando 120s a que el servidor arranque después del deploy..."
+      #     sleep 120
+      #     URL_STAGING="http://${{ env.EB_ENV_STAGING }}.eba-qnyktbf8.us-east-1.elasticbeanstalk.com"
+      #     echo "Ejecutando Seed en: $URL_STAGING"
+      #     curl -X POST "$URL_STAGING/api/admin/seed" \
+      #       -H "x-api-key: super-clave-secreta-para-seed" \
+      #       -H "Content-Type: application/json" \
+      #       --max-time 300 \
+      #       --retry 5 \
+      #       --retry-delay 10
 
   # ==========================================
   # JOB 3: DEPLOY A PRODUCCIÓN (CD - main)
@@ -269,15 +270,16 @@ jobs:
           # Desplegar a producción
           eb deploy ${{ env.EB_ENV_PROD }} --label "ver-${{ github.run_number }}" --timeout 20
 
-      - name: "Ejecutar Seed Production"
-        run: |
-          echo "Esperando 120s a que el servidor arranque después del deploy..."
-          sleep 120
-          URL_PROD="http://${{ env.EB_ENV_PROD }}.eba-qnyktbf8.us-east-1.elasticbeanstalk.com"
-          echo "Ejecutando Seed en: $URL_PROD"
-          curl -X POST "$URL_PROD/api/admin/seed" \
-            -H "x-api-key: super-clave-secreta-para-seed" \
-            -H "Content-Type: application/json" \
-            --max-time 300 \
-            --retry 3 \
-            --retry-delay 10
+      # TODO: Descomentar cuando se implemente el endpoint /api/admin/seed
+      # - name: "Ejecutar Seed Production"
+      #   run: |
+      #     echo "Esperando 120s a que el servidor arranque después del deploy..."
+      #     sleep 120
+      #     URL_PROD="http://${{ env.EB_ENV_PROD }}.eba-qnyktbf8.us-east-1.elasticbeanstalk.com"
+      #     echo "Ejecutando Seed en: $URL_PROD"
+      #     curl -X POST "$URL_PROD/api/admin/seed" \
+      #       -H "x-api-key: super-clave-secreta-para-seed" \
+      #       -H "Content-Type: application/json" \
+      #       --max-time 300 \
+      #       --retry 3 \
+      #       --retry-delay 10

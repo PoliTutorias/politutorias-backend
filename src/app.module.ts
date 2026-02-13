@@ -22,7 +22,7 @@ import { Oferta } from './ofertas/domain/entities/oferta.entity';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
         entities: [Oferta],
-        synchronize: configService.get<string>('NODE_ENV') === 'development',
+        synchronize: configService.get<string>('NODE_ENV') !== 'production',
         logging: false,
         ssl: configService.get<string>('DB_HOST')?.includes('rds.amazonaws.com')
           ? { rejectUnauthorized: false }

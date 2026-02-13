@@ -24,6 +24,9 @@ import { Oferta } from './ofertas/domain/entities/oferta.entity';
         entities: [Oferta],
         synchronize: configService.get<string>('NODE_ENV') === 'development',
         logging: false,
+        ssl: configService.get<string>('DB_HOST')?.includes('rds.amazonaws.com')
+          ? { rejectUnauthorized: false }
+          : false,
       }),
       inject: [ConfigService],
     }),

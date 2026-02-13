@@ -64,31 +64,30 @@ jobs:
       - name: "Preparar Paquete de Despliegue"
         run: |
           echo "Preparando carpeta de despliegue limpia..."
-          mkdir deployment_package
+          mkdir -p deployment_package
 
-          # Copiar compilado y assets
-          cp -r dist deployment_package/
-          #mkdir -p deployment_package/dist/seed/images
-          #cp -r src/seed/images/* deployment_package/dist/seed/images/
+          # Copiar archivos básicos (estos suelen ser obligatorios)
+          cp package.json deployment_package/ || echo "package.json no encontrado"
+          cp yarn.lock deployment_package/ || echo "yarn.lock no encontrado"
 
-          # Copiar archivos de configuración vitales
-          cp package.json deployment_package/
-          cp yarn.lock deployment_package/
+          # Copiar configuraciones de AWS solo SI existen
+          if [ -d ".ebextensions" ]; then
+            cp -r .ebextensions deployment_package/
+            echo "✔ .ebextensions copiado."
+          else
+            echo "⚠ .ebextensions no encontrado, saltando..."
+          fi
 
-          # Copiar configuraciones EB
-          cp -r .ebextensions deployment_package/
-          cp Procfile deployment_package/
+          if [ -f "Procfile" ]; then
+            cp Procfile deployment_package/
+            echo "✔ Procfile copiado."
+          else
+            echo "⚠ Procfile no encontrado, saltando..."
+          fi
 
-          # Instalar dependencias de producción DENTRO del paquete
+          # Instalar dependencias
           cd deployment_package
           yarn install --production --frozen-lockfile
-
-          # Debug: Verificar estructura
-          echo "--- Estructura del paquete ---"
-          ls -la
-          ls -la dist/
-          cat Procfile
-          echo "------------------------------"
 
       - name: "Crear ZIP Final"
         run: |

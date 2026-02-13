@@ -1,6 +1,7 @@
-import { Controller, Post, Body, HttpStatus, HttpCode } from '@nestjs/common';
+import { Controller, Post, Get, Body, HttpStatus, HttpCode } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { CreateOfertaUseCase } from './application/use-cases/create-oferta.use-case';
+import { GetAllOfertasUseCase } from './application/use-cases/get-all-ofertas.use-case';
 import { CreateOfertaDto } from './dto/create-oferta.dto';
 import { Oferta } from './domain/entities/oferta.entity';
 
@@ -17,7 +18,48 @@ interface CreateOfertaResponse {
 export class OfertasController {
   private readonly tutorId = 'a1b2c3d4-e5f6-7890-1234-567890abcdef';
 
-  constructor(private readonly createOfertaUseCase: CreateOfertaUseCase) {}
+  constructor(
+    private readonly createOfertaUseCase: CreateOfertaUseCase,
+    private readonly getAllOfertasUseCase: GetAllOfertasUseCase,
+  ) {}
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: 'Listar todas las ofertas de tutoría',
+    description: 'Obtiene todas las ofertas de tutoría ordenadas por fecha de creación (más recientes primero)' 
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Lista de ofertas obtenida exitosamente',
+    schema: {
+      example: {
+        statusCode: 200,
+        message: 'Ofertas obtenidas exitosamente',
+        data: [
+          {
+            id: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+            title: 'Cálculo Vectorial',
+            price: 10,
+            modality: 'Presencial',
+            categories: ['Matemáticas', 'Física'],
+            description: 'Se enseñará cálculo vectorial',
+            tutorId: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+            createdAt: '2023-10-27T10:30:00.000Z',
+            updatedAt: '2023-10-27T10:30:00.000Z',
+          },
+        ],
+      },
+    },
+  })
+  async findAll() {
+    const ofertas = await this.getAllOfertasUseCase.execute();
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Ofertas obtenidas exitosamente',
+      data: ofertas,
+    };
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)

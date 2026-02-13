@@ -28,6 +28,14 @@ export class TypeOrmOfertaRepository implements IOfertaRepository {
     }
   }
 
+  async findAll(): Promise<Oferta[]> {
+    return await this.ofertaRepository.find({
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+  }
+
   /**
    * Checks if the error is a unique constraint violation from TypeORM/database.
    * Supports PostgreSQL and SQLite error codes.

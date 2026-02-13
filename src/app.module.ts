@@ -23,7 +23,7 @@ import { Oferta } from './ofertas/domain/entities/oferta.entity';
         database: configService.get<string>('DB_NAME'),
         entities: [Oferta],
         synchronize: configService.get<string>('NODE_ENV') === 'development',
-        logging: configService.get<string>('NODE_ENV') === 'development',
+        logging: false,
       }),
       inject: [ConfigService],
     }),

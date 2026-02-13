@@ -68,8 +68,8 @@ jobs:
 
           # Copiar compilado y assets
           cp -r dist deployment_package/
-          mkdir -p deployment_package/dist/seed/images
-          cp -r src/seed/images/* deployment_package/dist/seed/images/
+          #mkdir -p deployment_package/dist/seed/images
+          #cp -r src/seed/images/* deployment_package/dist/seed/images/
 
           # Copiar archivos de configuración vitales
           cp package.json deployment_package/

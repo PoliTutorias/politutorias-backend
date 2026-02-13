@@ -174,7 +174,7 @@ jobs:
           echo "--- Carpeta dist ---"
           ls -la dist/ || echo "⚠ dist/ no encontrado en el paquete"
           echo "--- Procfile ---"
-          cat Procfile
+          cat Procfile || echo "⚠ Procfile no encontrado"
           echo "-----------------------------"
 
           # Inicializar EB application
@@ -260,7 +260,7 @@ jobs:
           echo "--- Carpeta dist ---"
           ls -la dist/ || echo "⚠ dist/ no encontrado en el paquete"
           echo "--- Procfile ---"
-          cat Procfile
+          cat Procfile || echo "⚠ Procfile no encontrado"
           echo "-----------------------------"
 
           # Inicializar EB application

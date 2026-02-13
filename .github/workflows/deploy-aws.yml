@@ -139,7 +139,7 @@ jobs:
 
           # Verify installations
           aws --version
-          $HOME/.local/bin/eb --version
+          eb --version
 
       - name: "Deploy a Elastic Beanstalk Staging"
         env:
@@ -147,7 +147,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
         run: |
-          export PATH=$PATH:$HOME/.local/bin
+          export PATH=$PATH:$HOME/.local/bin:/opt/pipx_bin
 
           # Configurar AWS credentials
           aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
@@ -225,7 +225,7 @@ jobs:
 
           # Verify installations
           aws --version
-          $HOME/.local/bin/eb --version
+          eb --version
 
       - name: "Deploy a Elastic Beanstalk Production"
         env:
@@ -233,7 +233,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
         run: |
-          export PATH=$PATH:$HOME/.local/bin
+          export PATH=$PATH:$HOME/.local/bin:/opt/pipx_bin
 
           # Configurar AWS credentials
           aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"

@@ -70,6 +70,15 @@ jobs:
           cp package.json deployment_package/ || echo "package.json no encontrado"
           cp yarn.lock deployment_package/ || echo "yarn.lock no encontrado"
 
+          # Copiar el build compilado (dist/)
+          if [ -d "dist" ]; then
+            cp -r dist deployment_package/
+            echo "✔ dist/ copiado."
+          else
+            echo "❌ ERROR: dist/ no encontrado. ¿Falló yarn build?"
+            exit 1
+          fi
+
           # Copiar configuraciones de AWS solo SI existen
           if [ -d ".ebextensions" ]; then
             cp -r .ebextensions deployment_package/
@@ -163,7 +172,7 @@ jobs:
           echo "--- Contenido del Paquete ---"
           ls -la
           echo "--- Carpeta dist ---"
-          ls -la dist/
+          ls -la dist/ || echo "⚠ dist/ no encontrado en el paquete"
           echo "--- Procfile ---"
           cat Procfile
           echo "-----------------------------"
@@ -249,7 +258,7 @@ jobs:
           echo "--- Contenido del Paquete ---"
           ls -la
           echo "--- Carpeta dist ---"
-          ls -la dist/
+          ls -la dist/ || echo "⚠ dist/ no encontrado en el paquete"
           echo "--- Procfile ---"
           cat Procfile
           echo "-----------------------------"

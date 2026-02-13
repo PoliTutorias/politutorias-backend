@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/unbound-method */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreateOfertaUseCase } from './create-oferta.use-case';
 import { IOfertaRepository } from '../ports/oferta.repository.interface';
@@ -78,7 +82,9 @@ describe('CreateOfertaUseCase', () => {
 
     // El repositorio mock debe lanzar la excepción de dominio
     mockOfertaRepository.save.mockRejectedValue(
-      new OfertaAlreadyExistsException('Ya existe una oferta con este título para este tutor.'),
+      new OfertaAlreadyExistsException(
+        'Ya existe una oferta con este título para este tutor.',
+      ),
     );
 
     try {
@@ -87,9 +93,11 @@ describe('CreateOfertaUseCase', () => {
     } catch (error) {
       expect(error).toBeInstanceOf(HttpException);
       expect(error.getStatus()).toBe(HttpStatus.CONFLICT);
-      const response = error.getResponse() as any;
+      const response = error.getResponse();
       expect(response.statusCode).toBe(HttpStatus.CONFLICT);
-      expect(response.message).toBe('Ya existe una oferta con este título para este tutor.');
+      expect(response.message).toBe(
+        'Ya existe una oferta con este título para este tutor.',
+      );
       expect(response.error).toBe('Conflict');
     }
 
@@ -111,7 +119,9 @@ describe('CreateOfertaUseCase', () => {
     const tutorId = uuid();
 
     // El repositorio mock debe lanzar un error genérico
-    mockOfertaRepository.save.mockRejectedValue(new Error('Network error during save operation'));
+    mockOfertaRepository.save.mockRejectedValue(
+      new Error('Network error during save operation'),
+    );
 
     try {
       await useCase.execute(createOfertaDto, tutorId);
@@ -119,9 +129,11 @@ describe('CreateOfertaUseCase', () => {
     } catch (error) {
       expect(error).toBeInstanceOf(HttpException);
       expect(error.getStatus()).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
-      const response = error.getResponse() as any;
+      const response = error.getResponse();
       expect(response.statusCode).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
-      expect(response.message).toBe('Error interno del servidor al crear la oferta');
+      expect(response.message).toBe(
+        'Error interno del servidor al crear la oferta',
+      );
       expect(response.error).toBe('Internal Server Error');
     }
 

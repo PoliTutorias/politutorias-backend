@@ -21,7 +21,7 @@ const AppDataSource = new DataSource({
 async function runSeed() {
   try {
     console.log('🌱 Iniciando seed de base de datos...');
-    
+
     // Inicializar conexión
     await AppDataSource.initialize();
     console.log('✅ Conexión a base de datos establecida');
@@ -41,4 +41,4 @@ async function runSeed() {
 }
 
 // Ejecutar seed
-runSeed();
+void runSeed();

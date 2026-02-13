@@ -8,7 +8,8 @@ import { OfertaAlreadyExistsException } from '../../application/exceptions/ofert
 // Database error codes for unique constraint violations
 const POSTGRES_UNIQUE_VIOLATION = '23505';
 const SQLITE_CONSTRAINT_VIOLATION = 'SQLITE_CONSTRAINT';
-const DUPLICATE_OFFER_MESSAGE = 'Ya existe una oferta con este título para este tutor.';
+const DUPLICATE_OFFER_MESSAGE =
+  'Ya existe una oferta con este título para este tutor.';
 
 @Injectable()
 export class TypeOrmOfertaRepository implements IOfertaRepository {
@@ -40,10 +41,14 @@ export class TypeOrmOfertaRepository implements IOfertaRepository {
    * Checks if the error is a unique constraint violation from TypeORM/database.
    * Supports PostgreSQL and SQLite error codes.
    */
-  private isUniqueConstraintViolation(error: any): boolean {
+  private isUniqueConstraintViolation(error: unknown): boolean {
+    if (typeof error !== 'object' || error === null) {
+      return false;
+    }
+    const err = error as { code?: string };
     return (
-      error.code === POSTGRES_UNIQUE_VIOLATION ||
-      error.code === SQLITE_CONSTRAINT_VIOLATION
+      err.code === POSTGRES_UNIQUE_VIOLATION ||
+      err.code === SQLITE_CONSTRAINT_VIOLATION
     );
   }
 }

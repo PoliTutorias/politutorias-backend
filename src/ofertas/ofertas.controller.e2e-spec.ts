@@ -1,5 +1,12 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, HttpStatus, HttpException } from '@nestjs/common';
+import {
+  INestApplication,
+  ValidationPipe,
+  HttpStatus,
+  HttpException,
+} from '@nestjs/common';
 import request from 'supertest';
 import { OfertasController } from './ofertas.controller';
 import { CreateOfertaUseCase } from './application/use-cases/create-oferta.use-case';
@@ -49,7 +56,8 @@ describe('OfertasController (e2e)', () => {
       price: 10,
       modality: 'Presencial',
       categories: ['Matemáticas'],
-      description: 'Se enseñará cálculo vectorial, incluyendo integrales de línea y superficie.',
+      description:
+        'Se enseñará cálculo vectorial, incluyendo integrales de línea y superficie.',
     };
 
     const mockOfertaEntity: Oferta = {
@@ -75,7 +83,10 @@ describe('OfertasController (e2e)', () => {
         expect(res.body.data.tutorId).toBe(tutorId);
         expect(res.body.data.createdAt).toBe('2023-10-27T10:30:00.000Z');
         expect(res.body.data.updatedAt).toBe('2023-10-27T10:30:00.000Z');
-        expect(mockCreateOfertaUseCase.execute).toHaveBeenCalledWith(createOfertaDto, tutorId);
+        expect(mockCreateOfertaUseCase.execute).toHaveBeenCalledWith(
+          createOfertaDto,
+          tutorId,
+        );
       });
   });
 
@@ -86,7 +97,8 @@ describe('OfertasController (e2e)', () => {
       price: 10,
       modality: 'Presencial',
       categories: ['Matemáticas'],
-      description: 'Se enseñará cálculo vectorial, incluyendo integrales de línea y superficie.',
+      description:
+        'Se enseñará cálculo vectorial, incluyendo integrales de línea y superficie.',
     };
 
     mockCreateOfertaUseCase.execute.mockRejectedValueOnce(
@@ -110,7 +122,10 @@ describe('OfertasController (e2e)', () => {
           message: 'Ya existe una oferta con este título para este tutor.',
           error: 'Conflict',
         });
-        expect(mockCreateOfertaUseCase.execute).toHaveBeenCalledWith(createOfertaDto, tutorId);
+        expect(mockCreateOfertaUseCase.execute).toHaveBeenCalledWith(
+          createOfertaDto,
+          tutorId,
+        );
       });
   });
 
@@ -121,7 +136,8 @@ describe('OfertasController (e2e)', () => {
       price: 10,
       modality: 'Presencial',
       categories: ['Matemáticas'],
-      description: 'Se enseñará cálculo vectorial, incluyendo integrales de línea y superficie.',
+      description:
+        'Se enseñará cálculo vectorial, incluyendo integrales de línea y superficie.',
     };
 
     await request(app.getHttpServer())
@@ -130,7 +146,9 @@ describe('OfertasController (e2e)', () => {
       .expect(HttpStatus.BAD_REQUEST)
       .expect((res) => {
         expect(res.body.statusCode).toBe(HttpStatus.BAD_REQUEST);
-        expect(res.body.message).toContain('El título de la oferta debe tener al menos 3 caracteres.');
+        expect(res.body.message).toContain(
+          'El título de la oferta debe tener al menos 3 caracteres.',
+        );
         expect(res.body.error).toBe('Bad Request');
         expect(mockCreateOfertaUseCase.execute).not.toHaveBeenCalled();
       });
@@ -152,7 +170,9 @@ describe('OfertasController (e2e)', () => {
       .expect(HttpStatus.BAD_REQUEST)
       .expect((res) => {
         expect(res.body.statusCode).toBe(HttpStatus.BAD_REQUEST);
-        expect(res.body.message).toContain('El precio por hora debe ser un valor positivo.');
+        expect(res.body.message).toContain(
+          'El precio por hora debe ser un valor positivo.',
+        );
         expect(res.body.error).toBe('Bad Request');
         expect(mockCreateOfertaUseCase.execute).not.toHaveBeenCalled();
       });
@@ -165,7 +185,8 @@ describe('OfertasController (e2e)', () => {
       price: 15,
       modality: 'Presencial',
       categories: [],
-      description: 'Descripción de al menos 20 caracteres para el curso de álgebra lineal.',
+      description:
+        'Descripción de al menos 20 caracteres para el curso de álgebra lineal.',
     };
 
     await request(app.getHttpServer())
@@ -174,7 +195,9 @@ describe('OfertasController (e2e)', () => {
       .expect(HttpStatus.BAD_REQUEST)
       .expect((res) => {
         expect(res.body.statusCode).toBe(HttpStatus.BAD_REQUEST);
-        expect(res.body.message).toContain('Debe seleccionar al menos una categoría.');
+        expect(res.body.message).toContain(
+          'Debe seleccionar al menos una categoría.',
+        );
         expect(res.body.error).toBe('Bad Request');
         expect(mockCreateOfertaUseCase.execute).not.toHaveBeenCalled();
       });
@@ -187,7 +210,8 @@ describe('OfertasController (e2e)', () => {
       price: 'diez',
       modality: 'Virtual',
       categories: ['Física'],
-      description: 'Introducción a la física cuántica, incluyendo principios fundamentales.',
+      description:
+        'Introducción a la física cuántica, incluyendo principios fundamentales.',
     };
 
     await request(app.getHttpServer())
@@ -196,7 +220,9 @@ describe('OfertasController (e2e)', () => {
       .expect(HttpStatus.BAD_REQUEST)
       .expect((res) => {
         expect(res.body.statusCode).toBe(HttpStatus.BAD_REQUEST);
-        expect(res.body.message).toContain('El precio por hora debe ser un número.');
+        expect(res.body.message).toContain(
+          'El precio por hora debe ser un número.',
+        );
         expect(res.body.error).toBe('Bad Request');
         expect(mockCreateOfertaUseCase.execute).not.toHaveBeenCalled();
       });
@@ -209,7 +235,8 @@ describe('OfertasController (e2e)', () => {
       price: 20,
       modality: 'Presencial',
       categories: ['Economía'],
-      description: 'Fundamentos de la economía para principiantes, oferta única.',
+      description:
+        'Fundamentos de la economía para principiantes, oferta única.',
     };
 
     mockCreateOfertaUseCase.execute.mockRejectedValueOnce(
@@ -233,7 +260,10 @@ describe('OfertasController (e2e)', () => {
           message: 'Error interno del servidor al crear la oferta',
           error: 'Internal Server Error',
         });
-        expect(mockCreateOfertaUseCase.execute).toHaveBeenCalledWith(createOfertaDto, tutorId);
+        expect(mockCreateOfertaUseCase.execute).toHaveBeenCalledWith(
+          createOfertaDto,
+          tutorId,
+        );
       });
   });
 
@@ -254,7 +284,9 @@ describe('OfertasController (e2e)', () => {
       .expect(HttpStatus.BAD_REQUEST)
       .expect((res) => {
         expect(res.body.statusCode).toBe(HttpStatus.BAD_REQUEST);
-        expect(res.body.message).toContain('property unexpectedField should not exist');
+        expect(res.body.message).toContain(
+          'property unexpectedField should not exist',
+        );
         expect(res.body.error).toBe('Bad Request');
         expect(mockCreateOfertaUseCase.execute).not.toHaveBeenCalled();
       });

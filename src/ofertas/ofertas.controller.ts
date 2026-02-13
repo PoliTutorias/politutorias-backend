@@ -1,4 +1,11 @@
-import { Controller, Post, Get, Body, HttpStatus, HttpCode } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  HttpStatus,
+  HttpCode,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { CreateOfertaUseCase } from './application/use-cases/create-oferta.use-case';
 import { GetAllOfertasUseCase } from './application/use-cases/get-all-ofertas.use-case';
@@ -25,12 +32,13 @@ export class OfertasController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Listar todas las ofertas de tutoría',
-    description: 'Obtiene todas las ofertas de tutoría ordenadas por fecha de creación (más recientes primero)' 
+    description:
+      'Obtiene todas las ofertas de tutoría ordenadas por fecha de creación (más recientes primero)',
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Lista de ofertas obtenida exitosamente',
     schema: {
       example: {
@@ -63,16 +71,17 @@ export class OfertasController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Crear oferta de tutoría',
-    description: 'Crea una nueva oferta de tutoría con los datos proporcionados' 
+    description:
+      'Crea una nueva oferta de tutoría con los datos proporcionados',
   })
-  @ApiBody({ 
+  @ApiBody({
     type: CreateOfertaDto,
     description: 'Datos de la oferta a crear',
   })
-  @ApiResponse({ 
-    status: 201, 
+  @ApiResponse({
+    status: 201,
     description: 'Oferta creada exitosamente',
     schema: {
       example: {
@@ -84,7 +93,8 @@ export class OfertasController {
           price: 10,
           modality: 'Presencial',
           categories: ['Matemáticas'],
-          description: 'Se enseñará cálculo vectorial, incluyendo integrales de línea y superficie.',
+          description:
+            'Se enseñará cálculo vectorial, incluyendo integrales de línea y superficie.',
           tutorId: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
           createdAt: '2023-10-27T10:30:00.000Z',
           updatedAt: '2023-10-27T10:30:00.000Z',
@@ -92,8 +102,8 @@ export class OfertasController {
       },
     },
   })
-  @ApiResponse({ 
-    status: 400, 
+  @ApiResponse({
+    status: 400,
     description: 'Datos de entrada inválidos',
     schema: {
       example: {
@@ -106,8 +116,8 @@ export class OfertasController {
       },
     },
   })
-  @ApiResponse({ 
-    status: 409, 
+  @ApiResponse({
+    status: 409,
     description: 'Ya existe una oferta con el mismo título para este tutor',
     schema: {
       example: {
@@ -117,8 +127,8 @@ export class OfertasController {
       },
     },
   })
-  @ApiResponse({ 
-    status: 500, 
+  @ApiResponse({
+    status: 500,
     description: 'Error interno del servidor',
     schema: {
       example: {
@@ -128,7 +138,9 @@ export class OfertasController {
       },
     },
   })
-  async create(@Body() createOfertaDto: CreateOfertaDto): Promise<CreateOfertaResponse> {
+  async create(
+    @Body() createOfertaDto: CreateOfertaDto,
+  ): Promise<CreateOfertaResponse> {
     const oferta = await this.createOfertaUseCase.execute(
       createOfertaDto,
       this.tutorId,

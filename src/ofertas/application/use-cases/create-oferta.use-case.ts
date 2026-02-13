@@ -4,7 +4,8 @@ import { Oferta } from '../../domain/entities/oferta.entity';
 import { CreateOfertaDto } from '../../dto/create-oferta.dto';
 import { OfertaAlreadyExistsException } from '../exceptions/oferta-already-exists.exception';
 
-const INTERNAL_SERVER_ERROR_MESSAGE = 'Error interno del servidor al crear la oferta';
+const INTERNAL_SERVER_ERROR_MESSAGE =
+  'Error interno del servidor al crear la oferta';
 
 @Injectable()
 export class CreateOfertaUseCase {
@@ -13,7 +14,10 @@ export class CreateOfertaUseCase {
     private readonly ofertaRepository: IOfertaRepository,
   ) {}
 
-  async execute(createOfertaDto: CreateOfertaDto, tutorId: string): Promise<Oferta> {
+  async execute(
+    createOfertaDto: CreateOfertaDto,
+    tutorId: string,
+  ): Promise<Oferta> {
     try {
       const oferta = Oferta.createFromDto(createOfertaDto, tutorId);
       return await this.ofertaRepository.save(oferta);

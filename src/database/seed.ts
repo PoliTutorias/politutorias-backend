@@ -1,6 +1,8 @@
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
 import { Oferta } from '../ofertas/domain/entities/oferta.entity';
+import { Tutor } from '../tutors/entities/tutor.entity';
+import { seedTutors } from './seeds/tutors.seed';
 import { seedOfertas } from './seeds/ofertas.seed';
 
 // Cargar variables de entorno
@@ -13,7 +15,7 @@ const AppDataSource = new DataSource({
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'mysecretpassword',
   database: process.env.DB_NAME || 'PoliTutoriasDB',
-  entities: [Oferta],
+  entities: [Tutor, Oferta],
   synchronize: false, // No sincronizar automáticamente en seeds
   logging: false,
 });
@@ -25,6 +27,14 @@ async function runSeed() {
     // Inicializar conexión
     await AppDataSource.initialize();
     console.log('✅ Conexión a base de datos establecida');
+
+    // Limpiar tablas usando CASCADE para manejar FK constraints
+    console.log('🧹 Limpiando tablas existentes...');
+    await AppDataSource.query('TRUNCATE TABLE ofertas, tutors CASCADE');
+    console.log('✅ Tablas limpiadas');
+
+    // IMPORTANTE: Ejecutar seed de tutores ANTES de ofertas (FK constraint)
+    await seedTutors(AppDataSource);
 
     // Ejecutar seed de ofertas
     await seedOfertas(AppDataSource);

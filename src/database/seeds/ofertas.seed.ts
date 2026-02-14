@@ -4,8 +4,7 @@ import { Oferta } from '../../ofertas/domain/entities/oferta.entity';
 export async function seedOfertas(dataSource: DataSource): Promise<void> {
   const ofertaRepository = dataSource.getRepository(Oferta);
 
-  // Limpiar tabla antes de insertar (opcional)
-  await ofertaRepository.clear();
+  // Nota: La limpieza se maneja en seed.ts principal por orden de FK
 
   const ofertas = [
     {

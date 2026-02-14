@@ -10,6 +10,8 @@ import {
 import request from 'supertest';
 import { OfertasController } from './ofertas.controller';
 import { CreateOfertaUseCase } from './application/use-cases/create-oferta.use-case';
+import { GetAllOfertasUseCase } from './application/use-cases/get-all-ofertas.use-case';
+import { OfertasService } from './ofertas.service';
 import { CreateOfertaDto } from './dto/create-oferta.dto';
 import { Oferta } from './domain/entities/oferta.entity';
 import { v4 as uuid } from 'uuid';
@@ -17,6 +19,17 @@ import { v4 as uuid } from 'uuid';
 // Mock de la implementación del CreateOfertaUseCase para controlarlo en los tests
 const mockCreateOfertaUseCase = {
   execute: jest.fn(),
+};
+
+// Mock de la implementación del GetAllOfertasUseCase
+const mockGetAllOfertasUseCase = {
+  execute: jest.fn(),
+};
+
+// Mock de OfertasService
+const mockOfertasService = {
+  findAllByTutorId: jest.fn(),
+  searchOffers: jest.fn(),
 };
 
 describe('OfertasController (e2e)', () => {
@@ -30,6 +43,14 @@ describe('OfertasController (e2e)', () => {
         {
           provide: CreateOfertaUseCase,
           useValue: mockCreateOfertaUseCase,
+        },
+        {
+          provide: GetAllOfertasUseCase,
+          useValue: mockGetAllOfertasUseCase,
+        },
+        {
+          provide: OfertasService,
+          useValue: mockOfertasService,
         },
       ],
     }).compile();
@@ -60,10 +81,12 @@ describe('OfertasController (e2e)', () => {
         'Se enseñará cálculo vectorial, incluyendo integrales de línea y superficie.',
     };
 
-    const mockOfertaEntity: Oferta = {
+    const mockOfertaEntity: Partial<Oferta> = {
       id: uuid(),
       ...createOfertaDto,
       tutorId: tutorId,
+      rating: 0.0,
+      reviewsCount: 0,
       createdAt: new Date('2023-10-27T10:30:00.000Z'),
       updatedAt: new Date('2023-10-27T10:30:00.000Z'),
     };

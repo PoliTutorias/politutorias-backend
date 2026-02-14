@@ -35,10 +35,17 @@ interface CreateOfertaResponse {
   data: Oferta;
 }
 
+/**
+ * UUID del tutor "en cero" para crear ofertas.
+ * Este tutor existe en la base de datos (creado por el seed).
+ * IMPORTANTE: Mantener sincronizado con tutors.seed.ts -> ZERO_TUTOR_ID
+ */
+const ZERO_TUTOR_ID = '550e8400-e29b-41d4-a716-446655440000';
+
 @ApiTags('ofertas')
 @Controller('api/ofertas')
 export class OfertasController {
-  private readonly tutorId = 'a1b2c3d4-e5f6-7890-1234-567890abcdef';
+  private readonly tutorId = ZERO_TUTOR_ID;
 
   constructor(
     private readonly createOfertaUseCase: CreateOfertaUseCase,

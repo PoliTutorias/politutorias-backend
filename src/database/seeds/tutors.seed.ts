@@ -2,6 +2,13 @@ import { DataSource } from 'typeorm';
 import { Tutor } from '../../tutors/entities/tutor.entity';
 
 /**
+ * UUID del tutor "en cero" - sin ofertas iniciales.
+ * Este tutor se usa para crear nuevas ofertas desde la API.
+ * IMPORTANTE: Mantener sincronizado con ofertas.controller.ts
+ */
+export const ZERO_TUTOR_ID = '550e8400-e29b-41d4-a716-446655440000';
+
+/**
  * Seed de tutores para HU02 y HU17.
  *
  * Crea los tutores necesarios antes de insertar las ofertas.
@@ -12,6 +19,14 @@ export async function seedTutors(dataSource: DataSource): Promise<void> {
   // Nota: La limpieza se maneja en seed.ts principal por orden de FK
 
   const tutors = [
+    // Tutor "en cero" - sin ofertas iniciales, usado para crear nuevas ofertas desde la API
+    {
+      id: ZERO_TUTOR_ID,
+      name: 'Tutor de Pruebas',
+      email: 'tutor.pruebas@poli.edu.ec',
+      photoUrl: 'https://randomuser.me/api/portraits/lego/1.jpg',
+      bio: 'Tutor de pruebas para desarrollo. Las ofertas creadas desde la API se asocian a este tutor.',
+    },
     {
       id: '550e8400-e29b-41d4-a716-446655440001',
       name: 'Juan Carlos Pérez',

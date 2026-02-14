@@ -5,11 +5,16 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Unique,
+  ManyToOne,
+  JoinColumn,
+  Index,
 } from 'typeorm';
 import { CreateOfertaDto } from '../../dto/create-oferta.dto';
+import { Tutor } from '../../../tutors/entities/tutor.entity';
 
 @Entity('ofertas')
 @Unique(['tutorId', 'title'])
+@Index(['tutorId'])
 export class Oferta {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -29,8 +34,21 @@ export class Oferta {
   @Column({ type: 'varchar', length: 250 })
   description: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'float', default: 0.0 })
+  rating: number;
+
+  @Column({ type: 'int', default: 0 })
+  reviewsCount: number;
+
+  @Column({ type: 'uuid', nullable: true })
   tutorId: string;
+
+  @ManyToOne(() => Tutor, (tutor) => tutor.ofertas, {
+    eager: false,
+    nullable: true,
+  })
+  @JoinColumn({ name: 'tutorId' })
+  tutor: Tutor;
 
   @CreateDateColumn()
   createdAt: Date;

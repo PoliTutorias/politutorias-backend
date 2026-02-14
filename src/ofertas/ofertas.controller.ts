@@ -5,12 +5,27 @@ import {
   Body,
   HttpStatus,
   HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Query,
+  ValidationPipe,
+  UsePipes,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { CreateOfertaUseCase } from './application/use-cases/create-oferta.use-case';
 import { GetAllOfertasUseCase } from './application/use-cases/get-all-ofertas.use-case';
 import { CreateOfertaDto } from './dto/create-oferta.dto';
 import { Oferta } from './domain/entities/oferta.entity';
+import { OfertasService } from './ofertas.service';
+import { OfertaDto } from './dto/oferta.dto';
+import { OffersQueryParams } from './dto/offers-query.dto';
+import { PaginatedOffersResponse } from './dto/paginated-offers-response.dto';
 
 const SUCCESS_MESSAGE = 'Oferta creada exitosamente';
 
@@ -20,14 +35,22 @@ interface CreateOfertaResponse {
   data: Oferta;
 }
 
+/**
+ * UUID del tutor "en cero" para crear ofertas.
+ * Este tutor existe en la base de datos (creado por el seed).
+ * IMPORTANTE: Mantener sincronizado con tutors.seed.ts -> ZERO_TUTOR_ID
+ */
+const ZERO_TUTOR_ID = '550e8400-e29b-41d4-a716-446655440000';
+
 @ApiTags('ofertas')
 @Controller('api/ofertas')
 export class OfertasController {
-  private readonly tutorId = 'a1b2c3d4-e5f6-7890-1234-567890abcdef';
+  private readonly tutorId = ZERO_TUTOR_ID;
 
   constructor(
     private readonly createOfertaUseCase: CreateOfertaUseCase,
     private readonly getAllOfertasUseCase: GetAllOfertasUseCase,
+    private readonly ofertasService: OfertasService,
   ) {}
 
   @Get()
@@ -67,6 +90,62 @@ export class OfertasController {
       message: 'Ofertas obtenidas exitosamente',
       data: ofertas,
     };
+  }
+
+  /**
+   * HU17: Endpoint de búsqueda y paginación de ofertas.
+   *
+   * Permite buscar ofertas por término (título de oferta o nombre de tutor)
+   * con soporte de paginación.
+   */
+  @Get('search')
+  @HttpCode(HttpStatus.OK)
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  @ApiOperation({
+    summary: 'Buscar ofertas de tutoría',
+    description:
+      'Busca ofertas de tutoría por término de búsqueda (título de oferta o nombre del tutor) con paginación. ' +
+      'Si no se proporciona searchTerm, retorna todas las ofertas paginadas.',
+  })
+  @ApiQuery({
+    name: 'searchTerm',
+    required: false,
+    type: String,
+    description:
+      'Término de búsqueda para filtrar por título de oferta o nombre de tutor',
+    example: 'matemáticas',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Número de página (comienza en 1)',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Cantidad de resultados por página',
+    example: 10,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Búsqueda exitosa con resultados paginados',
+    type: PaginatedOffersResponse,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Parámetros de consulta inválidos',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Error interno del servidor',
+  })
+  async searchOffers(
+    @Query() query: OffersQueryParams,
+  ): Promise<PaginatedOffersResponse> {
+    return this.ofertasService.searchOffers(query);
   }
 
   @Post()
@@ -158,5 +237,51 @@ export class OfertasController {
       message: SUCCESS_MESSAGE,
       data: oferta,
     };
+  }
+
+  /**
+   * HU02: Obtiene todas las ofertas de un tutor específico.
+   *
+   * @route GET /api/tutor/:tutorId/ofertas
+   * @param tutorId - UUID del tutor (validado por ParseUUIDPipe)
+   * @returns Array de OfertaDto
+   */
+  @Get('../tutor/:tutorId/ofertas')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Obtener ofertas de un tutor específico',
+    description:
+      'Retorna todas las ofertas publicadas por un tutor identificado por su UUID',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de ofertas del tutor obtenida exitosamente',
+    type: [OfertaDto],
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'UUID de tutor inválido',
+    schema: {
+      example: {
+        statusCode: 400,
+        message: 'Validation failed (uuid is expected)',
+        error: 'Bad Request',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Error interno del servidor',
+    schema: {
+      example: {
+        statusCode: 500,
+        message: 'Internal server error',
+      },
+    },
+  })
+  async findAllByTutorId(
+    @Param('tutorId', ParseUUIDPipe) tutorId: string,
+  ): Promise<OfertaDto[]> {
+    return this.ofertasService.findAllByTutorId(tutorId);
   }
 }

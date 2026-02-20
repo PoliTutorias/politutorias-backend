@@ -73,25 +73,25 @@ jobs:
           # Copiar el build compilado (dist/)
           if [ -d "dist" ]; then
             cp -r dist deployment_package/
-            echo "✔ dist/ copiado."
+            echo "[OK] dist/ copiado."
           else
-            echo "❌ ERROR: dist/ no encontrado. ¿Falló yarn build?"
+            echo "[ERROR] dist/ no encontrado. Fallo yarn build?"
             exit 1
           fi
 
           # Copiar configuraciones de AWS solo SI existen
           if [ -d ".ebextensions" ]; then
             cp -r .ebextensions deployment_package/
-            echo "✔ .ebextensions copiado."
+            echo "[OK] .ebextensions copiado."
           else
-            echo "⚠ .ebextensions no encontrado, saltando..."
+            echo "[WARN] .ebextensions no encontrado, saltando..."
           fi
 
           if [ -f "Procfile" ]; then
             cp Procfile deployment_package/
-            echo "✔ Procfile copiado."
+            echo "[OK] Procfile copiado."
           else
-            echo "⚠ Procfile no encontrado, saltando..."
+            echo "[WARN] Procfile no encontrado, saltando..."
           fi
 
           # Instalar dependencias
@@ -156,30 +156,29 @@ jobs:
           DB_PORT: ${{ secrets.DB_PORT }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          PGSSLMODE: require
           DB_NAME_STAGING: politutorias_staging
         run: |
-          echo "🔍 Verificando si la base de datos '$DB_NAME_STAGING' existe..."
+          echo "[INFO] Verificando si la base de datos '$DB_NAME_STAGING' existe..."
 
           DB_EXISTS=$(PGPASSWORD="$DB_PASSWORD" psql \
             -h "$DB_HOST" \
             -p "$DB_PORT" \
             -U "$DB_USER" \
             -d postgres \
-            -tAc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME_STAGING'" \
-            "sslmode=require" 2>/dev/null || echo "0")
+            -tAc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME_STAGING'" 2>/dev/null || echo "0")
 
           if [ "$DB_EXISTS" = "1" ]; then
-            echo "✅ Base de datos '$DB_NAME_STAGING' ya existe."
+            echo "[OK] Base de datos '$DB_NAME_STAGING' ya existe."
           else
-            echo "⚠ Base de datos '$DB_NAME_STAGING' no encontrada. Creando..."
+            echo "[WARN] Base de datos '$DB_NAME_STAGING' no encontrada. Creando..."
             PGPASSWORD="$DB_PASSWORD" psql \
               -h "$DB_HOST" \
               -p "$DB_PORT" \
               -U "$DB_USER" \
               -d postgres \
-              -c "CREATE DATABASE $DB_NAME_STAGING" \
-              "sslmode=require"
-            echo "✅ Base de datos '$DB_NAME_STAGING' creada exitosamente."
+              -c "CREATE DATABASE $DB_NAME_STAGING"
+            echo "[OK] Base de datos '$DB_NAME_STAGING' creada exitosamente."
           fi
 
       - name: "Deploy a Elastic Beanstalk Staging"
@@ -204,9 +203,9 @@ jobs:
           echo "--- Contenido del Paquete ---"
           ls -la
           echo "--- Carpeta dist ---"
-          ls -la dist/ || echo "⚠ dist/ no encontrado en el paquete"
+          ls -la dist/ || echo "[WARN] dist/ no encontrado en el paquete"
           echo "--- Procfile ---"
-          cat Procfile || echo "⚠ Procfile no encontrado"
+          cat Procfile || echo "[WARN] Procfile no encontrado"
           echo "-----------------------------"
 
           # Inicializar EB application
@@ -275,30 +274,29 @@ jobs:
           DB_PORT: ${{ secrets.DB_PORT }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          PGSSLMODE: require
           DB_NAME_PROD: politutorias_prod
         run: |
-          echo "🔍 Verificando si la base de datos '$DB_NAME_PROD' existe..."
+          echo "[INFO] Verificando si la base de datos '$DB_NAME_PROD' existe..."
 
           DB_EXISTS=$(PGPASSWORD="$DB_PASSWORD" psql \
             -h "$DB_HOST" \
             -p "$DB_PORT" \
             -U "$DB_USER" \
             -d postgres \
-            -tAc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME_PROD'" \
-            "sslmode=require" 2>/dev/null || echo "0")
+            -tAc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME_PROD'" 2>/dev/null || echo "0")
 
           if [ "$DB_EXISTS" = "1" ]; then
-            echo "✅ Base de datos '$DB_NAME_PROD' ya existe."
+            echo "[OK] Base de datos '$DB_NAME_PROD' ya existe."
           else
-            echo "⚠ Base de datos '$DB_NAME_PROD' no encontrada. Creando..."
+            echo "[WARN] Base de datos '$DB_NAME_PROD' no encontrada. Creando..."
             PGPASSWORD="$DB_PASSWORD" psql \
               -h "$DB_HOST" \
               -p "$DB_PORT" \
               -U "$DB_USER" \
               -d postgres \
-              -c "CREATE DATABASE $DB_NAME_PROD" \
-              "sslmode=require"
-            echo "✅ Base de datos '$DB_NAME_PROD' creada exitosamente."
+              -c "CREATE DATABASE $DB_NAME_PROD"
+            echo "[OK] Base de datos '$DB_NAME_PROD' creada exitosamente."
           fi
 
       - name: "Deploy a Elastic Beanstalk Production"
@@ -323,9 +321,9 @@ jobs:
           echo "--- Contenido del Paquete ---"
           ls -la
           echo "--- Carpeta dist ---"
-          ls -la dist/ || echo "⚠ dist/ no encontrado en el paquete"
+          ls -la dist/ || echo "[WARN] dist/ no encontrado en el paquete"
           echo "--- Procfile ---"
-          cat Procfile || echo "⚠ Procfile no encontrado"
+          cat Procfile || echo "[WARN] Procfile no encontrado"
           echo "-----------------------------"
 
           # Inicializar EB application

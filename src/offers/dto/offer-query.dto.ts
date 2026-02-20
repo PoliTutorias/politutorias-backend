@@ -59,9 +59,10 @@ export class OfferQueryDto {
     example: ['Matemáticas', 'Cálculo'],
   })
   @IsOptional()
-  @Transform(({ value }: { value: unknown }) =>
-    Array.isArray(value) ? value : [value],
-  )
+  @Transform(({ value }: { value: unknown }) => {
+    const arr = Array.isArray(value) ? value : [value];
+    return arr as string[];
+  })
   @IsArray()
   @IsString({ each: true })
   areaConocimiento?: string[];

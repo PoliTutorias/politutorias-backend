@@ -28,7 +28,11 @@ import {
  * Contiene solo el límite de error mínimo necesario para garantizar el contrato HTTP.
  */
 @ApiTags('offers')
-@ApiExtraModels(PaginatedOffersResponseDto, OfferResponseItemDto, TutorInOfferResponseDto)
+@ApiExtraModels(
+  PaginatedOffersResponseDto,
+  OfferResponseItemDto,
+  TutorInOfferResponseDto,
+)
 @Controller('api/offers')
 export class OffersController {
   constructor(private readonly offersService: OffersService) {}
@@ -46,14 +50,64 @@ export class OffersController {
       'Soporta filtros por modalidad, áreas de conocimiento y rango de precios, ' +
       'así como ordenamiento por precio, rating o fecha de creación.',
   })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Página (1-based, default 1)', example: 1 })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Resultados por página (default 10, max 100)', example: 10 })
-  @ApiQuery({ name: 'modality', required: false, type: String, description: 'Modalidad: Virtual | Presencial | Virtual/Presencial | Híbrida', example: 'Virtual' })
-  @ApiQuery({ name: 'areaConocimiento', required: false, type: [String], description: 'Una o más áreas de conocimiento (AND lógico). Repita el parámetro para múltiples valores.', example: ['Matemáticas', 'Cálculo'] })
-  @ApiQuery({ name: 'minPrice', required: false, type: Number, description: 'Precio mínimo en USD', example: 10 })
-  @ApiQuery({ name: 'maxPrice', required: false, type: Number, description: 'Precio máximo en USD', example: 20 })
-  @ApiQuery({ name: 'sortBy', required: false, type: String, description: 'Campo de ordenamiento: price | rating | createdAt', example: 'price' })
-  @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'], description: 'Dirección: asc | desc (default asc)', example: 'asc' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Página (1-based, default 1)',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Resultados por página (default 10, max 100)',
+    example: 10,
+  })
+  @ApiQuery({
+    name: 'modality',
+    required: false,
+    type: String,
+    description:
+      'Modalidad: Virtual | Presencial | Virtual/Presencial | Híbrida',
+    example: 'Virtual',
+  })
+  @ApiQuery({
+    name: 'areaConocimiento',
+    required: false,
+    type: [String],
+    description:
+      'Una o más áreas de conocimiento (AND lógico). Repita el parámetro para múltiples valores.',
+    example: ['Matemáticas', 'Cálculo'],
+  })
+  @ApiQuery({
+    name: 'minPrice',
+    required: false,
+    type: Number,
+    description: 'Precio mínimo en USD',
+    example: 10,
+  })
+  @ApiQuery({
+    name: 'maxPrice',
+    required: false,
+    type: Number,
+    description: 'Precio máximo en USD',
+    example: 20,
+  })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    type: String,
+    description: 'Campo de ordenamiento: price | rating | createdAt',
+    example: 'price',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    enum: ['asc', 'desc'],
+    description: 'Dirección: asc | desc (default asc)',
+    example: 'asc',
+  })
   @ApiResponse({
     status: 200,
     description: 'Lista paginada de ofertas obtenida exitosamente',

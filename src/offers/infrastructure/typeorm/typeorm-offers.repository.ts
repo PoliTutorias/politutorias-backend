@@ -34,13 +34,13 @@ export class TypeOrmOffersRepository implements IOffersRepository {
       const [offers, totalResults] = await qb.getManyAndCount();
 
       return {
-        offers: offers.map(OfferMapper.toDto),
+        offers: offers.map((o) => OfferMapper.toDto(o)),
         totalResults,
         currentPage: page,
         itemsPerPage: limit,
         totalPages: Math.ceil(totalResults / limit),
       };
-    } catch (error) {
+    } catch {
       throw new InternalServerErrorException(
         'Internal server error',
         'Error al consultar la base de datos.',
@@ -64,10 +64,9 @@ export class TypeOrmOffersRepository implements IOffersRepository {
 
     if (areaConocimiento && areaConocimiento.length > 0) {
       // Operador && de PostgreSQL: intersección de arrays (AND lógico entre tags)
-      qb.andWhere(
-        'offer.categories && ARRAY[:...areaConocimiento]::text[]',
-        { areaConocimiento },
-      );
+      qb.andWhere('offer.categories && ARRAY[:...areaConocimiento]::text[]', {
+        areaConocimiento,
+      });
     }
 
     if (minPrice !== undefined) {

@@ -1,7 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import {
-  IOffersRepository,
-} from '../../domain/interfaces/offers.repository.interface';
+import { IOffersRepository } from '../../domain/interfaces/offers.repository.interface';
 import { OfferQueryDto } from '../../dto/offer-query.dto';
 import { PaginatedOffersResponse } from '../../interfaces/paginated-offers-response.interface';
 

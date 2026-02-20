@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/unbound-method */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Test, TestingModule } from '@nestjs/testing';
 import { InternalServerErrorException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -53,7 +55,8 @@ describe('OffersService', () => {
       price: 12.5,
       modality: 'Virtual',
       categories: ['Matemática', 'Ingeniería'],
-      description: 'Tutorías intensivas en álgebra lineal para niveles avanzados.',
+      description:
+        'Tutorías intensivas en álgebra lineal para niveles avanzados.',
       rating: 4.5,
       reviewsCount: 10,
       tutorId: 'uuid-tutor-maria',
@@ -111,7 +114,13 @@ describe('OffersService', () => {
       rating: 4.0,
       reviewsCount: 7,
       tutorId: 't5',
-      tutor: { ...mockTutor, id: 't5', name: 'Laura', photoUrl: 'url', ofertas: [] },
+      tutor: {
+        ...mockTutor,
+        id: 't5',
+        name: 'Laura',
+        photoUrl: 'url',
+        ofertas: [],
+      },
       createdAt: new Date('2023-10-27T12:30:00.000Z'),
       updatedAt: new Date(),
     } as Oferta,
@@ -125,7 +134,13 @@ describe('OffersService', () => {
       rating: 4.2,
       reviewsCount: 10,
       tutorId: 't6',
-      tutor: { ...mockTutor, id: 't6', name: 'Carlos', photoUrl: 'url', ofertas: [] },
+      tutor: {
+        ...mockTutor,
+        id: 't6',
+        name: 'Carlos',
+        photoUrl: 'url',
+        ofertas: [],
+      },
       createdAt: new Date('2023-10-27T13:00:00.000Z'),
       updatedAt: new Date(),
     } as Oferta,
@@ -139,7 +154,13 @@ describe('OffersService', () => {
       rating: 4.7,
       reviewsCount: 25,
       tutorId: 't7',
-      tutor: { ...mockTutor, id: 't7', name: 'Ana', photoUrl: 'url', ofertas: [] },
+      tutor: {
+        ...mockTutor,
+        id: 't7',
+        name: 'Ana',
+        photoUrl: 'url',
+        ofertas: [],
+      },
       createdAt: new Date('2023-10-27T13:30:00.000Z'),
       updatedAt: new Date(),
     } as Oferta,
@@ -153,7 +174,13 @@ describe('OffersService', () => {
       rating: 4.5,
       reviewsCount: 12,
       tutorId: 't8',
-      tutor: { ...mockTutor, id: 't8', name: 'Roberto', photoUrl: 'url', ofertas: [] },
+      tutor: {
+        ...mockTutor,
+        id: 't8',
+        name: 'Roberto',
+        photoUrl: 'url',
+        ofertas: [],
+      },
       createdAt: new Date('2023-10-27T14:00:00.000Z'),
       updatedAt: new Date(),
     } as Oferta,
@@ -167,7 +194,13 @@ describe('OffersService', () => {
       rating: 4.3,
       reviewsCount: 11,
       tutorId: 't9',
-      tutor: { ...mockTutor, id: 't9', name: 'Sofia', photoUrl: 'url', ofertas: [] },
+      tutor: {
+        ...mockTutor,
+        id: 't9',
+        name: 'Sofia',
+        photoUrl: 'url',
+        ofertas: [],
+      },
       createdAt: new Date('2023-10-27T14:30:00.000Z'),
       updatedAt: new Date(),
     } as Oferta,
@@ -181,7 +214,13 @@ describe('OffersService', () => {
       rating: 3.9,
       reviewsCount: 8,
       tutorId: 't10',
-      tutor: { ...mockTutor, id: 't10', name: 'Daniela', photoUrl: 'url', ofertas: [] },
+      tutor: {
+        ...mockTutor,
+        id: 't10',
+        name: 'Daniela',
+        photoUrl: 'url',
+        ofertas: [],
+      },
       createdAt: new Date('2023-10-27T15:00:00.000Z'),
       updatedAt: new Date(),
     } as Oferta,
@@ -195,7 +234,13 @@ describe('OffersService', () => {
       rating: 4.6,
       reviewsCount: 16,
       tutorId: 't11',
-      tutor: { ...mockTutor, id: 't11', name: 'Fernando', photoUrl: 'url', ofertas: [] },
+      tutor: {
+        ...mockTutor,
+        id: 't11',
+        name: 'Fernando',
+        photoUrl: 'url',
+        ofertas: [],
+      },
       createdAt: new Date('2023-10-27T15:30:00.000Z'),
       updatedAt: new Date(),
     } as Oferta,
@@ -209,7 +254,13 @@ describe('OffersService', () => {
       rating: 4.9,
       reviewsCount: 30,
       tutorId: 't12',
-      tutor: { ...mockTutor, id: 't12', name: 'Gabriela', photoUrl: 'url', ofertas: [] },
+      tutor: {
+        ...mockTutor,
+        id: 't12',
+        name: 'Gabriela',
+        photoUrl: 'url',
+        ofertas: [],
+      },
       createdAt: new Date('2023-10-27T16:00:00.000Z'),
       updatedAt: new Date(),
     } as Oferta,
@@ -223,7 +274,13 @@ describe('OffersService', () => {
       rating: 3.5,
       reviewsCount: 4,
       tutorId: 't13',
-      tutor: { ...mockTutor, id: 't13', name: 'Javier', photoUrl: 'url', ofertas: [] },
+      tutor: {
+        ...mockTutor,
+        id: 't13',
+        name: 'Javier',
+        photoUrl: 'url',
+        ofertas: [],
+      },
       createdAt: new Date('2023-10-27T16:30:00.000Z'),
       updatedAt: new Date(),
     } as Oferta,
@@ -360,9 +417,9 @@ describe('OffersService', () => {
         'offer.modality LIKE :modalityValue',
         { modalityValue: '%Virtual%' },
       );
-      expect(
-        result.offers.every((o) => o.modality.includes('Virtual')),
-      ).toBe(true);
+      expect(result.offers.every((o) => o.modality.includes('Virtual'))).toBe(
+        true,
+      );
       expect(result.totalResults).toBe(filteredOffers.length);
     });
 
@@ -383,9 +440,9 @@ describe('OffersService', () => {
         'offer.categories && ARRAY[:...areaConocimiento]::text[]',
         { areaConocimiento: ['Matemática'] },
       );
-      expect(
-        result.offers.every((o) => o.tags.includes('Matemática')),
-      ).toBe(true);
+      expect(result.offers.every((o) => o.tags.includes('Matemática'))).toBe(
+        true,
+      );
       expect(result.totalResults).toBe(filteredOffers.length);
     });
 
@@ -393,14 +450,17 @@ describe('OffersService', () => {
     it('should filter offers by multiple areasConocimiento "Matemática" AND "Física"', async () => {
       const filteredOffers = mockOfertasEntity.filter(
         (o) =>
-          o.categories.includes('Matemática') && o.categories.includes('Física'),
+          o.categories.includes('Matemática') &&
+          o.categories.includes('Física'),
       );
       mockQueryBuilder.getManyAndCount.mockResolvedValue([
         filteredOffers,
         filteredOffers.length,
       ]);
 
-      const query: OfferQueryDto = { areaConocimiento: ['Matemática', 'Física'] };
+      const query: OfferQueryDto = {
+        areaConocimiento: ['Matemática', 'Física'],
+      };
       const result = await service.findAll(query);
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
@@ -436,9 +496,9 @@ describe('OffersService', () => {
         'offer.price <= :maxPrice',
         { maxPrice: 20 },
       );
-      expect(
-        result.offers.every((o) => o.price >= 10 && o.price <= 20),
-      ).toBe(true);
+      expect(result.offers.every((o) => o.price >= 10 && o.price <= 20)).toBe(
+        true,
+      );
       expect(result.totalResults).toBe(filteredOffers.length);
     });
 
@@ -455,7 +515,10 @@ describe('OffersService', () => {
       const query: OfferQueryDto = { sortBy: 'price', sortOrder: 'asc' };
       await service.findAll(query);
 
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('offer.price', 'ASC');
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'offer.price',
+        'ASC',
+      );
     });
 
     // 8. Ordenamiento por rating descendente

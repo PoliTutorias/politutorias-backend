@@ -20,7 +20,10 @@ export class TutorInOfferResponseDto implements TutorInOfferResponse {
   })
   id: string;
 
-  @ApiProperty({ description: 'Nombre completo del tutor', example: 'Ana García' })
+  @ApiProperty({
+    description: 'Nombre completo del tutor',
+    example: 'Ana García',
+  })
   name: string;
 
   @ApiProperty({

@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/unbound-method */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, HttpStatus, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
@@ -245,7 +249,10 @@ describe('OffersController (e2e) - HU03', () => {
         .expect(HttpStatus.OK);
 
       // Verifica que el servicio fue llamado con los valores por defecto
-      expect(offersService.findAll).toHaveBeenCalledWith({ page: 1, limit: 10 });
+      expect(offersService.findAll).toHaveBeenCalledWith({
+        page: 1,
+        limit: 10,
+      });
 
       // Verifica estructura de paginación
       expect(response.body.totalResults).toBe(13);
@@ -289,7 +296,10 @@ describe('OffersController (e2e) - HU03', () => {
         .get('/api/offers?page=2&limit=10')
         .expect(HttpStatus.OK);
 
-      expect(offersService.findAll).toHaveBeenCalledWith({ page: 2, limit: 10 });
+      expect(offersService.findAll).toHaveBeenCalledWith({
+        page: 2,
+        limit: 10,
+      });
       expect(response.body.offers).toHaveLength(3);
       expect(response.body.currentPage).toBe(2);
       expect(response.body.totalResults).toBe(13);
@@ -328,8 +338,7 @@ describe('OffersController (e2e) - HU03', () => {
     // 4. Filtro por múltiples áreas de conocimiento (AND)
     it('should filter offers by multiple areas of knowledge ("Matemática" AND "Física") (200 OK)', async () => {
       const filteredOffers = mockOffers.filter(
-        (o) =>
-          o.tags.includes('Matemática') && o.tags.includes('Física'),
+        (o) => o.tags.includes('Matemática') && o.tags.includes('Física'),
       );
       const expectedResponse: PaginatedOffersResponse = {
         offers: filteredOffers,
@@ -340,7 +349,7 @@ describe('OffersController (e2e) - HU03', () => {
       };
       (offersService.findAll as jest.Mock).mockResolvedValue(expectedResponse);
 
-      const response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .get('/api/offers?areaConocimiento=Matemática&areaConocimiento=Física')
         .expect(HttpStatus.OK);
 
@@ -435,9 +444,7 @@ describe('OffersController (e2e) - HU03', () => {
 
       expect(response.body).toEqual({
         statusCode: 400,
-        message: expect.arrayContaining([
-          expect.stringContaining('sortOrder'),
-        ]),
+        message: expect.arrayContaining([expect.stringContaining('sortOrder')]),
         error: 'Bad Request',
       });
       expect(offersService.findAll).not.toHaveBeenCalled();
@@ -458,7 +465,10 @@ describe('OffersController (e2e) - HU03', () => {
         message: 'Internal server error',
         error: 'Error al consultar la base de datos.',
       });
-      expect(offersService.findAll).toHaveBeenCalledWith({ page: 1, limit: 10 });
+      expect(offersService.findAll).toHaveBeenCalledWith({
+        page: 1,
+        limit: 10,
+      });
     });
   });
 });

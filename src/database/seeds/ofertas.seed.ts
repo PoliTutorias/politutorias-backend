@@ -1,109 +1,184 @@
 import { DataSource } from 'typeorm';
 import { Oferta } from '../../ofertas/domain/entities/oferta.entity';
 
+/**
+ * Seed de Ofertas para HU03: GET /api/offers
+ *
+ * 13 ofertas diseñadas para cubrir todos los escenarios de la HU03:
+ *   - Paginación (10 en página 1, 3 en página 2)
+ *   - Filtro por modalidad: Virtual, Presencial, Virtual/Presencial, Híbrida
+ *   - Filtro por áreas de conocimiento (tags), incluyendo AND lógico
+ *   - Filtro por rango de precios (8–25 USD)
+ *   - Ordenamiento por precio, rating y createdAt
+ */
 export async function seedOfertas(dataSource: DataSource): Promise<void> {
   const ofertaRepository = dataSource.getRepository(Oferta);
 
-  // Nota: La limpieza se maneja en seed.ts principal por orden de FK
-
   const ofertas = [
+    // 1 ─ Virtual / Matemáticas + Cálculo / precio medio
     {
       title: 'Cálculo Diferencial e Integral',
       price: 12.5,
       modality: 'Virtual',
       categories: ['Matemáticas', 'Cálculo'],
       description:
-        'Tutorías especializadas en límites, derivadas, integrales y aplicaciones. Incluye ejercicios prácticos y resolución de exámenes.',
+        'Tutorías especializadas en límites, derivadas, integrales y aplicaciones. Incluye ejercicios prácticos y resolución de exámenes anteriores.',
+      rating: 4.8,
+      reviewsCount: 24,
       tutorId: '550e8400-e29b-41d4-a716-446655440001',
     },
+    // 2 ─ Virtual/Presencial / Matemáticas + Física / precio bajo
     {
       title: 'Física Mecánica - Dinámica y Estática',
-      price: 15.0,
-      modality: 'Presencial',
-      categories: ['Física', 'Ingeniería'],
+      price: 10.0,
+      modality: 'Virtual/Presencial',
+      categories: ['Física', 'Matemáticas', 'Ingeniería'],
       description:
-        'Aprende conceptos de fuerzas, movimiento, energía y momento. Resolución de problemas con enfoque práctico para ingeniería.',
+        'Fuerzas, movimiento, energía y momento. Resolución de problemas con enfoque práctico para ingeniería civil y mecánica.',
+      rating: 4.6,
+      reviewsCount: 18,
       tutorId: '550e8400-e29b-41d4-a716-446655440001',
     },
+    // 3 ─ Virtual / Programación
     {
       title: 'Programación en Python - Desde Cero',
       price: 18.0,
       modality: 'Virtual',
       categories: ['Programación', 'Informática', 'Python'],
       description:
-        'Curso completo de Python: sintaxis, estructuras de datos, POO, manejo de archivos, y librerías como NumPy y Pandas.',
+        'Python completo: sintaxis, estructuras de datos, POO, manejo de archivos y librerías NumPy y Pandas. Enfoque en ciencia de datos.',
+      rating: 4.9,
+      reviewsCount: 42,
       tutorId: '550e8400-e29b-41d4-a716-446655440002',
     },
+    // 4 ─ Híbrida / Química
     {
       title: 'Química Orgánica - Reacciones y Mecanismos',
       price: 20.0,
       modality: 'Híbrida',
       categories: ['Química', 'Ciencias'],
       description:
-        'Domina las reacciones orgánicas, mecanismos de reacción, estereoquímica y nomenclatura IUPAC con ejercicios guiados.',
+        'Reacciones orgánicas, mecanismos, estereoquímica y nomenclatura IUPAC. Resolución guiada de problemas de examen.',
+      rating: 4.3,
+      reviewsCount: 11,
       tutorId: '550e8400-e29b-41d4-a716-446655440002',
     },
+    // 5 ─ Virtual / Matemáticas + Álgebra
     {
       title: 'Álgebra Lineal y Matrices',
       price: 14.0,
       modality: 'Virtual',
       categories: ['Matemáticas', 'Álgebra'],
       description:
-        'Espacios vectoriales, transformaciones lineales, diagonalización, valores propios. Aplicaciones en machine learning.',
+        'Espacios vectoriales, transformaciones lineales, diagonalización y valores propios. Aplicaciones en machine learning e ingeniería.',
+      rating: 4.7,
+      reviewsCount: 30,
       tutorId: '550e8400-e29b-41d4-a716-446655440003',
     },
+    // 6 ─ Presencial / Idiomas
     {
       title: 'Inglés Técnico para Ingeniería',
-      price: 10.0,
+      price: 8.0,
       modality: 'Presencial',
       categories: ['Idiomas', 'Inglés', 'Ingeniería'],
       description:
-        'Mejora tu comprensión de textos técnicos en inglés, redacción de papers y presentaciones académicas.',
+        'Comprensión de textos técnicos en inglés, redacción de papers y preparación de presentaciones académicas y profesionales.',
+      rating: 4.0,
+      reviewsCount: 9,
       tutorId: '550e8400-e29b-41d4-a716-446655440003',
     },
+    // 7 ─ Virtual / Programación + Algoritmos
     {
       title: 'Estructuras de Datos y Algoritmos',
       price: 22.0,
       modality: 'Virtual',
       categories: ['Programación', 'Algoritmos', 'Informática'],
       description:
-        'Aprende listas, árboles, grafos, ordenamiento y búsqueda. Análisis de complejidad temporal y espacial (Big O).',
+        'Listas, árboles, grafos, ordenamiento y búsqueda. Análisis de complejidad temporal y espacial (Big O) con ejemplos reales.',
+      rating: 4.9,
+      reviewsCount: 37,
       tutorId: '550e8400-e29b-41d4-a716-446655440004',
     },
+    // 8 ─ Híbrida / Economía
     {
       title: 'Microeconomía - Teoría del Consumidor',
       price: 16.0,
       modality: 'Híbrida',
       categories: ['Economía', 'Finanzas'],
       description:
-        'Elasticidad, utilidad, curvas de indiferencia, teoría de juegos y equilibrio de mercado con casos prácticos.',
+        'Elasticidad, utilidad, curvas de indiferencia y equilibrio de mercado. Teoría de juegos con casos prácticos y resolución de parciales.',
+      rating: 3.8,
+      reviewsCount: 7,
       tutorId: '550e8400-e29b-41d4-a716-446655440004',
     },
+    // 9 ─ Presencial / Física + Ingeniería
     {
       title: 'Circuitos Eléctricos - Análisis AC/DC',
       price: 17.5,
       modality: 'Presencial',
       categories: ['Ingeniería', 'Eléctrica', 'Física'],
       description:
-        'Leyes de Kirchhoff, análisis nodal y de mallas, teoremas de Thevenin y Norton, circuitos trifásicos.',
+        'Leyes de Kirchhoff, análisis nodal y de mallas, teoremas de Thevenin y Norton, régimen sinusoidal y circuitos trifásicos.',
+      rating: 4.5,
+      reviewsCount: 22,
       tutorId: '550e8400-e29b-41d4-a716-446655440005',
     },
+    // 10 ─ Virtual / Programación
     {
       title: 'Base de Datos y SQL Avanzado',
       price: 19.0,
       modality: 'Virtual',
       categories: ['Programación', 'Bases de Datos', 'SQL'],
       description:
-        'Normalización, índices, transacciones, optimización de queries, stored procedures y triggers en PostgreSQL/MySQL.',
+        'Normalización, índices, transacciones, optimización de queries, stored procedures y triggers en PostgreSQL y MySQL.',
+      rating: 4.6,
+      reviewsCount: 28,
       tutorId: '550e8400-e29b-41d4-a716-446655440005',
+    },
+    // 11 ─ Virtual/Presencial / Matemáticas (precio en rango 10–20)
+    {
+      title: 'Cálculo Vectorial y Multivariable',
+      price: 13.0,
+      modality: 'Virtual/Presencial',
+      categories: ['Matemáticas', 'Cálculo', 'Ingeniería'],
+      description:
+        'Integrales de línea y superficie, gradiente, divergencia y rotacional. Teoremas de Green, Stokes y Gauss con aplicaciones reales.',
+      rating: 4.8,
+      reviewsCount: 19,
+      tutorId: '550e8400-e29b-41d4-a716-446655440001',
+    },
+    // 12 ─ Presencial / Economía (precio bajo)
+    {
+      title: 'Macroeconomía - PIB y Política Fiscal',
+      price: 9.0,
+      modality: 'Presencial',
+      categories: ['Economía', 'Ciencias Sociales'],
+      description:
+        'Indicadores macroeconómicos, política monetaria y fiscal, modelos IS-LM y análisis de coyuntura económica nacional.',
+      rating: 3.6,
+      reviewsCount: 5,
+      tutorId: '550e8400-e29b-41d4-a716-446655440004',
+    },
+    // 13 ─ Virtual / Programación + precio alto (>20)
+    {
+      title: 'Desarrollo Web con React y Node.js',
+      price: 25.0,
+      modality: 'Virtual',
+      categories: ['Programación', 'Desarrollo Web', 'JavaScript'],
+      description:
+        'Construye aplicaciones web full-stack: React para el frontend, Node.js + Express para el backend, y PostgreSQL como base de datos.',
+      rating: 4.9,
+      reviewsCount: 53,
+      tutorId: '550e8400-e29b-41d4-a716-446655440002',
     },
   ];
 
-  // Insertar ofertas en la base de datos
+  console.log('📚 Insertando ofertas HU03...');
+
   for (const ofertaData of ofertas) {
     const oferta = ofertaRepository.create(ofertaData);
     await ofertaRepository.save(oferta);
   }
 
-  console.log('✅ Seed completado: 10 ofertas insertadas exitosamente');
+  console.log(`✅ ${ofertas.length} ofertas insertadas exitosamente`);
 }

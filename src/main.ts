@@ -21,6 +21,7 @@ async function bootstrap() {
     .setDescription('API para la gestión de tutorías académicas')
     .setVersion('1.0')
     .addTag('ofertas', 'Gestión de ofertas de tutoría')
+    .addTag('offers', 'Búsqueda y listado de ofertas (HU03)')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

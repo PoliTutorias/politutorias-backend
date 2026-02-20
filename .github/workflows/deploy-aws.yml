@@ -135,7 +135,7 @@ jobs:
         run: |
           echo "Installing AWS CLI and EB CLI..."
           sudo apt-get update -qq
-          sudo apt-get install -y pipx unzip curl
+          sudo apt-get install -y pipx unzip curl postgresql-client
 
           # Install AWS CLI v2
           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -149,6 +149,38 @@ jobs:
           # Verify installations
           aws --version
           eb --version
+
+      - name: "Verificar/Crear BD Staging"
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME_STAGING: politutorias_staging
+        run: |
+          echo "🔍 Verificando si la base de datos '$DB_NAME_STAGING' existe..."
+
+          DB_EXISTS=$(PGPASSWORD="$DB_PASSWORD" psql \
+            -h "$DB_HOST" \
+            -p "$DB_PORT" \
+            -U "$DB_USER" \
+            -d postgres \
+            -tAc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME_STAGING'" \
+            "sslmode=require" 2>/dev/null || echo "0")
+
+          if [ "$DB_EXISTS" = "1" ]; then
+            echo "✅ Base de datos '$DB_NAME_STAGING' ya existe."
+          else
+            echo "⚠ Base de datos '$DB_NAME_STAGING' no encontrada. Creando..."
+            PGPASSWORD="$DB_PASSWORD" psql \
+              -h "$DB_HOST" \
+              -p "$DB_PORT" \
+              -U "$DB_USER" \
+              -d postgres \
+              -c "CREATE DATABASE $DB_NAME_STAGING" \
+              "sslmode=require"
+            echo "✅ Base de datos '$DB_NAME_STAGING' creada exitosamente."
+          fi
 
       - name: "Deploy a Elastic Beanstalk Staging"
         env:
@@ -222,7 +254,7 @@ jobs:
         run: |
           echo "Installing AWS CLI and EB CLI..."
           sudo apt-get update -qq
-          sudo apt-get install -y pipx unzip curl
+          sudo apt-get install -y pipx unzip curl postgresql-client
 
           # Install AWS CLI v2
           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -236,6 +268,38 @@ jobs:
           # Verify installations
           aws --version
           eb --version
+
+      - name: "Verificar/Crear BD Production"
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME_PROD: politutorias_prod
+        run: |
+          echo "🔍 Verificando si la base de datos '$DB_NAME_PROD' existe..."
+
+          DB_EXISTS=$(PGPASSWORD="$DB_PASSWORD" psql \
+            -h "$DB_HOST" \
+            -p "$DB_PORT" \
+            -U "$DB_USER" \
+            -d postgres \
+            -tAc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME_PROD'" \
+            "sslmode=require" 2>/dev/null || echo "0")
+
+          if [ "$DB_EXISTS" = "1" ]; then
+            echo "✅ Base de datos '$DB_NAME_PROD' ya existe."
+          else
+            echo "⚠ Base de datos '$DB_NAME_PROD' no encontrada. Creando..."
+            PGPASSWORD="$DB_PASSWORD" psql \
+              -h "$DB_HOST" \
+              -p "$DB_PORT" \
+              -U "$DB_USER" \
+              -d postgres \
+              -c "CREATE DATABASE $DB_NAME_PROD" \
+              "sslmode=require"
+            echo "✅ Base de datos '$DB_NAME_PROD' creada exitosamente."
+          fi
 
       - name: "Deploy a Elastic Beanstalk Production"
         env:

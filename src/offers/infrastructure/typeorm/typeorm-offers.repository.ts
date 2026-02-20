@@ -1,0 +1,100 @@
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
+import { Oferta } from '../../../ofertas/domain/entities/oferta.entity';
+import { OfferQueryDto } from '../../dto/offer-query.dto';
+import { PaginatedOffersResponse } from '../../interfaces/paginated-offers-response.interface';
+import { IOffersRepository } from '../../domain/interfaces/offers.repository.interface';
+import { OfferMapper } from '../../application/mappers/offer.mapper';
+
+/**
+ * Implementación TypeORM de IOffersRepository.
+ * Encapsula toda interacción con la base de datos para el agregado Oferta.
+ */
+@Injectable()
+export class TypeOrmOffersRepository implements IOffersRepository {
+  constructor(
+    @InjectRepository(Oferta)
+    private readonly ofertaRepository: Repository<Oferta>,
+  ) {}
+
+  async findAll(query: OfferQueryDto): Promise<PaginatedOffersResponse> {
+    try {
+      const { page = 1, limit = 10 } = query;
+
+      const qb = this.ofertaRepository.createQueryBuilder('offer');
+      qb.leftJoinAndSelect('offer.tutor', 'tutor');
+
+      this.applyFilters(qb, query);
+      this.applySorting(qb, query);
+
+      const skip = (page - 1) * limit;
+      qb.skip(skip).take(limit);
+
+      const [offers, totalResults] = await qb.getManyAndCount();
+
+      return {
+        offers: offers.map((o) => OfferMapper.toDto(o)),
+        totalResults,
+        currentPage: page,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(totalResults / limit),
+      };
+    } catch {
+      throw new InternalServerErrorException(
+        'Internal server error',
+        'Error al consultar la base de datos.',
+      );
+    }
+  }
+
+  // ── Métodos privados de composición de la query ──────────────────────────
+
+  private applyFilters(
+    qb: SelectQueryBuilder<Oferta>,
+    query: OfferQueryDto,
+  ): void {
+    const { modality, areaConocimiento, minPrice, maxPrice } = query;
+
+    if (modality) {
+      qb.andWhere('offer.modality LIKE :modalityValue', {
+        modalityValue: `%${modality}%`,
+      });
+    }
+
+    if (areaConocimiento && areaConocimiento.length > 0) {
+      // simple-array almacena como texto CSV → usamos LIKE por cada área (AND lógico)
+      areaConocimiento.forEach((area, idx) => {
+        qb.andWhere(`offer.categories LIKE :area${idx}`, {
+          [`area${idx}`]: `%${area}%`,
+        });
+      });
+    }
+
+    if (minPrice !== undefined) {
+      qb.andWhere('offer.price >= :minPrice', { minPrice });
+    }
+
+    if (maxPrice !== undefined) {
+      qb.andWhere('offer.price <= :maxPrice', { maxPrice });
+    }
+  }
+
+  private applySorting(
+    qb: SelectQueryBuilder<Oferta>,
+    query: OfferQueryDto,
+  ): void {
+    const { sortBy, sortOrder } = query;
+    const direction: 'ASC' | 'DESC' =
+      sortOrder?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+    const fieldMap: Record<string, string> = {
+      price: 'offer.price',
+      rating: 'offer.rating',
+      date: 'offer.createdAt',
+    };
+
+    const orderField = (sortBy && fieldMap[sortBy]) ?? 'offer.createdAt';
+    qb.orderBy(orderField, direction);
+  }
+}

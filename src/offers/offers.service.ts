@@ -66,9 +66,11 @@ export class OffersService {
     }
 
     if (areaConocimiento && areaConocimiento.length > 0) {
-      // Operador && de PostgreSQL: intersección de arrays (AND lógico entre tags)
-      qb.andWhere('offer.categories && ARRAY[:...areaConocimiento]::text[]', {
-        areaConocimiento,
+      // simple-array almacena como texto CSV → usamos LIKE por cada área (AND lógico)
+      areaConocimiento.forEach((area, idx) => {
+        qb.andWhere(`offer.categories LIKE :area${idx}`, {
+          [`area${idx}`]: `%${area}%`,
+        });
       });
     }
 

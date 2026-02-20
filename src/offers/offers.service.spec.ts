@@ -437,8 +437,8 @@ describe('OffersService', () => {
       const result = await service.findAll(query);
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'offer.categories && ARRAY[:...areaConocimiento]::text[]',
-        { areaConocimiento: ['Matemática'] },
+        'offer.categories LIKE :area0',
+        { area0: '%Matemática%' },
       );
       expect(result.offers.every((o) => o.tags.includes('Matemática'))).toBe(
         true,
@@ -464,8 +464,12 @@ describe('OffersService', () => {
       const result = await service.findAll(query);
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'offer.categories && ARRAY[:...areaConocimiento]::text[]',
-        { areaConocimiento: ['Matemática', 'Física'] },
+        'offer.categories LIKE :area0',
+        { area0: '%Matemática%' },
+      );
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'offer.categories LIKE :area1',
+        { area1: '%Física%' },
       );
       expect(
         result.offers.every(

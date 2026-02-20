@@ -131,6 +131,11 @@ jobs:
           name: backend-api
           path: .
 
+      - name: "Instalar Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
       - name: "Instalar AWS CLI y EB CLI"
         run: |
           echo "Installing AWS CLI and EB CLI..."
@@ -214,19 +219,23 @@ jobs:
           # Desplegar a staging
           eb deploy ${{ env.EB_ENV_STAGING }} --label "ver-${{ github.run_number }}" --timeout 20
 
-      # TODO: Descomentar cuando se implemente el endpoint /api/admin/seed
-      # - name: "Ejecutar Seed Staging"
-      #   run: |
-      #     echo "Esperando 120s a que el servidor arranque después del deploy..."
-      #     sleep 120
-      #     URL_STAGING="http://${{ env.EB_ENV_STAGING }}.eba-qnyktbf8.us-east-1.elasticbeanstalk.com"
-      #     echo "Ejecutando Seed en: $URL_STAGING"
-      #     curl -X POST "$URL_STAGING/api/admin/seed" \
-      #       -H "x-api-key: super-clave-secreta-para-seed" \
-      #       -H "Content-Type: application/json" \
-      #       --max-time 300 \
-      #       --retry 5 \
-      #       --retry-delay 10
+      - name: "Ejecutar Seed Staging"
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: politutorias_staging
+        run: |
+          echo "[INFO] Ejecutando seed en staging..."
+
+          # Usar el paquete ya extraido en deploy_staging
+          cd deploy_staging
+
+          # Ejecutar seed
+          node dist/database/seed.js
+
+          echo "[OK] Seed ejecutado exitosamente en staging"
 
   # ==========================================
   # JOB 3: DEPLOY A PRODUCCIÓN (CD - main)

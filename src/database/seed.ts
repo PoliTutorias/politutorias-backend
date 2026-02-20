@@ -8,16 +8,21 @@ import { seedOfertas } from './seeds/ofertas.seed';
 // Cargar variables de entorno
 config();
 
+const dbHost = process.env.DB_HOST || 'localhost';
+
 const AppDataSource = new DataSource({
   type: 'postgres',
-  host: process.env.DB_HOST || 'localhost',
+  host: dbHost,
   port: parseInt(process.env.DB_PORT || '5432'),
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'mysecretpassword',
   database: process.env.DB_NAME || 'PoliTutoriasDB',
   entities: [Tutor, Oferta],
-  synchronize: false, // No sincronizar automáticamente en seeds
+  synchronize: true,
   logging: false,
+  ssl: dbHost.includes('rds.amazonaws.com')
+    ? { rejectUnauthorized: false }
+    : false,
 });
 
 async function runSeed() {

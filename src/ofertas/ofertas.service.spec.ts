@@ -1,15 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { InternalServerErrorException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { OfertasService } from './ofertas.service';
 import { Oferta } from './domain/entities/oferta.entity';
 import { Tutor } from '../tutors/entities/tutor.entity';
 import { OffersQueryParams } from './dto/offers-query.dto';
-import {
-  PaginatedOffersResponse,
-  OfferResponseDto,
-} from './dto/paginated-offers-response.dto';
+import { PaginatedOffersResponse } from './dto/paginated-offers-response.dto';
 
 /**
  * Unit Tests for OfertasService - HU02: findAllByTutorId
@@ -352,7 +348,6 @@ describe('OfertasService - findAllByTutorId (Unit Tests) - HU02', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 describe('OfertasService - searchOffers (Unit Tests) - HU17', () => {
   let service: OfertasService;
-  let repository: Repository<Oferta>;
 
   // ─── Datos de prueba ──────────────────────────────────────────────────────
   const mockTutor: Tutor = {
@@ -444,7 +439,6 @@ describe('OfertasService - searchOffers (Unit Tests) - HU17', () => {
     }).compile();
 
     service = module.get<OfertasService>(OfertasService);
-    repository = module.get<Repository<Oferta>>(getRepositoryToken(Oferta));
   });
 
   afterEach(() => {
@@ -477,9 +471,7 @@ describe('OfertasService - searchOffers (Unit Tests) - HU17', () => {
       expect(result.offers).toHaveLength(1);
       expect(result.offers[0].title).toBe('Cálculo Diferencial');
       // Verifica mapeo categories → tags
-      expect(result.offers[0].tags).toEqual(
-        mockOfertasEntity[0].categories,
-      );
+      expect(result.offers[0].tags).toEqual(mockOfertasEntity[0].categories);
       // Verifica mapeo photoUrl → photo
       expect(result.offers[0].tutor?.photo).toBe(mockTutor.photoUrl);
       // Verifica que price es number
@@ -567,7 +559,10 @@ describe('OfertasService - searchOffers (Unit Tests) - HU17', () => {
       // Sin searchTerm no debe aplicar ningún filtro andWhere
       expect(mockQBHU17.andWhere).not.toHaveBeenCalled();
       // Ordenamiento por defecto: createdAt DESC
-      expect(mockQBHU17.orderBy).toHaveBeenCalledWith('offer.createdAt', 'DESC');
+      expect(mockQBHU17.orderBy).toHaveBeenCalledWith(
+        'offer.createdAt',
+        'DESC',
+      );
       expect(result.totalResults).toBe(3);
       expect(result.offers).toHaveLength(3);
     });

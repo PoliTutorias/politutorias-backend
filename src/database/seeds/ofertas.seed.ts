@@ -2,14 +2,23 @@ import { DataSource } from 'typeorm';
 import { Oferta } from '../../ofertas/domain/entities/oferta.entity';
 
 /**
- * Seed de Ofertas para HU03: GET /api/offers
+ * Seed de Ofertas para HU03 y HU17.
  *
+ * ── HU03: GET /api/offers ────────────────────────────────────────────────────
  * 13 ofertas diseñadas para cubrir todos los escenarios de la HU03:
  *   - Paginación (10 en página 1, 3 en página 2)
  *   - Filtro por modalidad: Virtual, Presencial, Virtual/Presencial, Híbrida
  *   - Filtro por áreas de conocimiento (tags), incluyendo AND lógico
  *   - Filtro por rango de precios (8–25 USD)
  *   - Ordenamiento por precio, rating y createdAt
+ *
+ * ── HU17: GET /api/ofertas/search ───────────────────────────────────────────
+ * Las mismas 13 ofertas (asociadas a tutores con nombres reales) más 3 adicionales
+ * con títulos explísitos para cubrir los escenarios de búsqueda de HU17:
+ *   - Búsqueda por título: "matemáticas", "cálculo", "programación"
+ *   - Búsqueda por nombre de tutor: "Juan", "María", "Carlos"
+ *   - Paginación: > 10 resultados para verificar totalPages > 1
+ *   - Sin término: retorna todas las ofertas paginadas
  */
 export async function seedOfertas(dataSource: DataSource): Promise<void> {
   const ofertaRepository = dataSource.getRepository(Oferta);
@@ -171,14 +180,59 @@ export async function seedOfertas(dataSource: DataSource): Promise<void> {
       reviewsCount: 53,
       tutorId: '550e8400-e29b-41d4-a716-446655440002',
     },
+
+    // ─── HU17: Entradas adicionales para escenarios de búsqueda ─────────────
+    // Estas ofertas amplían la cobertura del endpoint GET /api/ofertas/search:
+    //   - Búsqueda por título con acento: "matemáticas"
+    //   - Búsqueda por nombre de tutor: "Roberto"
+    //   - Resultado vacío: término inexistente como "Astronomía" no coincide
+
+    // 14 ─ HU17: búsqueda por título "Estadística" (tutor Roberto)
+    {
+      title: 'Estadística y Probabilidad Aplicada',
+      price: 15.0,
+      modality: 'Virtual',
+      categories: ['Matemáticas', 'Estadística'],
+      description:
+        'Distribuciones de probabilidad, intervalos de confianza, pruebas de hipótesis y regresión lineal con aplicaciones en ingeniería.',
+      rating: 4.4,
+      reviewsCount: 14,
+      tutorId: '550e8400-e29b-41d4-a716-446655440005',
+    },
+    // 15 ─ HU17: búsqueda por nombre de tutor "Ana Lucía"
+    {
+      title: 'Fundamentos de Algoritmos y Complejidad',
+      price: 21.0,
+      modality: 'Virtual',
+      categories: ['Programación', 'Algoritmos', 'Informática'],
+      description:
+        'Análisis de complejidad, recursión, paradigmas de diseño (Divide & Conquer, Greedy, DP) y resolución de problemas de competencia.',
+      rating: 4.8,
+      reviewsCount: 20,
+      tutorId: '550e8400-e29b-41d4-a716-446655440004',
+    },
+    // 16 ─ HU17: paginación — lleva el total a 16 para verificar totalPages=2 con limit=10
+    {
+      title: 'Termodinámica e Ingeniería Química',
+      price: 18.5,
+      modality: 'Presencial',
+      categories: ['Química', 'Ingeniería', 'Física'],
+      description:
+        'Primera y segunda ley de la termodinámica, ciclos de potencia, transferencia de calor y diagramas de fase para procesos industriales.',
+      rating: 4.2,
+      reviewsCount: 8,
+      tutorId: '550e8400-e29b-41d4-a716-446655440003',
+    },
   ];
 
-  console.log('📚 Insertando ofertas HU03...');
+  console.log('📚 Insertando ofertas (HU03 + HU17)...');
 
   for (const ofertaData of ofertas) {
     const oferta = ofertaRepository.create(ofertaData);
     await ofertaRepository.save(oferta);
   }
 
-  console.log(`✅ ${ofertas.length} ofertas insertadas exitosamente`);
+  console.log(
+    `✅ ${ofertas.length} ofertas insertadas exitosamente (13 HU03 + 3 HU17)`,
+  );
 }

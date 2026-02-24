@@ -132,15 +132,58 @@ export class OfertasController {
   @ApiResponse({
     status: 200,
     description: 'Búsqueda exitosa con resultados paginados',
-    type: PaginatedOffersResponse,
+    schema: {
+      example: {
+        offers: [
+          {
+            id: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+            title: 'Cálculo Diferencial e Integral',
+            price: 12.5,
+            modality: 'Virtual',
+            description:
+              'Tutorías especializadas en límites, derivadas e integrales.',
+            tags: ['Matemáticas', 'Cálculo'],
+            rating: 4.8,
+            reviewsCount: 24,
+            tutor: {
+              id: '550e8400-e29b-41d4-a716-446655440001',
+              name: 'Juan Carlos Pérez',
+              photo: 'https://randomuser.me/api/portraits/men/1.jpg',
+            },
+            createdAt: '2023-10-27T10:30:00.000Z',
+          },
+        ],
+        totalResults: 3,
+        currentPage: 1,
+        itemsPerPage: 10,
+        totalPages: 1,
+      },
+    },
   })
   @ApiResponse({
     status: 400,
-    description: 'Parámetros de consulta inválidos',
+    description: 'Parámetros de consulta inválidos (page < 1 o limit <= 0)',
+    schema: {
+      example: {
+        statusCode: 400,
+        message: [
+          'La página debe ser al menos 1.',
+          'El límite debe ser un número positivo.',
+        ],
+        error: 'Bad Request',
+      },
+    },
   })
   @ApiResponse({
     status: 500,
-    description: 'Error interno del servidor',
+    description: 'Error interno del servidor al consultar las ofertas',
+    schema: {
+      example: {
+        statusCode: 500,
+        message: 'Error al consultar las ofertas de tutoría.',
+        error: 'Internal Server Error',
+      },
+    },
   })
   async searchOffers(
     @Query() query: OffersQueryParams,

@@ -53,15 +53,53 @@ export class OfertasService {
   }
 
   /**
+   * Mapea una entidad `Oferta` (con relación `tutor` cargada) al DTO de respuesta.
+   *
+   * Responsabilidad única: transformación de entidad → DTO (SRP / Mapper Pattern).
+   *
+   * Conversiones aplicadas:
+   *  - `price`       : decimal → `number` via `parseFloat`
+   *  - `categories`  → `tags`
+   *  - `tutor.photoUrl` → `tutor.photo`
+   *  - `createdAt`   : `Date` → ISO 8601 `string` via `toISOString()`
+   *
+   * @param offer - Entidad `Oferta` con `tutor` cargado a través de `leftJoinAndSelect`
+   * @returns `OfferResponseDto` listo para serializar en la respuesta HTTP
+   */
+  private mapToOfferResponseDto(offer: Oferta): OfferResponseDto {
+    return {
+      id: offer.id,
+      title: offer.title,
+      price: parseFloat(offer.price.toString()),
+      modality: offer.modality,
+      description: offer.description,
+      tags: offer.categories,
+      rating: offer.rating,
+      reviewsCount: offer.reviewsCount,
+      tutor: offer.tutor
+        ? {
+            id: offer.tutor.id,
+            name: offer.tutor.name,
+            photo: offer.tutor.photoUrl || '',
+          }
+        : null,
+      createdAt: offer.createdAt.toISOString(),
+    };
+  }
+
+  /**
    * HU17: Busca y pagina ofertas de tutoría por término de búsqueda.
+   *
+   * Responsabilidad: orquestar la consulta (QueryBuilder), paginación
+   * y delegar el mapeo de entidades a `mapToOfferResponseDto`.
    *
    * @param query - Parámetros de consulta (searchTerm, page, limit)
    * @returns Respuesta paginada con ofertas que coinciden con el criterio
    *
    * Búsqueda:
    * - Busca en el título de la oferta (title) o nombre del tutor (name)
-   * - Búsqueda insensible a mayúsculas/minúsculas
-   * - Si searchTerm está vacío, retorna todas las ofertas
+   * - Búsqueda insensible a mayúsculas/minúsculas mediante LOWER()
+   * - Si searchTerm está vacío o es solo espacios, retorna todas las ofertas
    * - Ordena por fecha de creación (más recientes primero)
    */
   async searchOffers(
@@ -71,10 +109,10 @@ export class OfertasService {
 
     const queryBuilder = this.ofertaRepository.createQueryBuilder('offer');
 
-    // Añadir relación con el tutor para acceder a su nombre y foto
+    // Cargar relación tutor para acceder a su nombre y foto en el mapeo
     queryBuilder.leftJoinAndSelect('offer.tutor', 'tutor');
 
-    // Aplicar filtro de búsqueda si existe un término
+    // Aplicar filtro de búsqueda solo cuando el término no es vacío/solo espacios
     if (searchTerm && searchTerm.trim() !== '') {
       queryBuilder.andWhere(
         '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.name) LIKE LOWER(:searchTerm))',
@@ -85,35 +123,15 @@ export class OfertasService {
     // Ordenamiento por defecto: más recientes primero
     queryBuilder.orderBy('offer.createdAt', 'DESC');
 
-    // Aplicar paginación
+    // Calcular offset y aplicar paginación
     const skip = (page - 1) * limit;
     queryBuilder.skip(skip).take(limit);
 
     try {
-      const [offers, totalResults] = await queryBuilder.getManyAndCount();
-
-      // Mapear OfertaEntity a OfferResponseDto
-      const formattedOffers: OfferResponseDto[] = offers.map((offer) => ({
-        id: offer.id,
-        title: offer.title,
-        price: parseFloat(offer.price.toString()),
-        modality: offer.modality,
-        description: offer.description,
-        tags: offer.categories,
-        rating: offer.rating,
-        reviewsCount: offer.reviewsCount,
-        tutor: offer.tutor
-          ? {
-              id: offer.tutor.id,
-              name: offer.tutor.name,
-              photo: offer.tutor.photoUrl || '',
-            }
-          : null,
-        createdAt: offer.createdAt,
-      }));
+      const [ofertas, totalResults] = await queryBuilder.getManyAndCount();
 
       return {
-        offers: formattedOffers,
+        offers: ofertas.map((offer) => this.mapToOfferResponseDto(offer)),
         totalResults,
         currentPage: page,
         itemsPerPage: limit,

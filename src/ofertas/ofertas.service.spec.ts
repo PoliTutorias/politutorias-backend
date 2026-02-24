@@ -1,8 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { InternalServerErrorException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OfertasService } from './ofertas.service';
 import { Oferta } from './domain/entities/oferta.entity';
+import { Tutor } from '../tutors/entities/tutor.entity';
+import { OffersQueryParams } from './dto/offers-query.dto';
+import {
+  PaginatedOffersResponse,
+  OfferResponseDto,
+} from './dto/paginated-offers-response.dto';
 
 /**
  * Unit Tests for OfertasService - HU02: findAllByTutorId
@@ -34,7 +41,6 @@ describe('OfertasService - findAllByTutorId (Unit Tests) - HU02', () => {
     }).compile();
 
     service = module.get<OfertasService>(OfertasService);
-    repository = module.get<Repository<Oferta>>(getRepositoryToken(Oferta));
   });
 
   afterEach(() => {
@@ -332,6 +338,326 @@ describe('OfertasService - findAllByTutorId (Unit Tests) - HU02', () => {
       // Verifica que sea una fecha válida en formato ISO
       const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
       expect(result[0].createdAt).toMatch(dateRegex);
+    });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HU17 - Tests Unitarios: searchOffers
+// Fase ROJA TDD: estos tests fallarán hasta que se implemente correctamente:
+//   - Método searchOffers en OfertasService
+//   - QueryBuilder con LOWER() LIKE y LEFT JOIN a tutor
+//   - Mapeo categories→tags, photoUrl→photo, price→parseFloat
+//   - Manejo de InternalServerErrorException con mensaje acordado
+// ─────────────────────────────────────────────────────────────────────────────
+describe('OfertasService - searchOffers (Unit Tests) - HU17', () => {
+  let service: OfertasService;
+  let repository: Repository<Oferta>;
+
+  // ─── Datos de prueba ──────────────────────────────────────────────────────
+  const mockTutor: Tutor = {
+    id: 'uuid-tutor-juan',
+    name: 'Juan Pérez',
+    photoUrl: 'https://example.com/photos/juan_perez.jpg',
+    email: 'juan@example.com',
+    bio: 'Tutor de matemáticas con 5 años de experiencia.',
+    ofertas: [],
+  };
+
+  const mockTutor2: Tutor = {
+    id: 'uuid-tutor-programador',
+    name: 'Programador Experto',
+    photoUrl: 'https://example.com/photos/programador.jpg',
+    email: 'programador@example.com',
+    bio: 'Tutor de programación.',
+    ofertas: [],
+  };
+
+  const mockOfertasEntity: Partial<Oferta>[] = [
+    {
+      id: 'uuid-oferta-1',
+      title: 'Cálculo Diferencial',
+      price: 10.0,
+      modality: 'Presencial',
+      categories: ['Matemática', 'Cálculo'],
+      description: 'Clases personalizadas de cálculo diferencial.',
+      rating: 4.8,
+      reviewsCount: 15,
+      tutorId: mockTutor.id,
+      tutor: mockTutor,
+      createdAt: new Date('2023-10-27T10:30:00.000Z'),
+      updatedAt: new Date('2023-10-27T10:30:00.000Z'),
+    },
+    {
+      id: 'uuid-oferta-2',
+      title: 'Álgebra Lineal',
+      price: 12.0,
+      modality: 'Virtual',
+      categories: ['Matemática', 'Álgebra'],
+      description: 'Tutorías de álgebra lineal avanzada.',
+      rating: 4.5,
+      reviewsCount: 10,
+      tutorId: mockTutor.id,
+      tutor: mockTutor,
+      createdAt: new Date('2023-10-28T11:00:00.000Z'),
+      updatedAt: new Date('2023-10-28T11:00:00.000Z'),
+    },
+    {
+      id: 'uuid-oferta-3',
+      title: 'Programación en Python',
+      price: 20.0,
+      modality: 'Virtual',
+      categories: ['Programación', 'Python'],
+      description: 'Aprende programación Python desde cero.',
+      rating: 4.9,
+      reviewsCount: 30,
+      tutorId: mockTutor2.id,
+      tutor: mockTutor2,
+      createdAt: new Date('2023-10-29T09:00:00.000Z'),
+      updatedAt: new Date('2023-10-29T09:00:00.000Z'),
+    },
+  ];
+
+  // ─── Mock QueryBuilder (cadena fluida HU17) ───────────────────────────────
+  const mockQBHU17 = {
+    leftJoinAndSelect: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    skip: jest.fn().mockReturnThis(),
+    take: jest.fn().mockReturnThis(),
+    getManyAndCount: jest.fn(),
+  };
+
+  const mockRepositoryHU17 = {
+    createQueryBuilder: jest.fn().mockReturnValue(mockQBHU17),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        OfertasService,
+        {
+          provide: getRepositoryToken(Oferta),
+          useValue: mockRepositoryHU17,
+        },
+      ],
+    }).compile();
+
+    service = module.get<OfertasService>(OfertasService);
+    repository = module.get<Repository<Oferta>>(getRepositoryToken(Oferta));
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('Scenario 1: Búsqueda por título - coincidencia única', () => {
+    it('should use LOWER() LIKE and return matching offer when searchTerm matches title', async () => {
+      const ofertaCalculo = [mockOfertasEntity[0]] as Oferta[];
+      mockQBHU17.getManyAndCount.mockResolvedValue([ofertaCalculo, 1]);
+
+      const result = await service.searchOffers({ searchTerm: 'Cálculo' });
+
+      expect(mockRepositoryHU17.createQueryBuilder).toHaveBeenCalledWith(
+        'offer',
+      );
+      expect(mockQBHU17.leftJoinAndSelect).toHaveBeenCalledWith(
+        'offer.tutor',
+        'tutor',
+      );
+      expect(mockQBHU17.andWhere).toHaveBeenCalledWith(
+        '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.name) LIKE LOWER(:searchTerm))',
+        { searchTerm: '%Cálculo%' },
+      );
+      expect(result.totalResults).toBe(1);
+      expect(result.offers).toHaveLength(1);
+      expect(result.offers[0].title).toBe('Cálculo Diferencial');
+      // Verifica mapeo categories → tags
+      expect(result.offers[0].tags).toEqual(
+        mockOfertasEntity[0].categories,
+      );
+      // Verifica mapeo photoUrl → photo
+      expect(result.offers[0].tutor?.photo).toBe(mockTutor.photoUrl);
+      // Verifica que price es number
+      expect(typeof result.offers[0].price).toBe('number');
+    });
+  });
+
+  describe('Scenario 2: Búsqueda por nombre de tutor', () => {
+    it('should match offers by tutor name using LOWER() LIKE', async () => {
+      const ofertasJuan = mockOfertasEntity.slice(0, 2) as Oferta[];
+      mockQBHU17.getManyAndCount.mockResolvedValue([ofertasJuan, 2]);
+
+      const result = await service.searchOffers({ searchTerm: 'Juan Pérez' });
+
+      expect(mockQBHU17.andWhere).toHaveBeenCalledWith(
+        '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.name) LIKE LOWER(:searchTerm))',
+        { searchTerm: '%Juan Pérez%' },
+      );
+      expect(result.totalResults).toBe(2);
+    });
+  });
+
+  describe('Scenario 3: Búsqueda que coincide por título y por tutor (condición OR)', () => {
+    it('should use OR condition covering both title and tutor.name', async () => {
+      const allMatches = mockOfertasEntity as Oferta[];
+      mockQBHU17.getManyAndCount.mockResolvedValue([allMatches, 3]);
+
+      await service.searchOffers({ searchTerm: 'Programación' });
+
+      expect(mockQBHU17.andWhere).toHaveBeenCalledWith(
+        '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.name) LIKE LOWER(:searchTerm))',
+        { searchTerm: '%Programación%' },
+      );
+    });
+  });
+
+  describe('Scenario 4: Búsqueda insensible a mayúsculas/minúsculas', () => {
+    it('should find offer when searchTerm is lowercase "cálculo"', async () => {
+      const ofertaCalculo = [mockOfertasEntity[0]] as Oferta[];
+      mockQBHU17.getManyAndCount.mockResolvedValue([ofertaCalculo, 1]);
+
+      await service.searchOffers({ searchTerm: 'cálculo' });
+
+      expect(mockQBHU17.andWhere).toHaveBeenCalledWith(
+        '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.name) LIKE LOWER(:searchTerm))',
+        { searchTerm: '%cálculo%' },
+      );
+    });
+
+    it('should find offer when searchTerm is uppercase "CÁLCULO"', async () => {
+      const ofertaCalculo = [mockOfertasEntity[0]] as Oferta[];
+      mockQBHU17.getManyAndCount.mockResolvedValue([ofertaCalculo, 1]);
+
+      await service.searchOffers({ searchTerm: 'CÁLCULO' });
+
+      expect(mockQBHU17.andWhere).toHaveBeenCalledWith(
+        '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.name) LIKE LOWER(:searchTerm))',
+        { searchTerm: '%CÁLCULO%' },
+      );
+    });
+  });
+
+  describe('Scenario 5: Búsqueda ignorando espacios en blanco (trim)', () => {
+    it('should trim searchTerm before applying LIKE pattern', async () => {
+      const ofertaAlgebra = [mockOfertasEntity[1]] as Oferta[];
+      mockQBHU17.getManyAndCount.mockResolvedValue([ofertaAlgebra, 1]);
+
+      await service.searchOffers({ searchTerm: ' Álgebra Lineal ' });
+
+      // El parámetro trimmeado debe ser '%Álgebra Lineal%'
+      expect(mockQBHU17.andWhere).toHaveBeenCalledWith(
+        '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.name) LIKE LOWER(:searchTerm))',
+        { searchTerm: '%Álgebra Lineal%' },
+      );
+    });
+  });
+
+  describe('Scenario 6: Búsqueda sin searchTerm (undefined/null)', () => {
+    it('should NOT apply andWhere when searchTerm is undefined and return all offers', async () => {
+      const allOfertas = mockOfertasEntity as Oferta[];
+      mockQBHU17.getManyAndCount.mockResolvedValue([allOfertas, 3]);
+
+      const result = await service.searchOffers({});
+
+      // Sin searchTerm no debe aplicar ningún filtro andWhere
+      expect(mockQBHU17.andWhere).not.toHaveBeenCalled();
+      // Ordenamiento por defecto: createdAt DESC
+      expect(mockQBHU17.orderBy).toHaveBeenCalledWith('offer.createdAt', 'DESC');
+      expect(result.totalResults).toBe(3);
+      expect(result.offers).toHaveLength(3);
+    });
+  });
+
+  describe('Scenario 7: searchTerm vacío (empty string)', () => {
+    it('should NOT apply andWhere when searchTerm is an empty string', async () => {
+      const allOfertas = mockOfertasEntity as Oferta[];
+      mockQBHU17.getManyAndCount.mockResolvedValue([allOfertas, 3]);
+
+      await service.searchOffers({ searchTerm: '' });
+
+      expect(mockQBHU17.andWhere).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Scenario 8: searchTerm con solo espacios', () => {
+    it('should NOT apply andWhere when searchTerm is only whitespace ("   ")', async () => {
+      const allOfertas = mockOfertasEntity as Oferta[];
+      mockQBHU17.getManyAndCount.mockResolvedValue([allOfertas, 3]);
+
+      await service.searchOffers({ searchTerm: '   ' });
+
+      // trim() da '' → no debe aplicar filtro
+      expect(mockQBHU17.andWhere).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Scenario 9: Búsqueda sin coincidencias', () => {
+    it('should return empty offers array with totalResults=0 and totalPages=0 when no matches', async () => {
+      mockQBHU17.getManyAndCount.mockResolvedValue([[], 0]);
+
+      const result: PaginatedOffersResponse = await service.searchOffers({
+        searchTerm: 'Astronomía',
+      });
+
+      expect(result.offers).toEqual([]);
+      expect(result.totalResults).toBe(0);
+      expect(result.currentPage).toBe(1);
+      expect(result.itemsPerPage).toBe(10);
+      expect(result.totalPages).toBe(0);
+    });
+  });
+
+  describe('Scenario 10: Paginación correcta (page=2, limit=5, 15 resultados)', () => {
+    it('should calculate skip=5, take=5 and return correct pagination metadata', async () => {
+      const page2Ofertas = mockOfertasEntity.slice(0, 3) as Oferta[];
+      mockQBHU17.getManyAndCount.mockResolvedValue([page2Ofertas, 15]);
+
+      const queryParams: OffersQueryParams = { page: 2, limit: 5 };
+      const result = await service.searchOffers(queryParams);
+
+      // Verifica skip = (2-1)*5 = 5
+      expect(mockQBHU17.skip).toHaveBeenCalledWith(5);
+      expect(mockQBHU17.take).toHaveBeenCalledWith(5);
+
+      // Verifica metadatos de paginación
+      expect(result.currentPage).toBe(2);
+      expect(result.itemsPerPage).toBe(5);
+      expect(result.totalResults).toBe(15);
+      expect(result.totalPages).toBe(3); // Math.ceil(15/5) = 3
+    });
+  });
+
+  describe('Scenario 11: Paginación que excede el total de páginas', () => {
+    it('should return empty offers with totalResults=13 and totalPages=2 when page=5 exceeds available pages', async () => {
+      mockQBHU17.getManyAndCount.mockResolvedValue([[], 13]);
+
+      const result = await service.searchOffers({ page: 5, limit: 10 });
+
+      expect(result.offers).toEqual([]);
+      expect(result.totalResults).toBe(13);
+      expect(result.currentPage).toBe(5);
+      expect(result.itemsPerPage).toBe(10);
+      expect(result.totalPages).toBe(2); // Math.ceil(13/10) = 2
+    });
+  });
+
+  describe('Scenario 12: Manejo de InternalServerErrorException', () => {
+    it('should throw InternalServerErrorException with agreed message when DB throws', async () => {
+      mockQBHU17.getManyAndCount.mockRejectedValue(
+        new Error('DB connection lost'),
+      );
+
+      await expect(service.searchOffers({})).rejects.toThrow(
+        InternalServerErrorException,
+      );
+      await expect(service.searchOffers({})).rejects.toThrow(
+        'Error al consultar las ofertas de tutoría.',
+      );
     });
   });
 });

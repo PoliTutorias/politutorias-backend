@@ -6,6 +6,7 @@ import {
   ValidationPipe,
   HttpStatus,
   HttpException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import request from 'supertest';
 import { OfertasController } from './ofertas.controller';
@@ -15,6 +16,10 @@ import { OfertasService } from './ofertas.service';
 import { CreateOfertaDto } from './dto/create-oferta.dto';
 import { Oferta } from './domain/entities/oferta.entity';
 import { v4 as uuid } from 'uuid';
+import {
+  PaginatedOffersResponse,
+  OfferResponseDto,
+} from './dto/paginated-offers-response.dto';
 
 // Mock de la implementación del CreateOfertaUseCase para controlarlo en los tests
 const mockCreateOfertaUseCase = {
@@ -313,5 +318,254 @@ describe('OfertasController (e2e)', () => {
         expect(res.body.error).toBe('Bad Request');
         expect(mockCreateOfertaUseCase.execute).not.toHaveBeenCalled();
       });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HU17 - Tests E2E: GET /api/ofertas/search
+// Fase ROJA TDD: estos tests fallarán hasta que se implemente correctamente:
+//   - Endpoint GET /api/ofertas/search en OfertasController
+//   - Método searchOffers en OfertasService con la firma acordada
+//   - ValidationPipe con transform:true para convertir page/limit a número
+// ─────────────────────────────────────────────────────────────────────────────
+describe('OfertasController - GET /api/ofertas/search (e2e) - HU17', () => {
+  let app: INestApplication;
+
+  const mockOfertasServiceHU17 = {
+    findAllByTutorId: jest.fn(),
+    searchOffers: jest.fn(),
+  };
+
+  const mockTutor = {
+    id: 'uuid-tutor-1',
+    name: 'Juan Pérez',
+    photo: 'https://example.com/photos/juan_perez.jpg',
+  };
+
+  const mockOfferResponse: OfferResponseDto = {
+    id: 'uuid-oferta-1',
+    title: 'Cálculo Diferencial',
+    price: 10.0,
+    modality: 'Presencial',
+    description: 'Clases personalizadas de cálculo diferencial.',
+    tags: ['Matemática', 'Cálculo'],
+    rating: 4.8,
+    reviewsCount: 15,
+    tutor: mockTutor,
+    createdAt: new Date('2023-10-27T10:30:00.000Z'),
+  };
+
+  beforeEach(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      controllers: [OfertasController],
+      providers: [
+        {
+          provide: CreateOfertaUseCase,
+          useValue: { execute: jest.fn() },
+        },
+        {
+          provide: GetAllOfertasUseCase,
+          useValue: { execute: jest.fn() },
+        },
+        {
+          provide: OfertasService,
+          useValue: mockOfertasServiceHU17,
+        },
+      ],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    // transform: true es CRÍTICO para convertir page/limit de string a number
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+        forbidNonWhitelisted: false,
+      }),
+    );
+    await app.init();
+  });
+
+  afterEach(async () => {
+    jest.clearAllMocks();
+    await app.close();
+  });
+
+  // ─── Escenario 1: 200 OK con searchTerm ────────────────────────────────────
+  it('should return 200 OK with matching offers when searchTerm="Cálculo" is provided', async () => {
+    const expectedResponse: PaginatedOffersResponse = {
+      offers: [mockOfferResponse],
+      totalResults: 1,
+      currentPage: 1,
+      itemsPerPage: 10,
+      totalPages: 1,
+    };
+    mockOfertasServiceHU17.searchOffers.mockResolvedValue(expectedResponse);
+
+    const response = await request(app.getHttpServer())
+      .get('/api/ofertas/search?searchTerm=Cálculo')
+      .expect(HttpStatus.OK);
+
+    // Verifica que el servicio fue llamado con los parámetros correctos
+    expect(mockOfertasServiceHU17.searchOffers).toHaveBeenCalledWith({
+      searchTerm: 'Cálculo',
+      page: 1,
+      limit: 10,
+    });
+
+    // Verifica estructura de respuesta
+    expect(response.body.totalResults).toBe(1);
+    expect(response.body.currentPage).toBe(1);
+    expect(response.body.itemsPerPage).toBe(10);
+    expect(response.body.totalPages).toBe(1);
+    expect(response.body.offers).toHaveLength(1);
+    expect(response.body.offers[0].id).toBe('uuid-oferta-1');
+    expect(response.body.offers[0].title).toBe('Cálculo Diferencial');
+    expect(response.body.offers[0].tutor.name).toBe('Juan Pérez');
+  });
+
+  // ─── Escenario 2: 200 OK sin searchTerm (valores por defecto) ──────────────
+  it('should return 200 OK with all offers when no searchTerm is provided (default page=1, limit=10)', async () => {
+    const expectedResponse: PaginatedOffersResponse = {
+      offers: [mockOfferResponse],
+      totalResults: 5,
+      currentPage: 1,
+      itemsPerPage: 10,
+      totalPages: 1,
+    };
+    mockOfertasServiceHU17.searchOffers.mockResolvedValue(expectedResponse);
+
+    const response = await request(app.getHttpServer())
+      .get('/api/ofertas/search')
+      .expect(HttpStatus.OK);
+
+    // Sin searchTerm → debe llamar al servicio con page y limit por defecto
+    expect(mockOfertasServiceHU17.searchOffers).toHaveBeenCalledWith({
+      page: 1,
+      limit: 10,
+    });
+    expect(response.body.totalResults).toBe(5);
+    expect(response.body.currentPage).toBe(1);
+  });
+
+  // ─── Escenario 3: 200 OK sin coincidencias ─────────────────────────────────
+  it('should return 200 OK with empty offers array when searchTerm="Astronomía" has no matches', async () => {
+    const emptyResponse: PaginatedOffersResponse = {
+      offers: [],
+      totalResults: 0,
+      currentPage: 1,
+      itemsPerPage: 10,
+      totalPages: 0,
+    };
+    mockOfertasServiceHU17.searchOffers.mockResolvedValue(emptyResponse);
+
+    const response = await request(app.getHttpServer())
+      .get('/api/ofertas/search?searchTerm=Astronomía')
+      .expect(HttpStatus.OK);
+
+    expect(response.body.offers).toEqual([]);
+    expect(response.body.totalResults).toBe(0);
+    expect(response.body.currentPage).toBe(1);
+    expect(response.body.itemsPerPage).toBe(10);
+    expect(response.body.totalPages).toBe(0);
+  });
+
+  // ─── Escenario 4: 200 OK con paginación explícita (page=2, limit=5) ─────────
+  it('should return 200 OK with correct pagination metadata (page=2, limit=5)', async () => {
+    const expectedResponse: PaginatedOffersResponse = {
+      offers: [mockOfferResponse],
+      totalResults: 12,
+      currentPage: 2,
+      itemsPerPage: 5,
+      totalPages: 3,
+    };
+    mockOfertasServiceHU17.searchOffers.mockResolvedValue(expectedResponse);
+
+    const response = await request(app.getHttpServer())
+      .get('/api/ofertas/search?page=2&limit=5')
+      .expect(HttpStatus.OK);
+
+    expect(mockOfertasServiceHU17.searchOffers).toHaveBeenCalledWith({
+      page: 2,
+      limit: 5,
+    });
+    expect(response.body.currentPage).toBe(2);
+    expect(response.body.itemsPerPage).toBe(5);
+    expect(response.body.totalResults).toBe(12);
+    expect(response.body.totalPages).toBe(3);
+  });
+
+  // ─── Escenario 5: 400 Bad Request - page=0 ────────────────────────────────
+  it('should return 400 Bad Request when page=0 (below minimum)', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/ofertas/search?page=0')
+      .expect(HttpStatus.BAD_REQUEST);
+
+    expect(response.body.statusCode).toBe(400);
+    expect(response.body.message).toContain('La página debe ser al menos 1.');
+    expect(response.body.error).toBe('Bad Request');
+    // El servicio NO debe ser invocado cuando el DTO falla la validación
+    expect(mockOfertasServiceHU17.searchOffers).not.toHaveBeenCalled();
+  });
+
+  // ─── Escenario 6: 400 Bad Request - page no es entero ────────────────────
+  it('should return 400 Bad Request when page=1.5 (not an integer)', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/ofertas/search?page=1.5')
+      .expect(HttpStatus.BAD_REQUEST);
+
+    expect(response.body.statusCode).toBe(400);
+    expect(response.body.message).toContain(
+      'La página debe ser un número entero.',
+    );
+    expect(response.body.error).toBe('Bad Request');
+    expect(mockOfertasServiceHU17.searchOffers).not.toHaveBeenCalled();
+  });
+
+  // ─── Escenario 7: 400 Bad Request - limit=0 ──────────────────────────────
+  it('should return 400 Bad Request when limit=0 (not positive)', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/ofertas/search?limit=0')
+      .expect(HttpStatus.BAD_REQUEST);
+
+    expect(response.body.statusCode).toBe(400);
+    expect(response.body.message).toContain(
+      'El límite debe ser un número positivo.',
+    );
+    expect(response.body.error).toBe('Bad Request');
+    expect(mockOfertasServiceHU17.searchOffers).not.toHaveBeenCalled();
+  });
+
+  // ─── Escenario 8: 400 Bad Request - limit no es entero ───────────────────
+  it('should return 400 Bad Request when limit=10.5 (not an integer)', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/ofertas/search?limit=10.5')
+      .expect(HttpStatus.BAD_REQUEST);
+
+    expect(response.body.statusCode).toBe(400);
+    expect(response.body.message).toContain(
+      'El límite debe ser un número entero.',
+    );
+    expect(response.body.error).toBe('Bad Request');
+    expect(mockOfertasServiceHU17.searchOffers).not.toHaveBeenCalled();
+  });
+
+  // ─── Escenario 9: 500 Internal Server Error ───────────────────────────────
+  it('should return 500 Internal Server Error when service throws InternalServerErrorException', async () => {
+    mockOfertasServiceHU17.searchOffers.mockRejectedValue(
+      new InternalServerErrorException(
+        'Error al consultar las ofertas de tutoría.',
+      ),
+    );
+
+    const response = await request(app.getHttpServer())
+      .get('/api/ofertas/search')
+      .expect(HttpStatus.INTERNAL_SERVER_ERROR);
+
+    expect(response.body.statusCode).toBe(500);
+    expect(response.body.message).toBe(
+      'Error al consultar las ofertas de tutoría.',
+    );
+    expect(response.body.error).toBe('Internal Server Error');
   });
 });

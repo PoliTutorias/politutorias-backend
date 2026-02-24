@@ -66,11 +66,11 @@ export class OffersService {
     }
 
     if (areaConocimiento && areaConocimiento.length > 0) {
-      // simple-array almacena como texto CSV → usamos LIKE por cada área (AND lógico)
-      areaConocimiento.forEach((area, idx) => {
-        qb.andWhere(`offer.categories LIKE :area${idx}`, {
-          [`area${idx}`]: `%${area}%`,
-        });
+      // Usa el operador de solapamiento de arrays de PostgreSQL (&&).
+      // Retorna ofertas cuyo campo categories comparta al menos un elemento
+      // con el array de áreas solicitadas.
+      qb.andWhere('offer.categories && ARRAY[:...areaConocimiento]::text[]', {
+        areaConocimiento,
       });
     }
 

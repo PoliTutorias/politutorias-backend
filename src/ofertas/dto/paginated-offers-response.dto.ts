@@ -80,10 +80,11 @@ export class OfferResponseDto {
   tutor: TutorResponseDto | null;
 
   @ApiProperty({
-    description: 'Fecha de creación de la oferta',
+    description: 'Fecha de creación de la oferta en formato ISO 8601',
     example: '2023-10-26T10:00:00.000Z',
+    type: String,
   })
-  createdAt: Date;
+  createdAt: Date | string;
 }
 
 /**

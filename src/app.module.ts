@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { OfertasModule } from './ofertas/ofertas.module';
 import { OffersModule } from './offers/offers.module';
+import { TutorsModule } from './tutors/tutors.module';
 import { Oferta } from './ofertas/domain/entities/oferta.entity';
 import { Tutor } from './tutors/entities/tutor.entity';
 
@@ -34,6 +35,7 @@ import { Tutor } from './tutors/entities/tutor.entity';
     }),
     OfertasModule,
     OffersModule,
+    TutorsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

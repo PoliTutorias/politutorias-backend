@@ -23,14 +23,11 @@ describe('OffersService', () => {
   let ofertaRepository: Repository<Oferta>;
 
   // ─── Mock Tutor ───────────────────────────────────────────────────────────
-  const mockTutor: Tutor = {
+  const mockTutor = {
     id: 'uuid-tutor-juan',
-    name: 'Juan Pérez',
-    photoUrl: 'https://example.com/photos/juan_perez.jpg',
-    email: 'juan@example.com',
-    bio: 'Tutor de matemáticas',
+    nombreCompleto: 'Juan Pérez',
     ofertas: [],
-  };
+  } as unknown as Tutor;
 
   // ─── Mock Ofertas (13 entidades de BD) ───────────────────────────────────
   const mockOfertasEntity: Oferta[] = [
@@ -379,9 +376,7 @@ describe('OffersService', () => {
       // categories → tags
       expect(result.offers[0].tags).toEqual(mockOfertasEntity[0].categories);
       // photoUrl → photo
-      expect(result.offers[0].tutor?.photo).toEqual(
-        mockOfertasEntity[0].tutor?.photoUrl,
-      );
+      expect(result.offers[0].tutor?.photo).toEqual('');
     });
 
     // 2. Segunda página

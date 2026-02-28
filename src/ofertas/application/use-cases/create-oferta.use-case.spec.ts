@@ -49,13 +49,13 @@ describe('CreateOfertaUseCase', () => {
       description: 'Clases personalizadas de cálculo avanzado.',
     };
     const tutorId = uuid();
-    const expectedOferta: Oferta = {
+    const expectedOferta = {
       id: uuid(),
       ...createOfertaDto,
       tutorId: tutorId,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    } as unknown as Oferta;
 
     mockOfertaRepository.save.mockResolvedValue(expectedOferta);
 

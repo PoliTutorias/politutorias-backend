@@ -1,27 +1,51 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Unique,
+} from 'typeorm';
 import { Oferta } from '../../ofertas/domain/entities/oferta.entity';
+import { Facultades, Semestres } from '../dto/registrar-datos-basicos.dto';
 
 /**
- * Entidad Tutor
+ * Entidad Tutor — HU34
  *
- * Representa un tutor en el sistema que puede ofrecer múltiples tutorías.
+ * Representa el perfil de un tutor registrado en el sistema.
+ * Un userId solo puede tener un perfil (unique).
  */
 @Entity('tutors')
+@Unique(['userId'])
+@Unique(['numeroWhatsapp'])
 export class Tutor {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ length: 100 })
-  name: string;
+  @Column({ nullable: false })
+  userId: string;
 
-  @Column({ nullable: true })
-  photoUrl: string;
+  @Column({ length: 60, nullable: false })
+  nombreCompleto: string;
 
-  @Column({ nullable: true })
-  email: string;
+  @Column({ length: 13, nullable: false })
+  numeroWhatsapp: string;
 
-  @Column({ type: 'text', nullable: true })
-  bio: string;
+  @Column({ type: 'enum', enum: Facultades, nullable: false })
+  facultad: Facultades;
+
+  @Column({ type: 'enum', enum: Semestres, nullable: false })
+  semestreActual: Semestres;
+
+  @Column({ type: 'text', nullable: false })
+  biografiaCorta: string;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 
   @OneToMany(() => Oferta, (oferta) => oferta.tutor)
   ofertas: Oferta[];

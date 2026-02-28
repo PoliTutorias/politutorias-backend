@@ -10,6 +10,25 @@ config();
 
 const dbHost = process.env.DB_HOST || 'localhost';
 
+const sslConfig = dbHost.includes('rds.amazonaws.com')
+  ? { rejectUnauthorized: false }
+  : false;
+
+/** Conexión sin synchronize: solo para limpiar el esquema viejo */
+const PreDataSource = new DataSource({
+  type: 'postgres',
+  host: dbHost,
+  port: parseInt(process.env.DB_PORT || '5432'),
+  username: process.env.DB_USER || 'postgres',
+  password: process.env.DB_PASSWORD || 'mysecretpassword',
+  database: process.env.DB_NAME || 'PoliTutoriasDB',
+  entities: [Tutor, Oferta],
+  synchronize: false,
+  logging: false,
+  ssl: sslConfig,
+});
+
+/** Conexión principal con synchronize: recrea el esquema limpio */
 const AppDataSource = new DataSource({
   type: 'postgres',
   host: dbHost,
@@ -20,23 +39,28 @@ const AppDataSource = new DataSource({
   entities: [Tutor, Oferta],
   synchronize: true,
   logging: false,
-  ssl: dbHost.includes('rds.amazonaws.com')
-    ? { rejectUnauthorized: false }
-    : false,
+  ssl: sslConfig,
 });
 
 async function runSeed() {
   try {
     console.log('🌱 Iniciando seed de base de datos...');
 
-    // Inicializar conexión
-    await AppDataSource.initialize();
-    console.log('✅ Conexión a base de datos establecida');
+    // Paso 1: Conectar SIN synchronize y eliminar las tablas con el esquema viejo.
+    // Esto evita que synchronize falle al agregar columnas NOT NULL a filas existentes.
+    console.log('🧹 Eliminando tablas con esquema anterior...');
+    await PreDataSource.initialize();
+    await PreDataSource.query(
+      'DROP TABLE IF EXISTS ofertas CASCADE; DROP TABLE IF EXISTS tutors CASCADE;',
+    );
+    await PreDataSource.destroy();
+    console.log('✅ Tablas eliminadas');
 
-    // Limpiar tablas usando CASCADE para manejar FK constraints
-    console.log('🧹 Limpiando tablas existentes...');
-    await AppDataSource.query('TRUNCATE TABLE ofertas, tutors CASCADE');
-    console.log('✅ Tablas limpiadas');
+    // Paso 2: Inicializar con synchronize: true → recrea las tablas con el esquema nuevo
+    await AppDataSource.initialize();
+    console.log(
+      '✅ Conexión a base de datos establecida y esquema sincronizado',
+    );
 
     // IMPORTANTE: Ejecutar seed de tutores ANTES de ofertas (FK constraint)
     await seedTutors(AppDataSource);

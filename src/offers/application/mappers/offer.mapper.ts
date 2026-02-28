@@ -18,8 +18,8 @@ export class OfferMapper {
     const tutor: TutorInOfferResponse | null = entity.tutor
       ? {
           id: entity.tutor.id,
-          name: entity.tutor.name,
-          photo: entity.tutor.photoUrl,
+          name: entity.tutor.nombreCompleto,
+          photo: '',
         }
       : null;
 

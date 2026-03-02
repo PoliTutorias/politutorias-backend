@@ -2,8 +2,10 @@ import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
 import { Oferta } from '../ofertas/domain/entities/oferta.entity';
 import { Tutor } from '../tutors/entities/tutor.entity';
+import { AvailabilityEntity } from '../disponibilidad/entities/availability.entity';
 import { seedTutors } from './seeds/tutors.seed';
 import { seedOfertas } from './seeds/ofertas.seed';
+import { seedDisponibilidad } from './seeds/disponibilidad.seed';
 
 // Cargar variables de entorno
 config();
@@ -22,7 +24,7 @@ const PreDataSource = new DataSource({
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'mysecretpassword',
   database: process.env.DB_NAME || 'PoliTutoriasDB',
-  entities: [Tutor, Oferta],
+  entities: [Tutor, Oferta, AvailabilityEntity],
   synchronize: false,
   logging: false,
   ssl: sslConfig,
@@ -36,7 +38,7 @@ const AppDataSource = new DataSource({
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'mysecretpassword',
   database: process.env.DB_NAME || 'PoliTutoriasDB',
-  entities: [Tutor, Oferta],
+  entities: [Tutor, Oferta, AvailabilityEntity],
   synchronize: true,
   logging: false,
   ssl: sslConfig,
@@ -51,7 +53,7 @@ async function runSeed() {
     console.log('🧹 Eliminando tablas con esquema anterior...');
     await PreDataSource.initialize();
     await PreDataSource.query(
-      'DROP TABLE IF EXISTS ofertas CASCADE; DROP TABLE IF EXISTS tutors CASCADE;',
+      'DROP TABLE IF EXISTS availability CASCADE; DROP TABLE IF EXISTS ofertas CASCADE; DROP TABLE IF EXISTS tutors CASCADE;',
     );
     await PreDataSource.destroy();
     console.log('✅ Tablas eliminadas');
@@ -67,6 +69,9 @@ async function runSeed() {
 
     // Ejecutar seed de ofertas
     await seedOfertas(AppDataSource);
+
+    // Ejecutar seed de disponibilidad
+    await seedDisponibilidad(AppDataSource);
 
     console.log('🎉 Seed completado exitosamente');
   } catch (error) {

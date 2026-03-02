@@ -350,23 +350,17 @@ describe('OfertasService - searchOffers (Unit Tests) - HU17', () => {
   let service: OfertasService;
 
   // ─── Datos de prueba ──────────────────────────────────────────────────────
-  const mockTutor: Tutor = {
+  const mockTutor = {
     id: 'uuid-tutor-juan',
-    name: 'Juan Pérez',
-    photoUrl: 'https://example.com/photos/juan_perez.jpg',
-    email: 'juan@example.com',
-    bio: 'Tutor de matemáticas con 5 años de experiencia.',
+    nombreCompleto: 'Juan Pérez',
     ofertas: [],
-  };
+  } as unknown as Tutor;
 
-  const mockTutor2: Tutor = {
+  const mockTutor2 = {
     id: 'uuid-tutor-programador',
-    name: 'Programador Experto',
-    photoUrl: 'https://example.com/photos/programador.jpg',
-    email: 'programador@example.com',
-    bio: 'Tutor de programación.',
+    nombreCompleto: 'Programador Experto',
     ofertas: [],
-  };
+  } as unknown as Tutor;
 
   const mockOfertasEntity: Partial<Oferta>[] = [
     {
@@ -473,7 +467,7 @@ describe('OfertasService - searchOffers (Unit Tests) - HU17', () => {
       // Verifica mapeo categories → tags
       expect(result.offers[0].tags).toEqual(mockOfertasEntity[0].categories);
       // Verifica mapeo photoUrl → photo
-      expect(result.offers[0].tutor?.photo).toBe(mockTutor.photoUrl);
+      expect(result.offers[0].tutor?.photo).toBe('');
       // Verifica que price es number
       expect(typeof result.offers[0].price).toBe('number');
     });

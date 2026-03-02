@@ -79,8 +79,8 @@ export class OfertasService {
       tutor: offer.tutor
         ? {
             id: offer.tutor.id,
-            name: offer.tutor.name,
-            photo: offer.tutor.photoUrl || '',
+            name: offer.tutor.nombreCompleto,
+            photo: '',
           }
         : null,
       createdAt: offer.createdAt.toISOString(),

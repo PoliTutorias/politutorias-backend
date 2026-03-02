@@ -20,8 +20,13 @@ async function bootstrap() {
     .setTitle('Poli Tutorías API')
     .setDescription('API para la gestión de tutorías académicas')
     .setVersion('1.0')
+    .addBearerAuth(
+      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      'JWT',
+    )
     .addTag('ofertas', 'Gestión de ofertas de tutoría')
     .addTag('offers', 'Búsqueda y listado de ofertas (HU03)')
+    .addTag('tutors', 'Gestión del perfil de tutor (HU34)')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

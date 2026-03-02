@@ -1,66 +1,106 @@
 import { DataSource } from 'typeorm';
 import { Tutor } from '../../tutors/entities/tutor.entity';
+import {
+  Facultades,
+  Semestres,
+} from '../../tutors/dto/registrar-datos-basicos.dto';
 
 /**
- * UUID del tutor "en cero" - sin ofertas iniciales.
- * Este tutor se usa para crear nuevas ofertas desde la API.
+ * UUID del tutor "en cero" — usado para crear nuevas ofertas desde la API.
  * IMPORTANTE: Mantener sincronizado con ofertas.controller.ts
  */
 export const ZERO_TUTOR_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 /**
- * Seed de tutores para HU02 y HU17.
- *
- * Crea los tutores necesarios antes de insertar las ofertas.
+ * Seed de tutores para HU02, HU17 y HU34.
+ * Crea los tutores necesarios ANTES de insertar las ofertas (FK constraint).
+ * Los campos reflejan la nueva entidad Tutor (HU34).
  */
 export async function seedTutors(dataSource: DataSource): Promise<void> {
   const tutorRepository = dataSource.getRepository(Tutor);
 
-  // Nota: La limpieza se maneja en seed.ts principal por orden de FK
-
-  const tutors = [
-    // Tutor "en cero" - sin ofertas iniciales, usado para crear nuevas ofertas desde la API
+  const tutors: Partial<Tutor>[] = [
+    // ── Tutor "en cero" — sólo para asociar ofertas creadas desde la API ──
     {
       id: ZERO_TUTOR_ID,
-      name: 'Tutor de Pruebas',
-      email: 'tutor.pruebas@poli.edu.ec',
-      photoUrl: 'https://randomuser.me/api/portraits/lego/1.jpg',
-      bio: 'Tutor de pruebas para desarrollo. Las ofertas creadas desde la API se asocian a este tutor.',
+      userId: 'seed-user-000',
+      nombreCompleto: 'Tutor de Pruebas',
+      numeroWhatsapp: '0000000000',
+      facultad: Facultades.FIS_SISTEMAS,
+      semestreActual: Semestres.DECIMO,
+      biografiaCorta:
+        'Tutor de pruebas para desarrollo. Las ofertas creadas desde la API se asocian a este perfil.',
     },
+    // ── Tutores reales ─────────────────────────────────────────────────────
     {
       id: '550e8400-e29b-41d4-a716-446655440001',
-      name: 'Juan Carlos Pérez',
-      email: 'jcperez@poli.edu.ec',
-      photoUrl: 'https://randomuser.me/api/portraits/men/1.jpg',
-      bio: 'Ingeniero Civil con 5 años de experiencia en tutorías de matemáticas y física. Especializado en cálculo diferencial e integral.',
+      userId: 'seed-user-001',
+      nombreCompleto: 'Juan Carlos Pérez',
+      numeroWhatsapp: '3001234001',
+      facultad: Facultades.FIS_SISTEMAS,
+      semestreActual: Semestres.OCTAVO,
+      biografiaCorta:
+        'Ingeniero en Sistemas con cinco años de experiencia en tutorías de matemáticas y programación. Especializado en cálculo diferencial e integral.',
     },
     {
       id: '550e8400-e29b-41d4-a716-446655440002',
-      name: 'María Fernanda González',
-      email: 'mfgonzalez@poli.edu.ec',
-      photoUrl: 'https://randomuser.me/api/portraits/women/2.jpg',
-      bio: 'Ingeniera en Sistemas y científica de datos. Experta en Python, programación y análisis de datos con más de 100 estudiantes capacitados.',
+      userId: 'seed-user-002',
+      nombreCompleto: 'María Fernanda González',
+      numeroWhatsapp: '3001234002',
+      facultad: Facultades.FIS_SISTEMAS,
+      semestreActual: Semestres.NOVENO,
+      biografiaCorta:
+        'Experta en Python, programación orientada a objetos y análisis de datos. Más de cien estudiantes capacitados en algoritmia y estructuras de datos.',
     },
     {
       id: '550e8400-e29b-41d4-a716-446655440003',
-      name: 'Carlos Alberto Rodríguez',
-      email: 'carodriguez@poli.edu.ec',
-      photoUrl: 'https://randomuser.me/api/portraits/men/3.jpg',
-      bio: 'Matemático con maestría en álgebra. Bilingüe español-inglés. Tutor certificado con enfoque en álgebra lineal y machine learning.',
+      userId: 'seed-user-003',
+      nombreCompleto: 'Carlos Alberto Rodríguez',
+      numeroWhatsapp: '3001234003',
+      facultad: Facultades.FCEC,
+      semestreActual: Semestres.DECIMO,
+      biografiaCorta:
+        'Matemático con enfoque en álgebra lineal y fundamentos de machine learning. Bilingüe español-inglés con enfoque en resolución de ejercicios prácticos.',
     },
     {
       id: '550e8400-e29b-41d4-a716-446655440004',
-      name: 'Ana Lucía Martínez',
-      email: 'almartinez@poli.edu.ec',
-      photoUrl: 'https://randomuser.me/api/portraits/women/4.jpg',
-      bio: 'Ingeniera en Software y economista. Especialista en estructuras de datos, algoritmos y microeconomía aplicada.',
+      userId: 'seed-user-004',
+      nombreCompleto: 'Ana Lucía Martínez',
+      numeroWhatsapp: '3001234004',
+      facultad: Facultades.FIS_SISTEMAS,
+      semestreActual: Semestres.SEPTIMO,
+      biografiaCorta:
+        'Especialista en estructuras de datos, algoritmos y bases de datos. Tutora comprometida con métodos didácticos claros para estudiantes de todos los niveles.',
     },
     {
       id: '550e8400-e29b-41d4-a716-446655440005',
-      name: 'Roberto Alejandro Silva',
-      email: 'rasilva@poli.edu.ec',
-      photoUrl: 'https://randomuser.me/api/portraits/men/5.jpg',
-      bio: 'Ingeniero Eléctrico y administrador de bases de datos. Experto en circuitos eléctricos, SQL avanzado y optimización de sistemas.',
+      userId: 'seed-user-005',
+      nombreCompleto: 'Roberto Alejandro Silva',
+      numeroWhatsapp: '3001234005',
+      facultad: Facultades.FCEC,
+      semestreActual: Semestres.DECIMO,
+      biografiaCorta:
+        'Ingeniero eléctrico con experiencia en circuitos, SQL avanzado y optimización de sistemas embebidos. Tutoría presencial y virtual disponible.',
+    },
+    {
+      id: '550e8400-e29b-41d4-a716-446655440006',
+      userId: 'seed-user-006',
+      nombreCompleto: 'Laura Daniela Torres',
+      numeroWhatsapp: '3001234006',
+      facultad: Facultades.FIAL,
+      semestreActual: Semestres.SEXTO,
+      biografiaCorta:
+        'Tutora de inglés técnico y comunicación académica. Metodología basada en casos reales de ingeniería. Ayudo a preparar presentaciones y redacción de informes.',
+    },
+    {
+      id: '550e8400-e29b-41d4-a716-446655440007',
+      userId: 'seed-user-007',
+      nombreCompleto: 'Andrés Felipe Moreno',
+      numeroWhatsapp: '3001234007',
+      facultad: Facultades.FCBT,
+      semestreActual: Semestres.OCTAVO,
+      biografiaCorta:
+        'Biólogo especializado en bioquímica y microbiología. Experiencia en tutorías de laboratorio, análisis de datos biológicos y preparación de exámenes de ciencias.',
     },
   ];
 

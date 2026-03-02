@@ -1,6 +1,12 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
+import {
+    Between,
+    FindOptionsWhere,
+    LessThanOrEqual,
+    MoreThanOrEqual,
+    Repository,
+} from 'typeorm';
 import { FilterQueryParams } from '../../../common/dtos/filter-query-params.dto';
 import { Oferta } from '../../domain/entities/oferta.entity';
 import { OfertaResponseDto } from '../../dto/oferta-response.dto';
@@ -49,20 +55,19 @@ export class FindOfertasByPriceUseCase {
       filterParams.minPrice !== undefined &&
       filterParams.maxPrice !== undefined
     ) {
-      whereCondition['precio'] = Between(
+      whereCondition['price'] = Between(
         filterParams.minPrice,
         filterParams.maxPrice,
       );
     } else if (filterParams.minPrice !== undefined) {
-      whereCondition['precio'] = MoreThanOrEqual(filterParams.minPrice);
+      whereCondition['price'] = MoreThanOrEqual(filterParams.minPrice);
     } else if (filterParams.maxPrice !== undefined) {
-      whereCondition['precio'] = LessThanOrEqual(filterParams.maxPrice);
+      whereCondition['price'] = LessThanOrEqual(filterParams.maxPrice);
     }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const [entities, total] = await this.ofertaRepository.findAndCount({
-        where: whereCondition as any,
+        where: whereCondition as FindOptionsWhere<Oferta>,
         relations: ['tutor'],
       });
 

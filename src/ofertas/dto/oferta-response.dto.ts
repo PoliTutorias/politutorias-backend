@@ -30,7 +30,8 @@ export class OfertaResponseDto {
   carrera: string | null;
 
   @ApiProperty({
-    description: 'Modalidad de la tutoría: Virtual, Presencial, Híbrida, Virtual/Presencial',
+    description:
+      'Modalidad de la tutoría: Virtual, Presencial, Híbrida, Virtual/Presencial',
     example: 'Virtual',
   })
   modalidad: string;

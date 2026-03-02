@@ -8,8 +8,8 @@ import { OfertaResponseDto } from './dto/oferta-response.dto';
 import { OfertaDto } from './dto/oferta.dto';
 import { OffersQueryParams } from './dto/offers-query.dto';
 import {
-    OfferResponseDto,
-    PaginatedOffersResponse,
+  OfferResponseDto,
+  PaginatedOffersResponse,
 } from './dto/paginated-offers-response.dto';
 import { OfertaMapper } from './mappers/oferta.mapper';
 

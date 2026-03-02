@@ -42,10 +42,10 @@ export class OfertaMapper {
     return {
       id: oferta.id,
       titulo: oferta.title,
-      carrera: null,            // campo aún no presente en la entidad actual
+      carrera: null, // campo aún no presente en la entidad actual
       modalidad: oferta.modality,
       descripcion: oferta.description,
-      lugarReunion: null,       // campo aún no presente en la entidad actual
+      lugarReunion: null, // campo aún no presente en la entidad actual
       precio: parseFloat(String(oferta.price)),
       tutor,
       imagenRepresentativaUrl: null, // campo aún no presente en la entidad actual

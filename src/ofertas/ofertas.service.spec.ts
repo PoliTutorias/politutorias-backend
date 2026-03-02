@@ -697,7 +697,7 @@ describe('OfertasService - findFilteredOfertas (Unit Tests) - HU27', () => {
     modalidad: 'Presencial',
     descripcion: 'Clases especializadas en límites, derivadas e integrales.',
     lugarReunion: 'Campus Central',
-    precio: 15.00,
+    precio: 15.0,
     imagenRepresentativaUrl: 'https://example.com/imagenes/calculo.jpg',
     tutorId: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
     tutor: mockTutorEntity,
@@ -712,7 +712,7 @@ describe('OfertasService - findFilteredOfertas (Unit Tests) - HU27', () => {
     modalidad: 'Virtual',
     descripcion: 'Matrices, vectores y transformaciones lineales.',
     lugarReunion: null,
-    precio: 12.50,
+    precio: 12.5,
     imagenRepresentativaUrl: null,
     tutorId: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
     tutor: mockTutorEntity,
@@ -727,7 +727,7 @@ describe('OfertasService - findFilteredOfertas (Unit Tests) - HU27', () => {
     modalidad: 'Híbrida',
     descripcion: 'Fundamentos de POO con Java y patrones de diseño.',
     lugarReunion: 'Biblioteca Central',
-    precio: 20.00,
+    precio: 20.0,
     imagenRepresentativaUrl: null,
     tutorId: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
     tutor: mockTutorEntity,
@@ -799,7 +799,7 @@ describe('OfertasService - findFilteredOfertas (Unit Tests) - HU27', () => {
       const result = await service.findFilteredOfertas({ minPrice: 10 });
 
       expect(mockHU27Repository.findAndCount).toHaveBeenCalledWith({
-        where: { precio: MoreThanOrEqual(10) },
+        where: { price: MoreThanOrEqual(10) },
         relations: ['tutor'],
       });
       expect(result.total).toBe(3);
@@ -821,7 +821,7 @@ describe('OfertasService - findFilteredOfertas (Unit Tests) - HU27', () => {
       const result = await service.findFilteredOfertas({ maxPrice: 20 });
 
       expect(mockHU27Repository.findAndCount).toHaveBeenCalledWith({
-        where: { precio: LessThanOrEqual(20) },
+        where: { price: LessThanOrEqual(20) },
         relations: ['tutor'],
       });
       expect(result.total).toBe(2);
@@ -846,7 +846,7 @@ describe('OfertasService - findFilteredOfertas (Unit Tests) - HU27', () => {
       });
 
       expect(mockHU27Repository.findAndCount).toHaveBeenCalledWith({
-        where: { precio: Between(10, 20) },
+        where: { price: Between(10, 20) },
         relations: ['tutor'],
       });
       expect(result.total).toBe(2);
@@ -896,4 +896,3 @@ describe('OfertasService - findFilteredOfertas (Unit Tests) - HU27', () => {
     });
   });
 });
-

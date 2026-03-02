@@ -1,31 +1,36 @@
 import {
-  Controller,
-  Post,
-  Get,
   Body,
-  HttpStatus,
+  Controller,
+  Get,
   HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
+  Post,
   Query,
-  ValidationPipe,
   UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
   ApiBody,
+  ApiExtraModels,
+  ApiOperation,
   ApiQuery,
+  ApiResponse,
+  ApiTags,
+  getSchemaPath,
 } from '@nestjs/swagger';
+import { FilterQueryParams } from '../common/dtos/filter-query-params.dto';
 import { CreateOfertaUseCase } from './application/use-cases/create-oferta.use-case';
 import { GetAllOfertasUseCase } from './application/use-cases/get-all-ofertas.use-case';
-import { CreateOfertaDto } from './dto/create-oferta.dto';
 import { Oferta } from './domain/entities/oferta.entity';
-import { OfertasService } from './ofertas.service';
+import { CreateOfertaDto } from './dto/create-oferta.dto';
+import { OfertaResponseDto } from './dto/oferta-response.dto';
 import { OfertaDto } from './dto/oferta.dto';
 import { OffersQueryParams } from './dto/offers-query.dto';
 import { PaginatedOffersResponse } from './dto/paginated-offers-response.dto';
+import { TutorResponseDto } from './dto/tutor-response.dto';
+import { OfertasService } from './ofertas.service';
 
 const SUCCESS_MESSAGE = 'Oferta creada exitosamente';
 
@@ -55,41 +60,72 @@ export class OfertasController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
+  @ApiExtraModels(OfertaResponseDto, TutorResponseDto)
   @ApiOperation({
-    summary: 'Listar todas las ofertas de tutoría',
+    summary: 'Listar ofertas de tutoría con filtro por rango de precio',
     description:
-      'Obtiene todas las ofertas de tutoría ordenadas por fecha de creación (más recientes primero)',
+      'Obtiene ofertas de tutoría con filtros opcionales por `minPrice` y `maxPrice`. ' +
+      'Los precios son inclusivos (>=, <=). Devuelve los datos del tutor embebidos en cada oferta.',
+  })
+  @ApiQuery({
+    name: 'minPrice',
+    required: false,
+    type: Number,
+    description: 'Precio mínimo inclusivo en USD (>= 0)',
+    example: 10,
+  })
+  @ApiQuery({
+    name: 'maxPrice',
+    required: false,
+    type: Number,
+    description: 'Precio máximo inclusivo en USD (> 0)',
+    example: 20,
   })
   @ApiResponse({
     status: 200,
-    description: 'Lista de ofertas obtenida exitosamente',
+    description: 'Lista de ofertas filtradas por rango de precio',
     schema: {
-      example: {
-        statusCode: 200,
-        message: 'Ofertas obtenidas exitosamente',
-        data: [
-          {
-            id: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-            title: 'Cálculo Vectorial',
-            price: 10,
-            modality: 'Presencial',
-            categories: ['Matemáticas', 'Física'],
-            description: 'Se enseñará cálculo vectorial',
-            tutorId: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-            createdAt: '2023-10-27T10:30:00.000Z',
-            updatedAt: '2023-10-27T10:30:00.000Z',
-          },
-        ],
+      type: 'object',
+      properties: {
+        ofertas: {
+          type: 'array',
+          items: { $ref: getSchemaPath(OfertaResponseDto) },
+        },
+        total: {
+          type: 'integer',
+          description: 'Número total de ofertas que coinciden con el filtro',
+          example: 3,
+        },
       },
     },
   })
-  async findAll() {
-    const ofertas = await this.getAllOfertasUseCase.execute();
-    return {
-      statusCode: HttpStatus.OK,
-      message: 'Ofertas obtenidas exitosamente',
-      data: ofertas,
-    };
+  @ApiResponse({
+    status: 400,
+    description: 'Parámetros de consulta inválidos',
+    schema: {
+      example: {
+        statusCode: 400,
+        message: ['minPrice debe ser un número válido.'],
+        error: 'Bad Request',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Error interno del servidor',
+    schema: {
+      example: {
+        statusCode: 500,
+        message: 'Error interno al filtrar ofertas.',
+        error: 'Internal Server Error',
+      },
+    },
+  })
+  async findAll(
+    @Query(new ValidationPipe({ transform: true, whitelist: true }))
+    filterParams: FilterQueryParams,
+  ): Promise<{ ofertas: OfertaResponseDto[]; total: number }> {
+    return this.ofertasService.findFilteredOfertas(filterParams);
   }
 
   /**

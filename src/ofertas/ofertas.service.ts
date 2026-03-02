@@ -1,13 +1,17 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { FilterQueryParams } from '../common/dtos/filter-query-params.dto';
+import { FindOfertasByPriceUseCase } from './application/use-cases/find-ofertas-by-price.use-case';
 import { Oferta } from './domain/entities/oferta.entity';
+import { OfertaResponseDto } from './dto/oferta-response.dto';
 import { OfertaDto } from './dto/oferta.dto';
 import { OffersQueryParams } from './dto/offers-query.dto';
 import {
-  PaginatedOffersResponse,
   OfferResponseDto,
+  PaginatedOffersResponse,
 } from './dto/paginated-offers-response.dto';
+import { OfertaMapper } from './mappers/oferta.mapper';
 
 /**
  * Servicio para gestionar ofertas de tutoría.
@@ -16,10 +20,19 @@ import {
  */
 @Injectable()
 export class OfertasService {
+  private readonly findOfertasByPriceUseCase: FindOfertasByPriceUseCase;
+
   constructor(
     @InjectRepository(Oferta)
     private readonly ofertaRepository: Repository<Oferta>,
-  ) {}
+  ) {
+    // Instanciado directamente para mantener compatibilidad con los tests
+    // unitarios existentes que solo proveen InjectRepository(Oferta).
+    this.findOfertasByPriceUseCase = new FindOfertasByPriceUseCase(
+      this.ofertaRepository,
+      new OfertaMapper(),
+    );
+  }
 
   /**
    * Obtiene todas las ofertas de un tutor específico.
@@ -143,5 +156,19 @@ export class OfertasService {
         'Error al consultar las ofertas de tutoría.',
       );
     }
+  }
+
+  /**
+   * HU27: Filtra ofertas por rango de precio (minPrice / maxPrice).
+   *
+   * Delega la lógica de filtrado y mapeo a `FindOfertasByPriceUseCase`.
+   *
+   * @param filterParams - Parámetros opcionales `minPrice` y `maxPrice`.
+   * @returns Objeto con el array de DTOs de respuesta y el total de registros.
+   */
+  async findFilteredOfertas(
+    filterParams: FilterQueryParams,
+  ): Promise<{ ofertas: OfertaResponseDto[]; total: number }> {
+    return this.findOfertasByPriceUseCase.execute(filterParams);
   }
 }

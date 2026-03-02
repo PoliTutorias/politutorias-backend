@@ -1,11 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { InternalServerErrorException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { OfertasService } from './ofertas.service';
-import { Oferta } from './domain/entities/oferta.entity';
+import { Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { Tutor } from '../tutors/entities/tutor.entity';
+import { Oferta } from './domain/entities/oferta.entity';
 import { OffersQueryParams } from './dto/offers-query.dto';
 import { PaginatedOffersResponse } from './dto/paginated-offers-response.dto';
+import { OfertasService } from './ofertas.service';
 
 /**
  * Unit Tests for OfertasService - HU02: findAllByTutorId
@@ -647,6 +648,245 @@ describe('OfertasService - searchOffers (Unit Tests) - HU17', () => {
       await expect(service.searchOffers({})).rejects.toThrow(
         'Error al consultar las ofertas de tutoría.',
       );
+    });
+  });
+});
+
+// =============================================================================
+// HU27: OfertasService.findFilteredOfertas — Filtrado por rango de precio
+//
+// FASE ROJA del TDD: Estos tests FALLARÁN inicialmente porque:
+// 1. El método findFilteredOfertas no existe en OfertasService.
+// 2. El repositorio ofertaRepository no tiene findAndCount configurado con
+//    las condiciones Between / MoreThanOrEqual / LessThanOrEqual sobre 'precio'.
+// 3. El mapeo de entidad → respuesta con nombres en español no está implementado.
+// =============================================================================
+
+describe('OfertasService - findFilteredOfertas (Unit Tests) - HU27', () => {
+  let service: OfertasService;
+
+  // Mock del Repository<Oferta> con findAndCount
+  const mockHU27Repository = {
+    find: jest.fn(),
+    findAndCount: jest.fn(),
+    createQueryBuilder: jest.fn(),
+  };
+
+  // -------------------------------------------------------------------------
+  // Datos de entidad mock — incluyen los campos nuevos requeridos por HU27
+  // -------------------------------------------------------------------------
+  const mockTutorEntity = {
+    id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+    name: 'Ana García',
+    photoUrl: 'https://example.com/fotos/ana-garcia.jpg',
+    email: 'ana.garcia@example.com',
+    bio: null,
+    ofertas: [],
+  } as unknown as Tutor;
+
+  const mockOfertaEntity1 = {
+    id: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+    titulo: 'Cálculo Diferencial e Integral',
+    carrera: 'Ingeniería de Sistemas',
+    modalidad: 'Presencial',
+    descripcion: 'Clases especializadas en límites, derivadas e integrales.',
+    lugarReunion: 'Campus Central',
+    precio: 15.0,
+    imagenRepresentativaUrl: 'https://example.com/imagenes/calculo.jpg',
+    tutorId: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+    tutor: mockTutorEntity,
+    createdAt: new Date('2024-03-15T10:00:00.000Z'),
+    updatedAt: new Date('2024-03-15T10:00:00.000Z'),
+  } as unknown as Oferta;
+
+  const mockOfertaEntity2 = {
+    id: 'b2c3d4e5-f6a7-8901-2345-678901bcdef0',
+    titulo: 'Álgebra Lineal',
+    carrera: 'Matemáticas',
+    modalidad: 'Virtual',
+    descripcion: 'Matrices, vectores y transformaciones lineales.',
+    lugarReunion: null,
+    precio: 12.5,
+    imagenRepresentativaUrl: null,
+    tutorId: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+    tutor: mockTutorEntity,
+    createdAt: new Date('2024-03-16T09:00:00.000Z'),
+    updatedAt: new Date('2024-03-16T09:00:00.000Z'),
+  } as unknown as Oferta;
+
+  const mockOfertaEntity3 = {
+    id: 'c3d4e5f6-a7b8-9012-3456-789012cdef01',
+    titulo: 'Programación Orientada a Objetos',
+    carrera: 'Ingeniería de Software',
+    modalidad: 'Híbrida',
+    descripcion: 'Fundamentos de POO con Java y patrones de diseño.',
+    lugarReunion: 'Biblioteca Central',
+    precio: 20.0,
+    imagenRepresentativaUrl: null,
+    tutorId: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+    tutor: mockTutorEntity,
+    createdAt: new Date('2024-03-17T08:30:00.000Z'),
+    updatedAt: new Date('2024-03-17T08:30:00.000Z'),
+  } as unknown as Oferta;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        OfertasService,
+        {
+          provide: getRepositoryToken(Oferta),
+          useValue: mockHU27Repository,
+        },
+      ],
+    }).compile();
+
+    service = module.get<OfertasService>(OfertasService);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  // -------------------------------------------------------------------------
+  // Escenario 1: Sin parámetros — devuelve todas las ofertas
+  // -------------------------------------------------------------------------
+  describe('Escenario 1: findFilteredOfertas() sin parámetros de filtro', () => {
+    it('debería llamar findAndCount con { where: {}, relations: ["tutor"] } y devolver { ofertas, total }', async () => {
+      const allEntities = [
+        mockOfertaEntity1,
+        mockOfertaEntity2,
+        mockOfertaEntity3,
+      ];
+      mockHU27Repository.findAndCount.mockResolvedValueOnce([allEntities, 3]);
+
+      const result = await service.findFilteredOfertas({});
+
+      // Verifica la llamada al repositorio
+      expect(mockHU27Repository.findAndCount).toHaveBeenCalledWith({
+        where: {},
+        relations: ['tutor'],
+      });
+
+      // Verifica la estructura de respuesta
+      expect(result).toHaveProperty('ofertas');
+      expect(result).toHaveProperty('total');
+      expect(result.total).toBe(3);
+      expect(result.ofertas.length).toBe(3);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Escenario 2: Solo minPrice — filtra precio >= minPrice
+  // -------------------------------------------------------------------------
+  describe('Escenario 2: findFilteredOfertas({ minPrice: 10 })', () => {
+    it('debería llamar findAndCount con where: { precio: MoreThanOrEqual(10) } y devolver los resultados correctos', async () => {
+      const filteredEntities = [
+        mockOfertaEntity1,
+        mockOfertaEntity2,
+        mockOfertaEntity3,
+      ];
+      mockHU27Repository.findAndCount.mockResolvedValueOnce([
+        filteredEntities,
+        3,
+      ]);
+
+      const result = await service.findFilteredOfertas({ minPrice: 10 });
+
+      expect(mockHU27Repository.findAndCount).toHaveBeenCalledWith({
+        where: { price: MoreThanOrEqual(10) },
+        relations: ['tutor'],
+      });
+      expect(result.total).toBe(3);
+      expect(result.ofertas.length).toBe(3);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Escenario 3: Solo maxPrice — filtra precio <= maxPrice
+  // -------------------------------------------------------------------------
+  describe('Escenario 3: findFilteredOfertas({ maxPrice: 20 })', () => {
+    it('debería llamar findAndCount con where: { precio: LessThanOrEqual(20) } y devolver los resultados correctos', async () => {
+      const filteredEntities = [mockOfertaEntity1, mockOfertaEntity2];
+      mockHU27Repository.findAndCount.mockResolvedValueOnce([
+        filteredEntities,
+        2,
+      ]);
+
+      const result = await service.findFilteredOfertas({ maxPrice: 20 });
+
+      expect(mockHU27Repository.findAndCount).toHaveBeenCalledWith({
+        where: { price: LessThanOrEqual(20) },
+        relations: ['tutor'],
+      });
+      expect(result.total).toBe(2);
+      expect(result.ofertas.length).toBe(2);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Escenario 4: Rango completo — filtra minPrice <= precio <= maxPrice
+  // -------------------------------------------------------------------------
+  describe('Escenario 4: findFilteredOfertas({ minPrice: 10, maxPrice: 20 })', () => {
+    it('debería llamar findAndCount con where: { precio: Between(10, 20) } y devolver los resultados correctos', async () => {
+      const filteredEntities = [mockOfertaEntity1, mockOfertaEntity2];
+      mockHU27Repository.findAndCount.mockResolvedValueOnce([
+        filteredEntities,
+        2,
+      ]);
+
+      const result = await service.findFilteredOfertas({
+        minPrice: 10,
+        maxPrice: 20,
+      });
+
+      expect(mockHU27Repository.findAndCount).toHaveBeenCalledWith({
+        where: { price: Between(10, 20) },
+        relations: ['tutor'],
+      });
+      expect(result.total).toBe(2);
+      expect(result.ofertas.length).toBe(2);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Escenario 5: Sin resultados — devuelve array vacío y total 0
+  // -------------------------------------------------------------------------
+  describe('Escenario 5: El repositorio no encuentra ofertas en el rango', () => {
+    it('debería devolver { ofertas: [], total: 0 }', async () => {
+      mockHU27Repository.findAndCount.mockResolvedValueOnce([[], 0]);
+
+      const result = await service.findFilteredOfertas({
+        minPrice: 100,
+        maxPrice: 200,
+      });
+
+      expect(result.ofertas).toEqual([]);
+      expect(result.total).toBe(0);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Escenario 6: El repositorio lanza un error — debe propagar InternalServerErrorException
+  // -------------------------------------------------------------------------
+  describe('Escenario 6: El repositorio lanza un error inesperado', () => {
+    it('debería lanzar InternalServerErrorException con mensaje "Error interno al filtrar ofertas." y registrar el error', async () => {
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+      mockHU27Repository.findAndCount.mockRejectedValueOnce(
+        new Error('DB connection lost'),
+      );
+
+      await expect(service.findFilteredOfertas({})).rejects.toThrow(
+        InternalServerErrorException,
+      );
+      await expect(service.findFilteredOfertas({})).rejects.toThrow(
+        'Error interno al filtrar ofertas.',
+      );
+
+      // Verifica que se registró el error en consola
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
     });
   });
 });

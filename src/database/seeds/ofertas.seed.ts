@@ -2,7 +2,7 @@ import { DataSource } from 'typeorm';
 import { Oferta } from '../../ofertas/domain/entities/oferta.entity';
 
 /**
- * Seed de Ofertas para HU03 y HU17.
+ * Seed de Ofertas para HU03, HU17 y HU27.
  *
  * ── HU03: GET /api/offers ────────────────────────────────────────────────────
  * 13 ofertas diseñadas para cubrir todos los escenarios de la HU03:
@@ -14,11 +14,24 @@ import { Oferta } from '../../ofertas/domain/entities/oferta.entity';
  *
  * ── HU17: GET /api/ofertas/search ───────────────────────────────────────────
  * Las mismas 13 ofertas (asociadas a tutores con nombres reales) más 3 adicionales
- * con títulos explísitos para cubrir los escenarios de búsqueda de HU17:
+ * con títulos explícitos para cubrir los escenarios de búsqueda de HU17:
  *   - Búsqueda por título: "matemáticas", "cálculo", "programación"
  *   - Búsqueda por nombre de tutor: "Juan", "María", "Carlos"
  *   - Paginación: > 10 resultados para verificar totalPages > 1
  *   - Sin término: retorna todas las ofertas paginadas
+ *
+ * ── HU27: GET /api/ofertas?minPrice=&maxPrice= ───────────────────────────────
+ * 6 ofertas adicionales con precios de borde definidos para validar los tres
+ * escenarios de filtrado por precio del endpoint HU27:
+ *   Zona baja  (< 10 USD): 5.00, 7.00
+ *   Zona media (10–20 USD): 10.00, 15.00, 20.00
+ *   Zona alta  (> 20 USD): 30.00
+ *
+ * Casos de prueba habilitados con estos precios:
+ *   GET /api/ofertas?maxPrice=9          → devuelve las 2 de zona baja
+ *   GET /api/ofertas?minPrice=10         → devuelve las de zona media y alta
+ *   GET /api/ofertas?minPrice=10&maxPrice=20 → devuelve solo las 3 de zona media
+ *   GET /api/ofertas?minPrice=25         → devuelve solo la de 30.00
  */
 export async function seedOfertas(dataSource: DataSource): Promise<void> {
   const ofertaRepository = dataSource.getRepository(Oferta);
@@ -223,9 +236,86 @@ export async function seedOfertas(dataSource: DataSource): Promise<void> {
       reviewsCount: 8,
       tutorId: '550e8400-e29b-41d4-a716-446655440003',
     },
+
+    // ─── HU27: Entradas con precios de borde para filtrado GET /api/ofertas ──
+    // Zona baja (< 10 USD): valida maxPrice=9 y ausencia con minPrice=10
+    // 17 ─ HU27: precio mínimo de catálogo (5 USD)
+    {
+      title: 'Introducción a la Lógica de Programación',
+      price: 5.0,
+      modality: 'Virtual',
+      categories: ['Programación', 'Informática'],
+      description:
+        'Fundamentos de lógica computacional, diagramas de flujo y pseudocódigo. Ideal para estudiantes que inician su formación en programación.',
+      rating: 4.1,
+      reviewsCount: 6,
+      tutorId: '550e8400-e29b-41d4-a716-446655440002',
+    },
+    // 18 ─ HU27: precio bajo (7 USD)
+    {
+      title: 'Nivelación de Matemáticas Básicas',
+      price: 7.0,
+      modality: 'Presencial',
+      categories: ['Matemáticas', 'Nivelación'],
+      description:
+        'Repaso de aritmética, fracciones, ecuaciones lineales y geometría básica. Preparación para materias de primer ciclo universitario.',
+      rating: 3.9,
+      reviewsCount: 4,
+      tutorId: '550e8400-e29b-41d4-a716-446655440001',
+    },
+    // Zona media (10–20 USD): valida minPrice=10&maxPrice=20
+    // 19 ─ HU27: precio exacto 10 USD (borde inferior del rango medio)
+    {
+      title: 'Cálculo de una Variable - Nivel Básico',
+      price: 10.0,
+      modality: 'Virtual/Presencial',
+      categories: ['Matemáticas', 'Cálculo'],
+      description:
+        'Funciones, límites y derivadas básicas con ejercicios resueltos. Orientado a estudiantes de primer ciclo de ingeniería y ciencias.',
+      rating: 4.3,
+      reviewsCount: 12,
+      tutorId: '550e8400-e29b-41d4-a716-446655440001',
+    },
+    // 20 ─ HU27: precio medio exacto (15 USD)
+    {
+      title: 'Probabilidad y Estadística para Ingeniería',
+      price: 15.0,
+      modality: 'Virtual',
+      categories: ['Matemáticas', 'Estadística', 'Ingeniería'],
+      description:
+        'Variables aleatorias, distribuciones de probabilidad, estimación de parámetros y pruebas de hipótesis con aplicaciones en procesos industriales.',
+      rating: 4.5,
+      reviewsCount: 17,
+      tutorId: '550e8400-e29b-41d4-a716-446655440005',
+    },
+    // 21 ─ HU27: precio exacto 20 USD (borde superior del rango medio)
+    {
+      title: 'Diseño Orientado a Objetos con UML',
+      price: 20.0,
+      modality: 'Híbrida',
+      categories: ['Programación', 'Software', 'Diseño'],
+      description:
+        'Principios SOLID, patrones de diseño GoF, diagramas UML de clases, secuencia y estado. Aplicaciones con Java y TypeScript.',
+      rating: 4.7,
+      reviewsCount: 21,
+      tutorId: '550e8400-e29b-41d4-a716-446655440002',
+    },
+    // Zona alta (> 20 USD): valida minPrice=25
+    // 22 ─ HU27: precio alto (30 USD) — borde superior del catálogo
+    {
+      title: 'Inteligencia Artificial y Machine Learning',
+      price: 30.0,
+      modality: 'Virtual',
+      categories: ['Programación', 'IA', 'Machine Learning', 'Python'],
+      description:
+        'Algoritmos de aprendizaje supervisado y no supervisado, redes neuronales, árboles de decisión y evaluación de modelos con scikit-learn y TensorFlow.',
+      rating: 5.0,
+      reviewsCount: 61,
+      tutorId: '550e8400-e29b-41d4-a716-446655440002',
+    },
   ];
 
-  console.log('📚 Insertando ofertas (HU03 + HU17)...');
+  console.log('📚 Insertando ofertas (HU03 + HU17 + HU27)...');
 
   for (const ofertaData of ofertas) {
     const oferta = ofertaRepository.create(ofertaData);
@@ -233,6 +323,6 @@ export async function seedOfertas(dataSource: DataSource): Promise<void> {
   }
 
   console.log(
-    `✅ ${ofertas.length} ofertas insertadas exitosamente (13 HU03 + 3 HU17)`,
+    `✅ ${ofertas.length} ofertas insertadas exitosamente (13 HU03 + 3 HU17 + 6 HU27)`,
   );
 }

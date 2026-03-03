@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
-    HttpStatus,
-    INestApplication,
-    InternalServerErrorException,
-    ValidationPipe,
+  HttpStatus,
+  INestApplication,
+  InternalServerErrorException,
+  ValidationPipe,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
@@ -53,7 +53,7 @@ const MOCK_OFERTA_1 = {
   modalidad: 'Presencial',
   descripcion: 'Clases especializadas en límites, derivadas e integrales.',
   lugarReunion: 'Campus Central - Edificio A, Salón 204',
-  precio: 15.00,
+  precio: 15.0,
   tutor: MOCK_TUTOR_1,
   imagenRepresentativaUrl: 'https://example.com/imagenes/calculo.jpg',
   createdAt: '2024-03-15T10:00:00.000Z',
@@ -67,7 +67,7 @@ const MOCK_OFERTA_2 = {
   modalidad: 'Virtual',
   descripcion: 'Matrices, vectores y transformaciones lineales.',
   lugarReunion: null,
-  precio: 12.50,
+  precio: 12.5,
   tutor: MOCK_TUTOR_2,
   imagenRepresentativaUrl: null,
   createdAt: '2024-03-16T09:00:00.000Z',
@@ -81,7 +81,7 @@ const MOCK_OFERTA_3 = {
   modalidad: 'Híbrida',
   descripcion: 'Fundamentos de POO con Java y patrones de diseño.',
   lugarReunion: 'Biblioteca Central',
-  precio: 20.00,
+  precio: 20.0,
   tutor: MOCK_TUTOR_1,
   imagenRepresentativaUrl: null,
   createdAt: '2024-03-17T08:30:00.000Z',
@@ -175,7 +175,7 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
           expect(oferta.descripcion).toBe(MOCK_OFERTA_1.descripcion);
           expect(oferta.lugarReunion).toBe(MOCK_OFERTA_1.lugarReunion);
           expect(typeof oferta.precio).toBe('number');
-          expect(oferta.precio).toBe(15.00);
+          expect(oferta.precio).toBe(15.0);
 
           // Estructura del tutor dentro de la oferta
           const tutor = oferta.tutor as Record<string, unknown>;
@@ -186,9 +186,9 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
           expect(tutor.contacto).toBe(MOCK_TUTOR_1.contacto);
 
           // El servicio fue llamado sin filtros (objeto vacío o undefined)
-          expect(
-            mockOfertasService.findFilteredOfertas,
-          ).toHaveBeenCalledTimes(1);
+          expect(mockOfertasService.findFilteredOfertas).toHaveBeenCalledTimes(
+            1,
+          );
           const callArg = mockOfertasService.findFilteredOfertas.mock
             .calls[0][0] as Record<string, unknown>;
           expect(callArg?.minPrice).toBeUndefined();
@@ -218,9 +218,10 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
           expect(res.body.total).toBe(2);
 
           // Verifica que se llamó con los filtros correctos (transformados a number)
-          expect(
-            mockOfertasService.findFilteredOfertas,
-          ).toHaveBeenCalledWith({ minPrice: 10, maxPrice: 20 });
+          expect(mockOfertasService.findFilteredOfertas).toHaveBeenCalledWith({
+            minPrice: 10,
+            maxPrice: 20,
+          });
         });
     });
   });
@@ -243,9 +244,9 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
         .expect(HttpStatus.OK)
         .expect((res) => {
           expect(res.body.total).toBe(2);
-          expect(
-            mockOfertasService.findFilteredOfertas,
-          ).toHaveBeenCalledWith({ minPrice: 15 });
+          expect(mockOfertasService.findFilteredOfertas).toHaveBeenCalledWith({
+            minPrice: 15,
+          });
         });
     });
   });
@@ -268,9 +269,9 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
         .expect(HttpStatus.OK)
         .expect((res) => {
           expect(res.body.total).toBe(2);
-          expect(
-            mockOfertasService.findFilteredOfertas,
-          ).toHaveBeenCalledWith({ maxPrice: 15 });
+          expect(mockOfertasService.findFilteredOfertas).toHaveBeenCalledWith({
+            maxPrice: 15,
+          });
         });
     });
   });
@@ -291,9 +292,10 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
         .expect((res) => {
           expect(res.body.ofertas).toEqual([]);
           expect(res.body.total).toBe(0);
-          expect(
-            mockOfertasService.findFilteredOfertas,
-          ).toHaveBeenCalledWith({ minPrice: 100, maxPrice: 200 });
+          expect(mockOfertasService.findFilteredOfertas).toHaveBeenCalledWith({
+            minPrice: 100,
+            maxPrice: 200,
+          });
         });
     });
   });
@@ -312,9 +314,7 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
           const messages: string[] = res.body.message as string[];
           expect(messages).toContain('minPrice debe ser un número válido.');
           // El servicio NO debe ser llamado con inputs inválidos
-          expect(
-            mockOfertasService.findFilteredOfertas,
-          ).not.toHaveBeenCalled();
+          expect(mockOfertasService.findFilteredOfertas).not.toHaveBeenCalled();
         });
     });
   });
@@ -332,9 +332,7 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
           expect(res.body.error).toBe('Bad Request');
           const messages: string[] = res.body.message as string[];
           expect(messages).toContain('minPrice no puede ser negativo.');
-          expect(
-            mockOfertasService.findFilteredOfertas,
-          ).not.toHaveBeenCalled();
+          expect(mockOfertasService.findFilteredOfertas).not.toHaveBeenCalled();
         });
     });
   });
@@ -352,9 +350,7 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
           expect(res.body.error).toBe('Bad Request');
           const messages: string[] = res.body.message as string[];
           expect(messages).toContain('maxPrice debe ser un número válido.');
-          expect(
-            mockOfertasService.findFilteredOfertas,
-          ).not.toHaveBeenCalled();
+          expect(mockOfertasService.findFilteredOfertas).not.toHaveBeenCalled();
         });
     });
   });
@@ -372,9 +368,7 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
           expect(res.body.error).toBe('Bad Request');
           const messages: string[] = res.body.message as string[];
           expect(messages).toContain('maxPrice debe ser un número positivo.');
-          expect(
-            mockOfertasService.findFilteredOfertas,
-          ).not.toHaveBeenCalled();
+          expect(mockOfertasService.findFilteredOfertas).not.toHaveBeenCalled();
         });
     });
   });
@@ -395,9 +389,9 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
           expect(res.body.statusCode).toBe(500);
           expect(res.body.message).toBe('Error interno al filtrar ofertas.');
           expect(res.body.error).toBe('Internal Server Error');
-          expect(
-            mockOfertasService.findFilteredOfertas,
-          ).toHaveBeenCalledTimes(1);
+          expect(mockOfertasService.findFilteredOfertas).toHaveBeenCalledTimes(
+            1,
+          );
         });
     });
   });

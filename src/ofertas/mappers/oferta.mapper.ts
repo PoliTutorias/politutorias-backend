@@ -33,9 +33,9 @@ export class OfertaMapper {
     const tutor: TutorResponseDto | null = oferta.tutor
       ? {
           id: oferta.tutor.id,
-          nombre: oferta.tutor.name,
-          fotoUrl: oferta.tutor.photoUrl ?? null,
-          contacto: oferta.tutor.email ?? null,
+          nombre: oferta.tutor.nombreCompleto,
+          fotoUrl: null,
+          contacto: oferta.tutor.numeroWhatsapp ?? null,
         }
       : null;
 

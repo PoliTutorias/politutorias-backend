@@ -1,20 +1,28 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-jest.mock('@aws-sdk/client-s3', () => ({
-  S3Client: jest.fn().mockImplementation(() => ({
-    send: jest.fn().mockResolvedValue({}),
-  })),
-  PutObjectCommand: jest.fn().mockImplementation(() => ({})),
-  GetObjectCommand: jest.fn().mockImplementation(() => ({})),
-}));
+jest.mock(
+  '@aws-sdk/client-s3',
+  () => ({
+    S3Client: jest.fn().mockImplementation(() => ({
+      send: jest.fn().mockResolvedValue({}),
+    })),
+    PutObjectCommand: jest.fn().mockImplementation(() => ({})),
+    GetObjectCommand: jest.fn().mockImplementation(() => ({})),
+  }),
+  { virtual: true },
+);
 
-jest.mock('@aws-sdk/s3-request-presigner', () => ({
-  getSignedUrl: jest
-    .fn()
-    .mockResolvedValue(
-      'https://test-bucket.s3.us-east-1.amazonaws.com/test-key?signed-params',
-    ),
-}));
+jest.mock(
+  '@aws-sdk/s3-request-presigner',
+  () => ({
+    getSignedUrl: jest
+      .fn()
+      .mockResolvedValue(
+        'https://test-bucket.s3.us-east-1.amazonaws.com/test-key?signed-params',
+      ),
+  }),
+  { virtual: true },
+);
 
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';

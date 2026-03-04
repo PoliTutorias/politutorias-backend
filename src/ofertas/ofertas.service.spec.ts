@@ -459,7 +459,7 @@ describe('OfertasService - searchOffers (Unit Tests) - HU17', () => {
         'tutor',
       );
       expect(mockQBHU17.andWhere).toHaveBeenCalledWith(
-        '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.name) LIKE LOWER(:searchTerm))',
+        '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.nombreCompleto) LIKE LOWER(:searchTerm))',
         { searchTerm: '%Cálculo%' },
       );
       expect(result.totalResults).toBe(1);
@@ -482,7 +482,7 @@ describe('OfertasService - searchOffers (Unit Tests) - HU17', () => {
       const result = await service.searchOffers({ searchTerm: 'Juan Pérez' });
 
       expect(mockQBHU17.andWhere).toHaveBeenCalledWith(
-        '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.name) LIKE LOWER(:searchTerm))',
+        '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.nombreCompleto) LIKE LOWER(:searchTerm))',
         { searchTerm: '%Juan Pérez%' },
       );
       expect(result.totalResults).toBe(2);
@@ -497,7 +497,7 @@ describe('OfertasService - searchOffers (Unit Tests) - HU17', () => {
       await service.searchOffers({ searchTerm: 'Programación' });
 
       expect(mockQBHU17.andWhere).toHaveBeenCalledWith(
-        '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.name) LIKE LOWER(:searchTerm))',
+        '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.nombreCompleto) LIKE LOWER(:searchTerm))',
         { searchTerm: '%Programación%' },
       );
     });
@@ -511,7 +511,7 @@ describe('OfertasService - searchOffers (Unit Tests) - HU17', () => {
       await service.searchOffers({ searchTerm: 'cálculo' });
 
       expect(mockQBHU17.andWhere).toHaveBeenCalledWith(
-        '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.name) LIKE LOWER(:searchTerm))',
+        '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.nombreCompleto) LIKE LOWER(:searchTerm))',
         { searchTerm: '%cálculo%' },
       );
     });
@@ -523,7 +523,7 @@ describe('OfertasService - searchOffers (Unit Tests) - HU17', () => {
       await service.searchOffers({ searchTerm: 'CÁLCULO' });
 
       expect(mockQBHU17.andWhere).toHaveBeenCalledWith(
-        '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.name) LIKE LOWER(:searchTerm))',
+        '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.nombreCompleto) LIKE LOWER(:searchTerm))',
         { searchTerm: '%CÁLCULO%' },
       );
     });
@@ -538,7 +538,7 @@ describe('OfertasService - searchOffers (Unit Tests) - HU17', () => {
 
       // El parámetro trimmeado debe ser '%Álgebra Lineal%'
       expect(mockQBHU17.andWhere).toHaveBeenCalledWith(
-        '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.name) LIKE LOWER(:searchTerm))',
+        '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.nombreCompleto) LIKE LOWER(:searchTerm))',
         { searchTerm: '%Álgebra Lineal%' },
       );
     });

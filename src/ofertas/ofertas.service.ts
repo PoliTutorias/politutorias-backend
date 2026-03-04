@@ -110,7 +110,7 @@ export class OfertasService {
    * @returns Respuesta paginada con ofertas que coinciden con el criterio
    *
    * Búsqueda:
-   * - Busca en el título de la oferta (title) o nombre del tutor (name)
+   * - Busca en el título de la oferta (title) o nombre del tutor (nombreCompleto)
    * - Búsqueda insensible a mayúsculas/minúsculas mediante LOWER()
    * - Si searchTerm está vacío o es solo espacios, retorna todas las ofertas
    * - Ordena por fecha de creación (más recientes primero)
@@ -128,7 +128,7 @@ export class OfertasService {
     // Aplicar filtro de búsqueda solo cuando el término no es vacío/solo espacios
     if (searchTerm && searchTerm.trim() !== '') {
       queryBuilder.andWhere(
-        '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.name) LIKE LOWER(:searchTerm))',
+        '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.nombreCompleto) LIKE LOWER(:searchTerm))',
         { searchTerm: `%${searchTerm.trim()}%` },
       );
     }

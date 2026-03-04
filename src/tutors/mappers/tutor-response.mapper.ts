@@ -35,6 +35,13 @@ export class TutorResponseDto {
   })
   biografiaCorta: string;
 
+  @ApiProperty({
+    example: 'https://storage.example.com/fotos/tutor-abc123.jpg',
+    nullable: true,
+    required: false,
+  })
+  fotoPerfil: string | null;
+
   @ApiProperty({ example: '2026-01-01T00:00:00.000Z' })
   createdAt: Date | string;
 
@@ -58,6 +65,7 @@ export class TutorResponseMapper {
       facultad: tutor.facultad,
       semestreActual: tutor.semestreActual,
       biografiaCorta: tutor.biografiaCorta,
+      fotoPerfil: tutor.fotoPerfil ?? null,
       createdAt: tutor.createdAt,
       updatedAt: tutor.updatedAt,
     };

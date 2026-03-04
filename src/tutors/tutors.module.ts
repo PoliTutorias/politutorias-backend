@@ -1,14 +1,15 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TutorService } from './tutor.service';
-import { TutorController } from './tutor.controller';
-import { Tutor } from './entities/tutor.entity';
-import { TypeOrmTutorRepositoryAdapter } from './infrastructure/typeorm-tutor.repository';
+import { StorageModule } from '../storage/storage.module';
 import { RegistrarActualizarDatosBasicosTutorUseCase } from './application/use-cases/registrar-actualizar-datos-basicos.use-case';
 import { TUTOR_REPOSITORY_TOKEN } from './domain/ports/tutor.repository.port';
+import { Tutor } from './entities/tutor.entity';
+import { TypeOrmTutorRepositoryAdapter } from './infrastructure/typeorm-tutor.repository';
+import { TutorController } from './tutor.controller';
+import { TutorService } from './tutor.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Tutor])],
+  imports: [TypeOrmModule.forFeature([Tutor]), StorageModule],
   controllers: [TutorController],
   providers: [
     // Adapter concreto para el port ITutorRepository

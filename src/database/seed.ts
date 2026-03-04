@@ -3,9 +3,14 @@ import { config } from 'dotenv';
 import { Oferta } from '../ofertas/domain/entities/oferta.entity';
 import { Tutor } from '../tutors/entities/tutor.entity';
 import { AvailabilityEntity } from '../disponibilidad/entities/availability.entity';
+import { ExperienciaEntity } from '../experiencias/entities/experiencia.entity';
+import { PerfilProfesionalEntity } from '../perfil/entities/perfil-profesional.entity';
+import { MateriaEntity } from '../materias/entities/materia.entity';
 import { seedTutors } from './seeds/tutors.seed';
 import { seedOfertas } from './seeds/ofertas.seed';
 import { seedDisponibilidad } from './seeds/disponibilidad.seed';
+import { seedExperiencias } from './seeds/experiencias.seed';
+import { seedPerfilesProfesionales } from './seeds/perfil-profesional.seed';
 
 // Cargar variables de entorno
 config();
@@ -16,6 +21,16 @@ const sslConfig = dbHost.includes('rds.amazonaws.com')
   ? { rejectUnauthorized: false }
   : false;
 
+/** Todas las entidades del proyecto */
+const ALL_ENTITIES = [
+  Tutor,
+  Oferta,
+  AvailabilityEntity,
+  ExperienciaEntity,
+  PerfilProfesionalEntity,
+  MateriaEntity,
+];
+
 /** Conexión sin synchronize: solo para limpiar el esquema viejo */
 const PreDataSource = new DataSource({
   type: 'postgres',
@@ -24,7 +39,7 @@ const PreDataSource = new DataSource({
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'mysecretpassword',
   database: process.env.DB_NAME || 'PoliTutoriasDB',
-  entities: [Tutor, Oferta, AvailabilityEntity],
+  entities: ALL_ENTITIES,
   synchronize: false,
   logging: false,
   ssl: sslConfig,
@@ -38,7 +53,7 @@ const AppDataSource = new DataSource({
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'mysecretpassword',
   database: process.env.DB_NAME || 'PoliTutoriasDB',
-  entities: [Tutor, Oferta, AvailabilityEntity],
+  entities: ALL_ENTITIES,
   synchronize: true,
   logging: false,
   ssl: sslConfig,
@@ -52,9 +67,14 @@ async function runSeed() {
     // Esto evita que synchronize falle al agregar columnas NOT NULL a filas existentes.
     console.log('🧹 Eliminando tablas con esquema anterior...');
     await PreDataSource.initialize();
-    await PreDataSource.query(
-      'DROP TABLE IF EXISTS availability CASCADE; DROP TABLE IF EXISTS ofertas CASCADE; DROP TABLE IF EXISTS tutors CASCADE;',
-    );
+    await PreDataSource.query(`
+      DROP TABLE IF EXISTS tutor_materias             CASCADE;
+      DROP TABLE IF EXISTS tutor_perfiles_profesionales CASCADE;
+      DROP TABLE IF EXISTS tutor_experiencias         CASCADE;
+      DROP TABLE IF EXISTS availability               CASCADE;
+      DROP TABLE IF EXISTS ofertas                    CASCADE;
+      DROP TABLE IF EXISTS tutors                     CASCADE;
+    `);
     await PreDataSource.destroy();
     console.log('✅ Tablas eliminadas');
 
@@ -72,6 +92,11 @@ async function runSeed() {
 
     // Ejecutar seed de disponibilidad
     await seedDisponibilidad(AppDataSource);
+
+    // HU42: Experiencias y perfiles profesionales
+    // (deben ir DESPUÉS de seedTutors por FK tutorId)
+    await seedExperiencias(AppDataSource);
+    await seedPerfilesProfesionales(AppDataSource);
 
     console.log('🎉 Seed completado exitosamente');
   } catch (error) {

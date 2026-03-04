@@ -27,6 +27,11 @@ async function bootstrap() {
     .addTag('ofertas', 'Gestión de ofertas de tutoría')
     .addTag('offers', 'Búsqueda y listado de ofertas (HU03)')
     .addTag('tutors', 'Gestión del perfil de tutor (HU34)')
+    .addTag('experiencias', 'Registro de experiencias del tutor (HU42)')
+    .addTag(
+      'perfil',
+      'Perfil profesional del tutor — materias y experiencias (HU42)',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

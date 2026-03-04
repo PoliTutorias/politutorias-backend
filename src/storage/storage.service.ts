@@ -1,12 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import {
-    GetObjectCommand,
-    PutObjectCommand,
-    PutObjectCommandInput,
-    S3Client,
+  GetObjectCommand,
+  PutObjectCommand,
+  PutObjectCommandInput,
+  S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Inject, Injectable, Logger } from '@nestjs/common';

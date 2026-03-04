@@ -3,6 +3,9 @@
 /node_modules
 /build
 /postgres
+# Package manager — el proyecto usa Yarn; ignorar lockfile de npm
+package-lock.json
+
 # Logs
 logs
 *.log

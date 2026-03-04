@@ -43,7 +43,7 @@ describe('StorageService', () => {
           provide: ConfigService,
           useValue: {
             get: (key: string) => {
-              if (key === 'AWS_S3_BUCKET_NAME') return 'test-bucket';
+              if (key === 'AWS_BUCKET_NAME') return 'test-bucket';
               if (key === 'AWS_REGION') return 'us-east-1';
               if (key === 'AWS_ACCESS_KEY_ID') return 'test-access-key';
               if (key === 'AWS_SECRET_ACCESS_KEY') return 'test-secret-key';

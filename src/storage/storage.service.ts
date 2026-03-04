@@ -20,11 +20,11 @@ export class StorageService {
     @Inject('S3_CLIENT') private s3Client: S3Client,
     private configService: ConfigService,
   ) {
-    const bucketName = this.configService.get<string>('AWS_S3_BUCKET_NAME');
+    const bucketName = this.configService.get<string>('AWS_BUCKET_NAME');
     const region = this.configService.get<string>('AWS_REGION');
 
     if (!bucketName) {
-      throw new Error('AWS_S3_BUCKET_NAME is not configured');
+      throw new Error('AWS_BUCKET_NAME is not configured');
     }
     if (!region) {
       throw new Error('AWS_REGION is not configured');

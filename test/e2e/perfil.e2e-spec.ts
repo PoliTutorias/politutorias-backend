@@ -1,6 +1,14 @@
 // test/e2e/perfil.e2e-spec.ts
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, HttpStatus, CanActivate, ValidationPipe, UnauthorizedException } from '@nestjs/common';
+import {
+  INestApplication,
+  HttpStatus,
+  CanActivate,
+  ValidationPipe,
+  UnauthorizedException,
+} from '@nestjs/common';
 import request from 'supertest';
 import { PerfilController } from './../../src/perfil/perfil.controller';
 import { PerfilService } from './../../src/perfil/perfil.service';
@@ -15,8 +23,8 @@ describe('PerfilController (e2e)', () => {
 
   const mockJwtAuthGuard: CanActivate = {
     canActivate: jest.fn((context) => {
-      const request = context.switchToHttp().getRequest();
-      request.user = { id: 'a-valid-uuid-tutor-id' };
+      const req = context.switchToHttp().getRequest<{ user: { id: string } }>();
+      req.user = { id: 'a-valid-uuid-tutor-id' };
       return true;
     }),
   };
@@ -24,9 +32,7 @@ describe('PerfilController (e2e)', () => {
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [PerfilController],
-      providers: [
-        { provide: PerfilService, useValue: mockPerfilService },
-      ],
+      providers: [{ provide: PerfilService, useValue: mockPerfilService }],
     })
       .overrideGuard(JwtAuthGuard)
       .useValue(mockJwtAuthGuard)
@@ -49,11 +55,15 @@ describe('PerfilController (e2e)', () => {
 
   beforeEach(() => {
     mockPerfilService.finalizar.mockReset();
-    jest.spyOn(mockJwtAuthGuard, 'canActivate').mockImplementation((context) => {
-      const request = context.switchToHttp().getRequest();
-      request.user = { id: 'a-valid-uuid-tutor-id' };
-      return true;
-    });
+    jest
+      .spyOn(mockJwtAuthGuard, 'canActivate')
+      .mockImplementation((context) => {
+        const req = context
+          .switchToHttp()
+          .getRequest<{ user: { id: string } }>();
+        req.user = { id: 'a-valid-uuid-tutor-id' };
+        return true;
+      });
   });
 
   // Escenario 1: Finalización Exitosa del Perfil (Creación/Actualización)
@@ -79,12 +89,17 @@ describe('PerfilController (e2e)', () => {
       .expect(HttpStatus.OK)
       .expect((res) => {
         expect(res.body.success).toBe(true);
-        expect(res.body.message).toBe('Perfil profesional finalizado con éxito');
+        expect(res.body.message).toBe(
+          'Perfil profesional finalizado con éxito',
+        );
         expect(res.body.data).toBeDefined();
         expect(res.body.data.id).toBe('mock-perfil-uuid');
         expect(res.body.data.tutorId).toBe(tutorId);
         expect(res.body.data.materias).toEqual(perfilProfesionalDto.materias);
-        expect(mockPerfilService.finalizar).toHaveBeenCalledWith(tutorId, perfilProfesionalDto);
+        expect(mockPerfilService.finalizar).toHaveBeenCalledWith(
+          tutorId,
+          perfilProfesionalDto,
+        );
       });
   });
 
@@ -111,9 +126,14 @@ describe('PerfilController (e2e)', () => {
       .expect(HttpStatus.OK)
       .expect((res) => {
         expect(res.body.success).toBe(true);
-        expect(res.body.message).toBe('Perfil profesional finalizado con éxito');
+        expect(res.body.message).toBe(
+          'Perfil profesional finalizado con éxito',
+        );
         expect(res.body.data.materias).toEqual([]);
-        expect(mockPerfilService.finalizar).toHaveBeenCalledWith(tutorId, perfilProfesionalDto);
+        expect(mockPerfilService.finalizar).toHaveBeenCalledWith(
+          tutorId,
+          perfilProfesionalDto,
+        );
       });
   });
 
@@ -130,7 +150,11 @@ describe('PerfilController (e2e)', () => {
       .expect(HttpStatus.BAD_REQUEST)
       .expect((res) => {
         expect(res.body.statusCode).toBe(HttpStatus.BAD_REQUEST);
-        expect(res.body.message).toEqual(expect.arrayContaining(['Cada materia debe ser una cadena de texto.']));
+        expect(res.body.message).toEqual(
+          expect.arrayContaining([
+            'Cada materia debe ser una cadena de texto.',
+          ]),
+        );
         expect(mockPerfilService.finalizar).not.toHaveBeenCalled();
       });
   });
@@ -161,7 +185,9 @@ describe('PerfilController (e2e)', () => {
         expect(res.body.statusCode).toBe(HttpStatus.BAD_REQUEST);
         // El mensaje de error anidado es complejo, solo verificar que un error existe.
         // NestJS ValidationPipe genera mensajes con el formato "experiencias.N.mensaje"
-        expect(res.body.message).toEqual(expect.arrayContaining(['experiencias.1.El puesto es requerido.']));
+        expect(res.body.message).toEqual(
+          expect.arrayContaining(['experiencias.1.El puesto es requerido.']),
+        );
         expect(mockPerfilService.finalizar).not.toHaveBeenCalled();
       });
   });
@@ -184,7 +210,6 @@ describe('PerfilController (e2e)', () => {
 
   // Escenario 6: Error Interno del Servidor
   it('should return 500 INTERNAL SERVER ERROR if an unexpected error occurs', async () => {
-    const tutorId = 'a-valid-uuid-tutor-id';
     const perfilProfesionalDto = {
       materias: ['Cálculo'],
     };
@@ -198,7 +223,9 @@ describe('PerfilController (e2e)', () => {
       .expect(HttpStatus.INTERNAL_SERVER_ERROR)
       .expect((res) => {
         expect(res.body.statusCode).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
-        expect(res.body.message).toBe('Error interno al finalizar el perfil profesional.');
+        expect(res.body.message).toBe(
+          'Error interno al finalizar el perfil profesional.',
+        );
       });
   });
 });

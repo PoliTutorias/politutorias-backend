@@ -1,6 +1,14 @@
 // test/e2e/experiencias.e2e-spec.ts
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, HttpStatus, CanActivate, ValidationPipe, UnauthorizedException } from '@nestjs/common';
+import {
+  INestApplication,
+  HttpStatus,
+  CanActivate,
+  ValidationPipe,
+  UnauthorizedException,
+} from '@nestjs/common';
 import request from 'supertest';
 import { ExperienciasController } from './../../src/experiencias/experiencias.controller';
 import { ExperienciasService } from './../../src/experiencias/experiencias.service';
@@ -17,8 +25,8 @@ describe('ExperienciasController (e2e)', () => {
   // Mock del guard para simular autenticación
   const mockJwtAuthGuard: CanActivate = {
     canActivate: jest.fn((context) => {
-      const request = context.switchToHttp().getRequest();
-      request.user = { id: 'a-valid-uuid-tutor-id' }; // Simular usuario autenticado
+      const req = context.switchToHttp().getRequest<{ user: { id: string } }>();
+      req.user = { id: 'a-valid-uuid-tutor-id' }; // Simular usuario autenticado
       return true;
     }),
   };
@@ -52,11 +60,15 @@ describe('ExperienciasController (e2e)', () => {
   beforeEach(() => {
     // Resetear mocks antes de cada test para asegurar aislamiento
     mockExperienciasService.add.mockReset();
-    jest.spyOn(mockJwtAuthGuard, 'canActivate').mockImplementation((context) => {
-      const request = context.switchToHttp().getRequest();
-      request.user = { id: 'a-valid-uuid-tutor-id' };
-      return true;
-    });
+    jest
+      .spyOn(mockJwtAuthGuard, 'canActivate')
+      .mockImplementation((context) => {
+        const req = context
+          .switchToHttp()
+          .getRequest<{ user: { id: string } }>();
+        req.user = { id: 'a-valid-uuid-tutor-id' };
+        return true;
+      });
   });
 
   // Escenario 1: Registro Exitoso
@@ -94,7 +106,10 @@ describe('ExperienciasController (e2e)', () => {
         expect(res.body.data.institucion).toBe(experienciaDto.institucion);
         expect(res.body.data.fechaInicio).toBe(experienciaDto.fechaInicio);
         expect(res.body.data.fechaFin).toBe(experienciaDto.fechaFin);
-        expect(mockExperienciasService.add).toHaveBeenCalledWith(tutorId, experienciaDto);
+        expect(mockExperienciasService.add).toHaveBeenCalledWith(
+          tutorId,
+          experienciaDto,
+        );
       });
   });
 
@@ -114,7 +129,9 @@ describe('ExperienciasController (e2e)', () => {
       .expect(HttpStatus.BAD_REQUEST)
       .expect((res) => {
         expect(res.body.statusCode).toBe(HttpStatus.BAD_REQUEST);
-        expect(res.body.message).toEqual(expect.arrayContaining(['El puesto es requerido.']));
+        expect(res.body.message).toEqual(
+          expect.arrayContaining(['El puesto es requerido.']),
+        );
         expect(mockExperienciasService.add).not.toHaveBeenCalled();
       });
   });
@@ -135,7 +152,11 @@ describe('ExperienciasController (e2e)', () => {
       .expect(HttpStatus.BAD_REQUEST)
       .expect((res) => {
         expect(res.body.statusCode).toBe(HttpStatus.BAD_REQUEST);
-        expect(res.body.message).toEqual(expect.arrayContaining(['Formato de fecha MM/AAAA inválido para fecha de inicio.']));
+        expect(res.body.message).toEqual(
+          expect.arrayContaining([
+            'Formato de fecha MM/AAAA inválido para fecha de inicio.',
+          ]),
+        );
         expect(mockExperienciasService.add).not.toHaveBeenCalled();
       });
   });
@@ -156,7 +177,11 @@ describe('ExperienciasController (e2e)', () => {
       .expect(HttpStatus.BAD_REQUEST)
       .expect((res) => {
         expect(res.body.statusCode).toBe(HttpStatus.BAD_REQUEST);
-        expect(res.body.message).toEqual(expect.arrayContaining(['Máximo 7 caracteres (MM/AAAA) o "Presente" (8 caracteres).']));
+        expect(res.body.message).toEqual(
+          expect.arrayContaining([
+            'Máximo 7 caracteres (MM/AAAA) o "Presente" (8 caracteres).',
+          ]),
+        );
         expect(mockExperienciasService.add).not.toHaveBeenCalled();
       });
   });
@@ -185,7 +210,6 @@ describe('ExperienciasController (e2e)', () => {
 
   // Escenario 6: Error Interno del Servidor
   it('should return 500 INTERNAL SERVER ERROR if an unexpected error occurs', async () => {
-    const tutorId = 'a-valid-uuid-tutor-id';
     const experienciaDto = {
       puesto: 'Profesor de Cálculo I',
       institucion: 'Universidad Nacional',
@@ -194,7 +218,9 @@ describe('ExperienciasController (e2e)', () => {
     };
 
     // Hacer que el mock del servicio lance un error
-    mockExperienciasService.add.mockRejectedValue(new Error('Database connection lost'));
+    mockExperienciasService.add.mockRejectedValue(
+      new Error('Database connection lost'),
+    );
 
     await request(app.getHttpServer())
       .post('/api/experiencias')
@@ -203,7 +229,9 @@ describe('ExperienciasController (e2e)', () => {
       .expect(HttpStatus.INTERNAL_SERVER_ERROR)
       .expect((res) => {
         expect(res.body.statusCode).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
-        expect(res.body.message).toBe('Error interno al registrar la experiencia.');
+        expect(res.body.message).toBe(
+          'Error interno al registrar la experiencia.',
+        );
       });
   });
 });

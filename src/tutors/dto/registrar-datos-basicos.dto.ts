@@ -1,13 +1,15 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsString,
+  IsEnum,
   IsNotEmpty,
   IsNumberString,
-  MinLength,
-  MaxLength,
+  IsOptional,
+  IsString,
+  IsUrl,
   Matches,
-  IsEnum,
+  MaxLength,
+  MinLength,
 } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
 
 export enum Facultades {
   FIS_SISTEMAS = 'FIS - Sistemas',
@@ -98,4 +100,15 @@ export class RegistrarDatosBasicosDto {
     message: 'La biografía no debe exceder los 300 caracteres.',
   })
   biografiaCorta: string;
+
+  @ApiProperty({
+    description: 'URL de la fotografía de perfil del tutor',
+    example: 'https://storage.example.com/fotos/tutor-abc123.jpg',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString({ message: 'La foto de perfil debe ser una cadena de texto.' })
+  @IsUrl({}, { message: 'La foto de perfil debe ser una URL válida.' })
+  fotoPerfil?: string;
 }

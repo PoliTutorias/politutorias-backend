@@ -21,25 +21,25 @@
  *   src/tutors/guards/jwt-auth.guard.ts
  */
 
-import { Test, TestingModule } from '@nestjs/testing';
 import {
-  INestApplication,
-  ValidationPipe,
-  UnauthorizedException,
   ExecutionContext,
+  INestApplication,
+  UnauthorizedException,
+  ValidationPipe,
 } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { v4 as uuidv4 } from 'uuid';
 
 // ── Imports que aún NO existen (causan fallo en la fase ROJA) ──────────────
-import { TutorController } from './tutor.controller';
-import { TutorService } from './tutor.service';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import {
-  RegistrarDatosBasicosDto,
   Facultades,
+  RegistrarDatosBasicosDto,
   Semestres,
 } from './dto/registrar-datos-basicos.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { TutorController } from './tutor.controller';
+import { TutorService } from './tutor.service';
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── Datos de prueba fijos ─────────────────────────────────────────────────
@@ -51,6 +51,7 @@ const VALID_DTO: RegistrarDatosBasicosDto = {
   facultad: Facultades.FIS_SISTEMAS,
   semestreActual: Semestres.QUINTO,
   biografiaCorta: 'Tutor con más de tres años de experiencia en matemáticas.',
+  fotoPerfil: 'https://storage.example.com/fotos/juan-perez.jpg',
 };
 
 const TUTOR_CREADO = {
@@ -61,6 +62,7 @@ const TUTOR_CREADO = {
   facultad: VALID_DTO.facultad,
   semestreActual: VALID_DTO.semestreActual,
   biografiaCorta: VALID_DTO.biografiaCorta,
+  fotoPerfil: VALID_DTO.fotoPerfil,
   createdAt: new Date('2026-01-01T00:00:00.000Z').toISOString(),
   updatedAt: new Date('2026-01-01T00:00:00.000Z').toISOString(),
 };
@@ -74,6 +76,15 @@ const TUTOR_ACTUALIZADO = {
 // ── Mock del servicio ──────────────────────────────────────────────────────
 const mockTutorService = {
   registrarDatosBasicos: jest.fn(),
+};
+
+// ── Mock del servicio de almacenamiento S3 ────────────────────────────────
+const mockStorageService = {
+  uploadProfileFile: jest
+    .fn()
+    .mockResolvedValue(
+      'https://politutorias-storage-staging.s3.us-east-1.amazonaws.com/tutor-perfiles/mock.jpg',
+    ),
 };
 
 // ── Guard que autentica (simula usuario logueado) ─────────────────────────
@@ -101,7 +112,10 @@ describe('TutorController (e2e) — HU34 [usuario autenticado]', () => {
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [TutorController],
-      providers: [{ provide: TutorService, useValue: mockTutorService }],
+      providers: [
+        { provide: TutorService, useValue: mockTutorService },
+        { provide: StorageService, useValue: mockStorageService },
+      ],
     })
       .overrideGuard(JwtAuthGuard)
       .useValue(authenticatedGuard)
@@ -359,7 +373,10 @@ describe('TutorController (e2e) — HU34 [usuario no autenticado]', () => {
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [TutorController],
-      providers: [{ provide: TutorService, useValue: mockTutorService }],
+      providers: [
+        { provide: TutorService, useValue: mockTutorService },
+        { provide: StorageService, useValue: mockStorageService },
+      ],
     })
       .overrideGuard(JwtAuthGuard)
       .useValue(unauthorizedGuard)

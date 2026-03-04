@@ -22,13 +22,13 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { QueryFailedError } from 'typeorm';
 
 // ── Imports que aún NO existen completamente (causan fallo en la fase ROJA) ─
-import { TutorService } from './tutor.service';
-import { Tutor } from './entities/tutor.entity';
 import {
-  RegistrarDatosBasicosDto,
   Facultades,
+  RegistrarDatosBasicosDto,
   Semestres,
 } from './dto/registrar-datos-basicos.dto';
+import { Tutor } from './entities/tutor.entity';
+import { TutorService } from './tutor.service';
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── Datos de prueba fijos ─────────────────────────────────────────────────
@@ -42,6 +42,7 @@ const VALID_DTO: RegistrarDatosBasicosDto = {
   semestreActual: Semestres.TERCERO,
   biografiaCorta:
     'Tutora especializada en programación orientada a objetos y estructuras de datos.',
+  fotoPerfil: 'https://storage.example.com/fotos/maria-garcia.jpg',
 };
 
 /** Entidad simulada que devuelve el repositorio (perfil existente) */
@@ -53,6 +54,7 @@ const EXISTING_TUTOR: Partial<Tutor> = {
   facultad: Facultades.FIS_SISTEMAS,
   semestreActual: Semestres.SEGUNDO,
   biografiaCorta: 'Descripción anterior.',
+  fotoPerfil: 'https://storage.example.com/fotos/antigua.jpg',
 };
 
 /** Entidad que devuelve create() + save() al crear un perfil nuevo */
@@ -64,6 +66,7 @@ const NEW_TUTOR: Partial<Tutor> = {
   facultad: VALID_DTO.facultad,
   semestreActual: VALID_DTO.semestreActual,
   biografiaCorta: VALID_DTO.biografiaCorta,
+  fotoPerfil: VALID_DTO.fotoPerfil ?? null,
 };
 
 // ── Mock del repositorio TypeORM ──────────────────────────────────────────
@@ -127,6 +130,7 @@ describe('TutorService — registrarDatosBasicos (Unit Tests) — HU34', () => {
           facultad: VALID_DTO.facultad,
           semestreActual: VALID_DTO.semestreActual,
           biografiaCorta: VALID_DTO.biografiaCorta,
+          fotoPerfil: VALID_DTO.fotoPerfil,
         }),
       );
 
@@ -183,6 +187,7 @@ describe('TutorService — registrarDatosBasicos (Unit Tests) — HU34', () => {
           facultad: VALID_DTO.facultad,
           semestreActual: VALID_DTO.semestreActual,
           biografiaCorta: VALID_DTO.biografiaCorta,
+          fotoPerfil: VALID_DTO.fotoPerfil,
         }),
       );
 

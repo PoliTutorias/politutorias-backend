@@ -1,11 +1,11 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
-  OneToMany,
   CreateDateColumn,
-  UpdateDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
   Unique,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Oferta } from '../../ofertas/domain/entities/oferta.entity';
 import { Facultades, Semestres } from '../dto/registrar-datos-basicos.dto';
@@ -40,6 +40,9 @@ export class Tutor {
 
   @Column({ type: 'text', nullable: false })
   biografiaCorta: string;
+
+  @Column({ type: 'text', nullable: true })
+  fotoPerfil: string | null;
 
   @CreateDateColumn()
   createdAt: Date;

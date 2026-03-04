@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ExperienciaEntity } from '../entities/experiencia.entity';
-import { IExperienciaRepository } from '../../domain/ports/experiencia.repository.port';
+import { IExperienciaRepository } from '../domain/ports/experiencia.repository.port';
 
 /**
  * Implementación concreta de IExperienciaRepository usando TypeORM.

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PerfilProfesionalEntity } from '../entities/perfil-profesional.entity';
-import { IPerfilProfesionalRepository } from '../../domain/ports/perfil-profesional.repository.port';
+import { IPerfilProfesionalRepository } from '../domain/ports/perfil-profesional.repository.port';
 
 /**
  * Implementación concreta de IPerfilProfesionalRepository usando TypeORM.

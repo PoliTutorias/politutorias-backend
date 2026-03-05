@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
-  HttpStatus,
-  INestApplication,
-  InternalServerErrorException,
-  ValidationPipe,
+    HttpStatus,
+    INestApplication,
+    InternalServerErrorException,
+    ValidationPipe,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
@@ -94,6 +94,7 @@ const MOCK_OFERTA_3 = {
 const mockOfertasService = {
   findAllByTutorId: jest.fn(),
   searchOffers: jest.fn(),
+  getFilteredOfertas: jest.fn(),
   findFilteredOfertas: jest.fn(),
 };
 
@@ -146,12 +147,12 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
   // Escenario 1: Sin parámetros — retorna todas las ofertas
   // -------------------------------------------------------------------------
   describe('Escenario 1: Sin parámetros de filtro', () => {
-    it('debería responder 200 OK con { ofertas: [...], total: N } y llamar findFilteredOfertas sin filtros', async () => {
+    it('debería responder 200 OK con { data: [...], total: N } y llamar getFilteredOfertas sin filtros', async () => {
       const mockResponse = {
-        ofertas: [MOCK_OFERTA_1, MOCK_OFERTA_2, MOCK_OFERTA_3],
+        data: [MOCK_OFERTA_1, MOCK_OFERTA_2, MOCK_OFERTA_3],
         total: 3,
       };
-      mockOfertasService.findFilteredOfertas.mockResolvedValueOnce(
+      mockOfertasService.getFilteredOfertas.mockResolvedValueOnce(
         mockResponse,
       );
 
@@ -160,14 +161,14 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
         .expect(HttpStatus.OK)
         .expect((res) => {
           // Estructura raíz
-          expect(res.body).toHaveProperty('ofertas');
+          expect(res.body).toHaveProperty('data');
           expect(res.body).toHaveProperty('total');
-          expect(Array.isArray(res.body.ofertas)).toBe(true);
+          expect(Array.isArray(res.body.data)).toBe(true);
           expect(res.body.total).toBe(3);
-          expect(res.body.ofertas.length).toBe(3);
+          expect(res.body.data.length).toBe(3);
 
           // Estructura de la primera oferta (campos en español)
-          const oferta = res.body.ofertas[0] as Record<string, unknown>;
+          const oferta = res.body.data[0] as Record<string, unknown>;
           expect(oferta.id).toBe(MOCK_OFERTA_1.id);
           expect(oferta.titulo).toBe(MOCK_OFERTA_1.titulo);
           expect(oferta.carrera).toBe(MOCK_OFERTA_1.carrera);
@@ -186,10 +187,10 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
           expect(tutor.contacto).toBe(MOCK_TUTOR_1.contacto);
 
           // El servicio fue llamado sin filtros (objeto vacío o undefined)
-          expect(mockOfertasService.findFilteredOfertas).toHaveBeenCalledTimes(
+          expect(mockOfertasService.getFilteredOfertas).toHaveBeenCalledTimes(
             1,
           );
-          const callArg = mockOfertasService.findFilteredOfertas.mock
+          const callArg = mockOfertasService.getFilteredOfertas.mock
             .calls[0][0] as Record<string, unknown>;
           expect(callArg?.minPrice).toBeUndefined();
           expect(callArg?.maxPrice).toBeUndefined();
@@ -201,12 +202,12 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
   // Escenario 2: Filtrado por minPrice y maxPrice válidos
   // -------------------------------------------------------------------------
   describe('Escenario 2: Filtrado por minPrice=10 y maxPrice=20', () => {
-    it('debería responder 200 OK con las ofertas en el rango y llamar findFilteredOfertas({ minPrice: 10, maxPrice: 20 })', async () => {
+    it('debería responder 200 OK con las ofertas en el rango y llamar getFilteredOfertas({ minPrice: 10, maxPrice: 20 })', async () => {
       const mockResponse = {
-        ofertas: [MOCK_OFERTA_1, MOCK_OFERTA_2],
+        data: [MOCK_OFERTA_1, MOCK_OFERTA_2],
         total: 2,
       };
-      mockOfertasService.findFilteredOfertas.mockResolvedValueOnce(
+      mockOfertasService.getFilteredOfertas.mockResolvedValueOnce(
         mockResponse,
       );
 
@@ -214,11 +215,11 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
         .get('/api/ofertas?minPrice=10&maxPrice=20')
         .expect(HttpStatus.OK)
         .expect((res) => {
-          expect(res.body.ofertas.length).toBe(2);
+          expect(res.body.data.length).toBe(2);
           expect(res.body.total).toBe(2);
 
           // Verifica que se llamó con los filtros correctos (transformados a number)
-          expect(mockOfertasService.findFilteredOfertas).toHaveBeenCalledWith({
+          expect(mockOfertasService.getFilteredOfertas).toHaveBeenCalledWith({
             minPrice: 10,
             maxPrice: 20,
           });
@@ -230,12 +231,12 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
   // Escenario 3: Solo minPrice válido
   // -------------------------------------------------------------------------
   describe('Escenario 3: Solo minPrice=15', () => {
-    it('debería responder 200 OK y llamar findFilteredOfertas({ minPrice: 15 })', async () => {
+    it('debería responder 200 OK y llamar getFilteredOfertas({ minPrice: 15 })', async () => {
       const mockResponse = {
-        ofertas: [MOCK_OFERTA_1, MOCK_OFERTA_3],
+        data: [MOCK_OFERTA_1, MOCK_OFERTA_3],
         total: 2,
       };
-      mockOfertasService.findFilteredOfertas.mockResolvedValueOnce(
+      mockOfertasService.getFilteredOfertas.mockResolvedValueOnce(
         mockResponse,
       );
 
@@ -244,7 +245,7 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
         .expect(HttpStatus.OK)
         .expect((res) => {
           expect(res.body.total).toBe(2);
-          expect(mockOfertasService.findFilteredOfertas).toHaveBeenCalledWith({
+          expect(mockOfertasService.getFilteredOfertas).toHaveBeenCalledWith({
             minPrice: 15,
           });
         });
@@ -255,12 +256,12 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
   // Escenario 4: Solo maxPrice válido
   // -------------------------------------------------------------------------
   describe('Escenario 4: Solo maxPrice=15', () => {
-    it('debería responder 200 OK y llamar findFilteredOfertas({ maxPrice: 15 })', async () => {
+    it('debería responder 200 OK y llamar getFilteredOfertas({ maxPrice: 15 })', async () => {
       const mockResponse = {
-        ofertas: [MOCK_OFERTA_1, MOCK_OFERTA_2],
+        data: [MOCK_OFERTA_1, MOCK_OFERTA_2],
         total: 2,
       };
-      mockOfertasService.findFilteredOfertas.mockResolvedValueOnce(
+      mockOfertasService.getFilteredOfertas.mockResolvedValueOnce(
         mockResponse,
       );
 
@@ -269,7 +270,7 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
         .expect(HttpStatus.OK)
         .expect((res) => {
           expect(res.body.total).toBe(2);
-          expect(mockOfertasService.findFilteredOfertas).toHaveBeenCalledWith({
+          expect(mockOfertasService.getFilteredOfertas).toHaveBeenCalledWith({
             maxPrice: 15,
           });
         });
@@ -281,8 +282,8 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
   // -------------------------------------------------------------------------
   describe('Escenario 5: Rango sin ofertas (minPrice=100, maxPrice=200)', () => {
     it('debería responder 200 OK con { ofertas: [], total: 0 }', async () => {
-      mockOfertasService.findFilteredOfertas.mockResolvedValueOnce({
-        ofertas: [],
+      mockOfertasService.getFilteredOfertas.mockResolvedValueOnce({
+        data: [],
         total: 0,
       });
 
@@ -290,9 +291,9 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
         .get('/api/ofertas?minPrice=100&maxPrice=200')
         .expect(HttpStatus.OK)
         .expect((res) => {
-          expect(res.body.ofertas).toEqual([]);
+          expect(res.body.data).toEqual([]);
           expect(res.body.total).toBe(0);
-          expect(mockOfertasService.findFilteredOfertas).toHaveBeenCalledWith({
+          expect(mockOfertasService.getFilteredOfertas).toHaveBeenCalledWith({
             minPrice: 100,
             maxPrice: 200,
           });
@@ -314,7 +315,7 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
           const messages: string[] = res.body.message as string[];
           expect(messages).toContain('minPrice debe ser un número válido.');
           // El servicio NO debe ser llamado con inputs inválidos
-          expect(mockOfertasService.findFilteredOfertas).not.toHaveBeenCalled();
+          expect(mockOfertasService.getFilteredOfertas).not.toHaveBeenCalled();
         });
     });
   });
@@ -332,7 +333,7 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
           expect(res.body.error).toBe('Bad Request');
           const messages: string[] = res.body.message as string[];
           expect(messages).toContain('minPrice no puede ser negativo.');
-          expect(mockOfertasService.findFilteredOfertas).not.toHaveBeenCalled();
+          expect(mockOfertasService.getFilteredOfertas).not.toHaveBeenCalled();
         });
     });
   });
@@ -350,7 +351,7 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
           expect(res.body.error).toBe('Bad Request');
           const messages: string[] = res.body.message as string[];
           expect(messages).toContain('maxPrice debe ser un número válido.');
-          expect(mockOfertasService.findFilteredOfertas).not.toHaveBeenCalled();
+          expect(mockOfertasService.getFilteredOfertas).not.toHaveBeenCalled();
         });
     });
   });
@@ -368,7 +369,7 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
           expect(res.body.error).toBe('Bad Request');
           const messages: string[] = res.body.message as string[];
           expect(messages).toContain('maxPrice debe ser un número positivo.');
-          expect(mockOfertasService.findFilteredOfertas).not.toHaveBeenCalled();
+          expect(mockOfertasService.getFilteredOfertas).not.toHaveBeenCalled();
         });
     });
   });
@@ -378,7 +379,7 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
   // -------------------------------------------------------------------------
   describe('Escenario 10: Error interno del servidor en el servicio', () => {
     it('debería responder 500 con el mensaje acordado "Error interno al filtrar ofertas."', async () => {
-      mockOfertasService.findFilteredOfertas.mockRejectedValueOnce(
+      mockOfertasService.getFilteredOfertas.mockRejectedValueOnce(
         new InternalServerErrorException('Error interno al filtrar ofertas.'),
       );
 
@@ -389,7 +390,7 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
           expect(res.body.statusCode).toBe(500);
           expect(res.body.message).toBe('Error interno al filtrar ofertas.');
           expect(res.body.error).toBe('Internal Server Error');
-          expect(mockOfertasService.findFilteredOfertas).toHaveBeenCalledTimes(
+          expect(mockOfertasService.getFilteredOfertas).toHaveBeenCalledTimes(
             1,
           );
         });

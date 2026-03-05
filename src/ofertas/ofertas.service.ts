@@ -1,9 +1,13 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { plainToInstance } from 'class-transformer';
+import { FindManyOptions, Repository } from 'typeorm';
 import { FilterQueryParams } from '../common/dtos/filter-query-params.dto';
 import { FindOfertasByPriceUseCase } from './application/use-cases/find-ofertas-by-price.use-case';
+import { GetFilteredOfertasUseCase } from './application/use-cases/get-filtered-ofertas.use-case';
 import { Oferta } from './domain/entities/oferta.entity';
+import { GetOfertasFilterDto } from './dto/get-ofertas-filter.dto';
+import { OfertaItemDto } from './dto/oferta-item.dto';
 import { OfertaResponseDto } from './dto/oferta-response.dto';
 import { OfertaDto } from './dto/oferta.dto';
 import { OffersQueryParams } from './dto/offers-query.dto';
@@ -21,17 +25,25 @@ import { OfertaMapper } from './mappers/oferta.mapper';
 @Injectable()
 export class OfertasService {
   private readonly findOfertasByPriceUseCase: FindOfertasByPriceUseCase;
+  private readonly getFilteredOfertasUseCase: GetFilteredOfertasUseCase;
 
   constructor(
     @InjectRepository(Oferta)
     private readonly ofertaRepository: Repository<Oferta>,
   ) {
-    // Instanciado directamente para mantener compatibilidad con los tests
-    // unitarios existentes que solo proveen InjectRepository(Oferta).
     this.findOfertasByPriceUseCase = new FindOfertasByPriceUseCase(
       this.ofertaRepository,
       new OfertaMapper(),
     );
+    // Oferta domain entity ahora incluye las columnas HU26 (modalidad, titulo,
+    // precioHora, etc.) y es el único gestor del schema de la tabla "ofertas".
+    this.getFilteredOfertasUseCase = new GetFilteredOfertasUseCase({
+      findAndCountFiltered: (options) =>
+        this.ofertaRepository.findAndCount({
+          ...options,
+          relations: ['tutor'],
+        } as FindManyOptions<Oferta>),
+    });
   }
 
   /**
@@ -170,5 +182,38 @@ export class OfertasService {
     filterParams: FilterQueryParams,
   ): Promise<{ ofertas: OfertaResponseDto[]; total: number }> {
     return this.findOfertasByPriceUseCase.execute(filterParams);
+  }
+
+  /**
+   * HU26: Filtra ofertas por modalidad (PRESENCIAL / VIRTUAL / AMBOS).
+   *
+   * Actúa como orquestador de capa de aplicación:
+   *  1. Delega la lógica de filtrado a `GetFilteredOfertasUseCase` (SRP).
+   *  2. Transforma las entidades crudas a DTOs de respuesta (responsabilidad
+   *     de presentación que permanece en esta capa para mantener compatibilidad
+   *     con los tests E2E existentes que mockean este método completo).
+   *  3. Atrapa errores genéricos y los convierte en `InternalServerErrorException`.
+   *
+   * @param filterDto - DTO con campo opcional `modalidad` (array de strings).
+   * @returns Objeto con `data` (array de OfertaItemDto) y `total` (conteo).
+   */
+  async getFilteredOfertas(
+    filterDto: GetOfertasFilterDto,
+  ): Promise<{ data: OfertaItemDto[]; total: number }> {
+    try {
+      const [entities, total] =
+        await this.getFilteredOfertasUseCase.execute(filterDto);
+
+      const data = plainToInstance(OfertaItemDto, entities, {
+        excludeExtraneousValues: true,
+      });
+
+      return { data, total };
+    } catch (error) {
+      console.error('Error al filtrar ofertas por modalidad:', error);
+      throw new InternalServerErrorException(
+        'Error interno al filtrar ofertas.',
+      );
+    }
   }
 }

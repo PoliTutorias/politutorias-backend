@@ -1,7 +1,14 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import {
+  Between,
+  In,
+  IsNull,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+  Not,
+} from 'typeorm';
 import { Tutor } from '../tutors/entities/tutor.entity';
 import { Oferta } from './domain/entities/oferta.entity';
 import { OffersQueryParams } from './dto/offers-query.dto';
@@ -885,6 +892,492 @@ describe('OfertasService - findFilteredOfertas (Unit Tests) - HU27', () => {
       );
 
       // Verifica que se registró el error en consola
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+  });
+});
+
+// =============================================================================
+// HU26: OfertasService.getFilteredOfertas — Filtrado por modalidad
+//
+// FASE ROJA del TDD: Estos tests FALLARÁN inicialmente porque:
+// 1. El método `getFilteredOfertas` aún no existe en OfertasService.
+// 2. La entidad `Oferta` usa campos en inglés (title, price, modality, createdAt)
+//    pero el contrato de HU26 requiere campos en español (titulo, precioHora,
+//    modalidad, fechaCreacion) y un enum PRESENCIAL/VIRTUAL/AMBOS.
+// 3. El repositorio no tiene configurada la cláusula WHERE con `In([...])` sobre
+//    el campo `modalidad`.
+// 4. El mapeo de `tutor.calificacionPromedio` y `tutor.numResenas` a la raíz
+//    del OfertaDto todavía no existe (Riesgo 1 del análisis).
+// 5. El orden por `fechaCreacion DESC` no está implementado para este nuevo método.
+//
+// Entidad OfertaEntity esperada (nueva estructura HU26 en español):
+//   - id: string (UUID)
+//   - titulo: string
+//   - descripcion: string | null
+//   - modalidad: 'PRESENCIAL' | 'VIRTUAL' | 'AMBOS'  (OfferModality enum)
+//   - precioHora: number (decimal)
+//   - areaConocimiento: string | null
+//   - nivel: string | null
+//   - tutor: TutorEntity { id, nombre, fotoUrl, calificacionPromedio, numResenas }
+//   - fechaCreacion: Date  (CreateDateColumn)
+//
+// OfertaDto de respuesta esperado (raíz del objeto):
+//   { id, titulo, descripcion, modalidad, precioHora, areaConocimiento, nivel,
+//     tutor: { id, nombre, fotoUrl },
+//     calificacionPromedio, numResenas, fechaCreacion: string ISO 8601 }
+//
+// OfertasListResponseDto:
+//   { data: OfertaDto[], total: number }
+// =============================================================================
+
+// Tipos locales que documentan la estructura FUTURA de las entidades en HU26.
+// Estos NO importan de producción para que el test compile aunque la entidad
+// aún tenga campos en inglés.
+interface MockTutorHU26 {
+  id: string;
+  nombre: string;
+  fotoUrl: string | null;
+  calificacionPromedio: number;
+  numResenas: number;
+}
+
+interface MockOfertaEntityHU26 {
+  id: string;
+  titulo: string;
+  descripcion: string | null;
+  modalidad: string; // 'PRESENCIAL' | 'VIRTUAL' | 'AMBOS'
+  precioHora: number;
+  areaConocimiento: string | null;
+  nivel: string | null;
+  tutor: MockTutorHU26;
+  fechaCreacion: Date;
+}
+
+describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
+  let service: OfertasService;
+
+  // ─── Tutores mock (estructura nueva TutorEntity) ──────────────────────────
+  const mockTutorHU26A: MockTutorHU26 = {
+    id: 'tutor-hu26-0001-4000-8000-000000000001',
+    nombre: 'Ana Martínez',
+    fotoUrl: 'https://example.com/fotos/ana.jpg',
+    calificacionPromedio: 4.7,
+    numResenas: 45,
+  };
+
+  const mockTutorHU26B: MockTutorHU26 = {
+    id: 'tutor-hu26-0002-4000-8000-000000000002',
+    nombre: 'Luis Torres',
+    fotoUrl: null,
+    calificacionPromedio: 4.2,
+    numResenas: 30,
+  };
+
+  const mockTutorHU26C: MockTutorHU26 = {
+    id: 'tutor-hu26-0003-4000-8000-000000000003',
+    nombre: 'Sofía Ramírez',
+    fotoUrl: 'https://example.com/fotos/sofia.jpg',
+    calificacionPromedio: 4.9,
+    numResenas: 88,
+  };
+
+  // ─── Entidades mock (estructura nueva OfertaEntity) ──────────────────────
+  // fechaCreacion con distintas fechas para verificar ordenamiento DESC
+  const mockOfertaPresencialEntity: MockOfertaEntityHU26 = {
+    id: 'oferta-hu26-0001-4000-8000-000000000001',
+    titulo: 'Cálculo Diferencial Presencial',
+    descripcion: 'Clases presenciales de cálculo.',
+    modalidad: 'PRESENCIAL',
+    precioHora: 18.5,
+    areaConocimiento: 'Matemáticas',
+    nivel: 'Universitario',
+    tutor: mockTutorHU26A,
+    fechaCreacion: new Date('2024-03-10T10:00:00.000Z'),
+  };
+
+  const mockOfertaVirtualEntity: MockOfertaEntityHU26 = {
+    id: 'oferta-hu26-0002-4000-8000-000000000002',
+    titulo: 'Álgebra Lineal Virtual',
+    descripcion: 'Tutorías online de álgebra lineal.',
+    modalidad: 'VIRTUAL',
+    precioHora: 15.0,
+    areaConocimiento: 'Matemáticas',
+    nivel: 'Universitario',
+    tutor: mockTutorHU26B,
+    fechaCreacion: new Date('2024-03-09T08:00:00.000Z'),
+  };
+
+  const mockOfertaAmbosEntity: MockOfertaEntityHU26 = {
+    id: 'oferta-hu26-0003-4000-8000-000000000003',
+    titulo: 'Física General (cualquier modalidad)',
+    descripcion: null,
+    modalidad: 'AMBOS',
+    precioHora: 20.0,
+    areaConocimiento: 'Física',
+    nivel: null,
+    tutor: mockTutorHU26C,
+    fechaCreacion: new Date('2024-03-08T06:00:00.000Z'),
+  };
+
+  // ─── Mock del repositorio ─────────────────────────────────────────────────
+  // Se usa findAndCount (no find) para obtener lista + conteo en una sola query.
+  const mockHU26Repository = {
+    findAndCount: jest.fn(),
+    find: jest.fn(),
+    createQueryBuilder: jest.fn().mockReturnValue({
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+    }),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        OfertasService,
+        {
+          provide: getRepositoryToken(Oferta),
+          useValue: mockHU26Repository,
+        },
+      ],
+    }).compile();
+
+    service = module.get<OfertasService>(OfertasService);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  // ── Escenario 1: Filtrar PRESENCIAL (frontend envía PRESENCIAL,AMBOS) ─────
+  /**
+   * GIVEN: Repositorio con entidades PRESENCIAL, VIRTUAL y AMBOS.
+   * WHEN:  getFilteredOfertas({ modalidad: ['PRESENCIAL', 'AMBOS'] })
+   * THEN:  findAndCount se llama con where: { modalidad: In(['PRESENCIAL','AMBOS']) }
+   *        y order: { fechaCreacion: 'DESC' }.
+   *
+   * Falla inicial: getFilteredOfertas no existe en OfertasService.
+   */
+  describe('Escenario 1: filtro modalidad=["PRESENCIAL","AMBOS"]', () => {
+    it('debe llamar al repositorio con In(["PRESENCIAL","AMBOS"]) y retornar las entidades correctas', async () => {
+      const entidadesFiltradas = [
+        mockOfertaPresencialEntity,
+        mockOfertaAmbosEntity,
+      ];
+      mockHU26Repository.findAndCount.mockResolvedValueOnce([
+        entidadesFiltradas,
+        2,
+      ]);
+
+      // Llama al método NUEVO que todavía no existe → test falla aquí
+      const result = await (
+        service as unknown as Record<string, unknown> & {
+          getFilteredOfertas: (dto: unknown) => Promise<unknown>;
+        }
+      ).getFilteredOfertas({ modalidad: ['PRESENCIAL', 'AMBOS'] });
+
+      // Verifica llamada al repositorio con la cláusula WHERE correcta
+      expect(mockHU26Repository.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            titulo: Not(IsNull()),
+            modalidad: In(['PRESENCIAL', 'AMBOS']),
+          },
+          order: { fechaCreacion: 'DESC' },
+        }),
+      );
+
+      // Verifica que la respuesta usa la clave `data` (no `ofertas`)
+      const typedResult = result as { data: unknown[]; total: number };
+      expect(typedResult).toHaveProperty('data');
+      expect(typedResult).toHaveProperty('total', 2);
+      expect(typedResult.data).toHaveLength(2);
+    });
+  });
+
+  // ── Escenario 2: Filtrar VIRTUAL (frontend envía VIRTUAL,AMBOS) ───────────
+  /**
+   * GIVEN: Repositorio con entidades PRESENCIAL, VIRTUAL y AMBOS.
+   * WHEN:  getFilteredOfertas({ modalidad: ['VIRTUAL', 'AMBOS'] })
+   * THEN:  findAndCount se llama con where: { modalidad: In(['VIRTUAL','AMBOS']) }
+   *        y order: { fechaCreacion: 'DESC' }.
+   */
+  describe('Escenario 2: filtro modalidad=["VIRTUAL","AMBOS"]', () => {
+    it('debe llamar al repositorio con In(["VIRTUAL","AMBOS"]) y retornar las entidades correctas', async () => {
+      const entidadesFiltradas = [
+        mockOfertaVirtualEntity,
+        mockOfertaAmbosEntity,
+      ];
+      mockHU26Repository.findAndCount.mockResolvedValueOnce([
+        entidadesFiltradas,
+        2,
+      ]);
+
+      const result = await (
+        service as unknown as Record<string, unknown> & {
+          getFilteredOfertas: (dto: unknown) => Promise<unknown>;
+        }
+      ).getFilteredOfertas({ modalidad: ['VIRTUAL', 'AMBOS'] });
+
+      expect(mockHU26Repository.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { titulo: Not(IsNull()), modalidad: In(['VIRTUAL', 'AMBOS']) },
+          order: { fechaCreacion: 'DESC' },
+        }),
+      );
+
+      const typedResult = result as { data: unknown[]; total: number };
+      expect(typedResult).toHaveProperty('data');
+      expect(typedResult).toHaveProperty('total', 2);
+      expect(typedResult.data).toHaveLength(2);
+    });
+  });
+
+  // ── Escenario 3: Filtrar AMBOS únicamente ─────────────────────────────────
+  /**
+   * GIVEN: Repositorio con entidades de todas las modalidades.
+   * WHEN:  getFilteredOfertas({ modalidad: ['AMBOS'] })
+   * THEN:  findAndCount se llama con where: { modalidad: In(['AMBOS']) }
+   *        y order: { fechaCreacion: 'DESC' }.
+   */
+  describe('Escenario 3: filtro modalidad=["AMBOS"]', () => {
+    it('debe llamar al repositorio con In(["AMBOS"]) y retornar solo entidades AMBOS', async () => {
+      mockHU26Repository.findAndCount.mockResolvedValueOnce([
+        [mockOfertaAmbosEntity],
+        1,
+      ]);
+
+      const result = await (
+        service as unknown as Record<string, unknown> & {
+          getFilteredOfertas: (dto: unknown) => Promise<unknown>;
+        }
+      ).getFilteredOfertas({ modalidad: ['AMBOS'] });
+
+      expect(mockHU26Repository.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { titulo: Not(IsNull()), modalidad: In(['AMBOS']) },
+          order: { fechaCreacion: 'DESC' },
+        }),
+      );
+
+      const typedResult = result as { data: unknown[]; total: number };
+      expect(typedResult.total).toBe(1);
+      expect(typedResult.data).toHaveLength(1);
+    });
+  });
+
+  // ── Escenario 4: Sin filtro de modalidad (todas las ofertas) ──────────────
+  /**
+   * GIVEN: Repositorio con entidades de todas las modalidades.
+   * WHEN:  getFilteredOfertas({}) o getFilteredOfertas({ modalidad: undefined })
+   * THEN:  findAndCount se llama con where:{} vacío (sin condición de modalidad)
+   *        y order: { fechaCreacion: 'DESC' }.
+   *
+   * Verifica que modalidad=undefined NO añade una cláusula WHERE.
+   */
+  describe('Escenario 4: Sin filtro de modalidad (modalidad undefined / ausente)', () => {
+    it('debe llamar al repositorio sin cláusula WHERE de modalidad y retornar todas', async () => {
+      const todasLasEntidades = [
+        mockOfertaPresencialEntity,
+        mockOfertaVirtualEntity,
+        mockOfertaAmbosEntity,
+      ];
+      mockHU26Repository.findAndCount.mockResolvedValueOnce([
+        todasLasEntidades,
+        3,
+      ]);
+
+      const result = await (
+        service as unknown as Record<string, unknown> & {
+          getFilteredOfertas: (dto: unknown) => Promise<unknown>;
+        }
+      ).getFilteredOfertas({});
+
+      // WHERE debe tener solo titulo IS NOT NULL: sin restricción de modalidad
+      expect(mockHU26Repository.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { titulo: Not(IsNull()) },
+          order: { fechaCreacion: 'DESC' },
+        }),
+      );
+
+      // La condición WHERE NO debe contener ninguna clave `modalidad`
+      const firstCall = mockHU26Repository.findAndCount.mock
+        .calls[0] as unknown[];
+      const callArgs = firstCall[0] as Record<string, unknown>;
+      const whereClause = callArgs.where as Record<string, unknown>;
+      expect(whereClause).not.toHaveProperty('modalidad');
+
+      const typedResult = result as { data: unknown[]; total: number };
+      expect(typedResult.total).toBe(3);
+      expect(typedResult.data).toHaveLength(3);
+    });
+
+    it('debe comportarse igual cuando modalidad es un array vacío', async () => {
+      mockHU26Repository.findAndCount.mockResolvedValueOnce([
+        [mockOfertaPresencialEntity, mockOfertaVirtualEntity],
+        2,
+      ]);
+
+      await (
+        service as unknown as Record<string, unknown> & {
+          getFilteredOfertas: (dto: unknown) => Promise<unknown>;
+        }
+      ).getFilteredOfertas({ modalidad: [] });
+
+      expect(mockHU26Repository.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { titulo: Not(IsNull()) },
+          order: { fechaCreacion: 'DESC' },
+        }),
+      );
+    });
+  });
+
+  // ── Escenario 5: Mapeo correcto de OfertaDto (Riesgos 1 y 2) ─────────────
+  /**
+   * GIVEN: Repositorio retorna una entidad completa con tutor anidado.
+   * WHEN:  getFilteredOfertas({ modalidad: ['PRESENCIAL', 'AMBOS'] })
+   * THEN:  El DTO resultante tiene:
+   *        - calificacionPromedio en la RAÍZ (no en tutor) — Riesgo 1
+   *        - numResenas en la RAÍZ (no en tutor) — Riesgo 1
+   *        - fechaCreacion como string ISO 8601 (no Date) — Riesgo 2
+   *        - tutor con id, nombre, fotoUrl
+   */
+  describe('Escenario 5: Mapeo OfertaDto — calificacionPromedio, numResenas y fechaCreacion', () => {
+    it('debe aplanar calificacionPromedio y numResenas del tutor a la raíz del OfertaDto (Riesgo 1)', async () => {
+      mockHU26Repository.findAndCount.mockResolvedValueOnce([
+        [mockOfertaPresencialEntity],
+        1,
+      ]);
+
+      const result = await (
+        service as unknown as Record<string, unknown> & {
+          getFilteredOfertas: (dto: unknown) => Promise<unknown>;
+        }
+      ).getFilteredOfertas({ modalidad: ['PRESENCIAL', 'AMBOS'] });
+
+      const typedResult = result as {
+        data: Array<Record<string, unknown>>;
+        total: number;
+      };
+      const ofertaDto = typedResult.data[0];
+
+      // RIESGO 1: calificacionPromedio debe estar en la RAÍZ del objeto oferta
+      expect(ofertaDto).toHaveProperty(
+        'calificacionPromedio',
+        mockTutorHU26A.calificacionPromedio,
+      );
+      expect(ofertaDto).toHaveProperty('numResenas', mockTutorHU26A.numResenas);
+
+      // El tutor anidado solo debe tener id, nombre, fotoUrl (no las calificaciones)
+      const tutor = ofertaDto.tutor as Record<string, unknown>;
+      expect(tutor).toHaveProperty('id', mockTutorHU26A.id);
+      expect(tutor).toHaveProperty('nombre', mockTutorHU26A.nombre);
+      expect(tutor).toHaveProperty('fotoUrl', mockTutorHU26A.fotoUrl);
+      expect(tutor).not.toHaveProperty('calificacionPromedio');
+      expect(tutor).not.toHaveProperty('numResenas');
+    });
+
+    it('debe retornar fechaCreacion como string ISO 8601 (no como Date) (Riesgo 2)', async () => {
+      mockHU26Repository.findAndCount.mockResolvedValueOnce([
+        [mockOfertaPresencialEntity],
+        1,
+      ]);
+
+      const result = await (
+        service as unknown as Record<string, unknown> & {
+          getFilteredOfertas: (dto: unknown) => Promise<unknown>;
+        }
+      ).getFilteredOfertas({ modalidad: ['PRESENCIAL', 'AMBOS'] });
+
+      const typedResult = result as {
+        data: Array<Record<string, unknown>>;
+        total: number;
+      };
+      const ofertaDto = typedResult.data[0];
+
+      // RIESGO 2: fechaCreacion debe ser string ISO 8601
+      expect(ofertaDto).toHaveProperty('fechaCreacion');
+      expect(typeof ofertaDto.fechaCreacion).toBe('string');
+      expect(ofertaDto.fechaCreacion as string).toBe(
+        mockOfertaPresencialEntity.fechaCreacion.toISOString(),
+      );
+      expect(ofertaDto.fechaCreacion as string).toMatch(
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/,
+      );
+    });
+  });
+
+  // ── Escenario 6: Sin resultados ───────────────────────────────────────────
+  /**
+   * GIVEN: Repositorio retorna [[], 0] para cualquier filtro.
+   * WHEN:  getFilteredOfertas({ modalidad: ['PRESENCIAL', 'AMBOS'] })
+   * THEN:  El servicio retorna { data: [], total: 0 }.
+   *
+   * RIESGO 6: total debe ser exactamente 0.
+   */
+  describe('Escenario 6: Sin ofertas que coincidan', () => {
+    it('debe retornar { data: [], total: 0 } cuando el repositorio no encuentra resultados', async () => {
+      mockHU26Repository.findAndCount.mockResolvedValueOnce([[], 0]);
+
+      const result = await (
+        service as unknown as Record<string, unknown> & {
+          getFilteredOfertas: (dto: unknown) => Promise<unknown>;
+        }
+      ).getFilteredOfertas({ modalidad: ['PRESENCIAL', 'AMBOS'] });
+
+      const typedResult = result as { data: unknown[]; total: number };
+      expect(typedResult).toEqual({ data: [], total: 0 });
+      expect(typedResult.data).toHaveLength(0);
+      expect(typedResult.total).toBe(0);
+    });
+  });
+
+  // ── Escenario 7: Error interno del repositorio ────────────────────────────
+  /**
+   * GIVEN: findAndCount lanza un Error genérico.
+   * WHEN:  getFilteredOfertas({ modalidad: ['VIRTUAL'] })
+   * THEN:  El servicio captura el error y lanza InternalServerErrorException
+   *        con el mensaje exacto del contrato: "Error interno al filtrar ofertas."
+   *        Y registra el error en console.error.
+   */
+  describe('Escenario 7: El repositorio lanza un error interno', () => {
+    it('debe capturar el error y lanzar InternalServerErrorException con el mensaje del contrato', async () => {
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      mockHU26Repository.findAndCount.mockRejectedValueOnce(
+        new Error('DB connection lost'),
+      );
+
+      await expect(
+        (
+          service as unknown as Record<string, unknown> & {
+            getFilteredOfertas: (dto: unknown) => Promise<unknown>;
+          }
+        ).getFilteredOfertas({ modalidad: ['VIRTUAL'] }),
+      ).rejects.toThrow(InternalServerErrorException);
+
+      mockHU26Repository.findAndCount.mockRejectedValueOnce(
+        new Error('DB connection lost'),
+      );
+
+      await expect(
+        (
+          service as unknown as Record<string, unknown> & {
+            getFilteredOfertas: (dto: unknown) => Promise<unknown>;
+          }
+        ).getFilteredOfertas({ modalidad: ['VIRTUAL'] }),
+      ).rejects.toThrow('Error interno al filtrar ofertas.');
+
+      // Verifica que el error fue registrado en consola
       expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
     });

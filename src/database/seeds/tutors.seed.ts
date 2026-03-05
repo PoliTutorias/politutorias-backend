@@ -1,9 +1,9 @@
 import { DataSource } from 'typeorm';
-import { Tutor } from '../../tutors/entities/tutor.entity';
 import {
   Facultades,
   Semestres,
 } from '../../tutors/dto/registrar-datos-basicos.dto';
+import { Tutor } from '../../tutors/entities/tutor.entity';
 
 /**
  * UUID del tutor "en cero" — usado para crear nuevas ofertas desde la API.
@@ -30,6 +30,8 @@ export async function seedTutors(dataSource: DataSource): Promise<void> {
       semestreActual: Semestres.DECIMO,
       biografiaCorta:
         'Tutor de pruebas para desarrollo. Las ofertas creadas desde la API se asocian a este perfil.',
+      calificacionPromedio: 0,
+      numResenas: 0,
     },
     // ── Tutores reales ─────────────────────────────────────────────────────
     {
@@ -41,6 +43,8 @@ export async function seedTutors(dataSource: DataSource): Promise<void> {
       semestreActual: Semestres.OCTAVO,
       biografiaCorta:
         'Ingeniero en Sistemas con cinco años de experiencia en tutorías de matemáticas y programación. Especializado en cálculo diferencial e integral.',
+      calificacionPromedio: 4.8,
+      numResenas: 52,
     },
     {
       id: '550e8400-e29b-41d4-a716-446655440002',
@@ -51,6 +55,8 @@ export async function seedTutors(dataSource: DataSource): Promise<void> {
       semestreActual: Semestres.NOVENO,
       biografiaCorta:
         'Experta en Python, programación orientada a objetos y análisis de datos. Más de cien estudiantes capacitados en algoritmia y estructuras de datos.',
+      calificacionPromedio: 4.9,
+      numResenas: 78,
     },
     {
       id: '550e8400-e29b-41d4-a716-446655440003',
@@ -61,6 +67,8 @@ export async function seedTutors(dataSource: DataSource): Promise<void> {
       semestreActual: Semestres.DECIMO,
       biografiaCorta:
         'Matemático con enfoque en álgebra lineal y fundamentos de machine learning. Bilingüe español-inglés con enfoque en resolución de ejercicios prácticos.',
+      calificacionPromedio: 4.7,
+      numResenas: 45,
     },
     {
       id: '550e8400-e29b-41d4-a716-446655440004',
@@ -71,6 +79,8 @@ export async function seedTutors(dataSource: DataSource): Promise<void> {
       semestreActual: Semestres.SEPTIMO,
       biografiaCorta:
         'Especialista en estructuras de datos, algoritmos y bases de datos. Tutora comprometida con métodos didácticos claros para estudiantes de todos los niveles.',
+      calificacionPromedio: 4.5,
+      numResenas: 33,
     },
     {
       id: '550e8400-e29b-41d4-a716-446655440005',
@@ -81,6 +91,8 @@ export async function seedTutors(dataSource: DataSource): Promise<void> {
       semestreActual: Semestres.DECIMO,
       biografiaCorta:
         'Ingeniero eléctrico con experiencia en circuitos, SQL avanzado y optimización de sistemas embebidos. Tutoría presencial y virtual disponible.',
+      calificacionPromedio: 4.3,
+      numResenas: 21,
     },
     {
       id: '550e8400-e29b-41d4-a716-446655440006',
@@ -91,6 +103,8 @@ export async function seedTutors(dataSource: DataSource): Promise<void> {
       semestreActual: Semestres.SEXTO,
       biografiaCorta:
         'Tutora de inglés técnico y comunicación académica. Metodología basada en casos reales de ingeniería. Ayudo a preparar presentaciones y redacción de informes.',
+      calificacionPromedio: 4.6,
+      numResenas: 38,
     },
     {
       id: '550e8400-e29b-41d4-a716-446655440007',
@@ -101,6 +115,8 @@ export async function seedTutors(dataSource: DataSource): Promise<void> {
       semestreActual: Semestres.OCTAVO,
       biografiaCorta:
         'Biólogo especializado en bioquímica y microbiología. Experiencia en tutorías de laboratorio, análisis de datos biológicos y preparación de exámenes de ciencias.',
+      calificacionPromedio: 4.4,
+      numResenas: 17,
     },
   ];
 

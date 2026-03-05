@@ -5,6 +5,7 @@ import { IOfertaRepository } from './application/ports/oferta.repository.interfa
 import { CreateOfertaUseCase } from './application/use-cases/create-oferta.use-case';
 import { FindOfertasByPriceUseCase } from './application/use-cases/find-ofertas-by-price.use-case';
 import { GetAllOfertasUseCase } from './application/use-cases/get-all-ofertas.use-case';
+import { GetFilteredOfertasUseCase } from './application/use-cases/get-filtered-ofertas.use-case';
 import { Oferta } from './domain/entities/oferta.entity';
 import { TypeOrmOfertaRepository } from './infrastructure/persistence/typeorm-oferta.repository';
 import { OfertaMapper } from './mappers/oferta.mapper';
@@ -19,6 +20,7 @@ import { TutorOfertasController } from './tutor-ofertas.controller';
     CreateOfertaUseCase,
     FindOfertasByPriceUseCase,
     GetAllOfertasUseCase,
+    GetFilteredOfertasUseCase,
     OfertaMapper,
     OfertasService,
     {

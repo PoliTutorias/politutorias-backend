@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Oferta } from '../../domain/entities/oferta.entity';
-import { IOfertaRepository } from '../../application/ports/oferta.repository.interface';
+import { FindManyOptions, Repository } from 'typeorm';
 import { OfertaAlreadyExistsException } from '../../application/exceptions/oferta-already-exists.exception';
+import {
+  IOfertaRepository,
+  OfertaFilterOptions,
+} from '../../application/ports/oferta.repository.interface';
+import { Oferta } from '../../domain/entities/oferta.entity';
 
 // Database error codes for unique constraint violations
 const POSTGRES_UNIQUE_VIOLATION = '23505';
@@ -35,6 +38,20 @@ export class TypeOrmOfertaRepository implements IOfertaRepository {
         createdAt: 'DESC',
       },
     });
+  }
+
+  /**
+   * HU26: Consulta filtrada con conteo total sobre Repository<Oferta>.
+   * Oferta ya contiene las columnas HU26 (modalidad, titulo, precioHora, etc.)
+   * y es el único gestor del schema de la tabla "ofertas".
+   */
+  async findAndCountFiltered(
+    options: OfertaFilterOptions,
+  ): Promise<[unknown[], number]> {
+    return this.ofertaRepository.findAndCount({
+      ...options,
+      relations: ['tutor'],
+    } as FindManyOptions<Oferta>);
   }
 
   /**

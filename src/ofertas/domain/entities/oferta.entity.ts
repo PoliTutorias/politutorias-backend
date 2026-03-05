@@ -1,16 +1,16 @@
 import {
-  Entity,
   Column,
-  PrimaryGeneratedColumn,
   CreateDateColumn,
-  UpdateDateColumn,
-  Unique,
-  ManyToOne,
-  JoinColumn,
+  Entity,
   Index,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  Unique,
+  UpdateDateColumn,
 } from 'typeorm';
-import { CreateOfertaDto } from '../../dto/create-oferta.dto';
 import { Tutor } from '../../../tutors/entities/tutor.entity';
+import { CreateOfertaDto } from '../../dto/create-oferta.dto';
 
 @Entity('ofertas')
 @Unique(['tutorId', 'title'])
@@ -49,6 +49,35 @@ export class Oferta {
   })
   @JoinColumn({ name: 'tutorId' })
   tutor: Tutor;
+
+  // ─── Columnas HU26 (nullable para coexistir con registros legacy) ───────────
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  titulo?: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  descripcion?: string | null;
+
+  @Column({
+    type: 'enum',
+    enum: ['PRESENCIAL', 'VIRTUAL', 'AMBOS'],
+    nullable: true,
+  })
+  modalidad?: string | null;
+
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  precioHora?: number | null;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  areaConocimiento?: string | null;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  nivel?: string | null;
+
+  @CreateDateColumn()
+  fechaCreacion?: Date;
+
+  // ────────────────────────────────────────────────────────────────────────────
 
   @CreateDateColumn()
   createdAt: Date;

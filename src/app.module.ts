@@ -1,20 +1,21 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { OfertasModule } from './ofertas/ofertas.module';
-import { OffersModule } from './offers/offers.module';
-import { TutorsModule } from './tutors/tutors.module';
 import { DisponibilidadModule } from './disponibilidad/disponibilidad.module';
-import { ExperienciasModule } from './experiencias/experiencias.module';
-import { PerfilModule } from './perfil/perfil.module';
-import { Oferta } from './ofertas/domain/entities/oferta.entity';
-import { Tutor } from './tutors/entities/tutor.entity';
 import { AvailabilityEntity } from './disponibilidad/entities/availability.entity';
 import { ExperienciaEntity } from './experiencias/entities/experiencia.entity';
-import { PerfilProfesionalEntity } from './perfil/entities/perfil-profesional.entity';
+import { ExperienciasModule } from './experiencias/experiencias.module';
 import { MateriaEntity } from './materias/entities/materia.entity';
+import { Oferta } from './ofertas/domain/entities/oferta.entity';
+import { OfertaEntity } from './ofertas/entities/oferta.entity';
+import { OfertasModule } from './ofertas/ofertas.module';
+import { OffersModule } from './offers/offers.module';
+import { PerfilProfesionalEntity } from './perfil/entities/perfil-profesional.entity';
+import { PerfilModule } from './perfil/perfil.module';
+import { Tutor } from './tutors/entities/tutor.entity';
+import { TutorsModule } from './tutors/tutors.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { MateriaEntity } from './materias/entities/materia.entity';
         database: configService.get<string>('DB_NAME'),
         entities: [
           Oferta,
+          OfertaEntity,
           Tutor,
           AvailabilityEntity,
           ExperienciaEntity,

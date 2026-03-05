@@ -462,7 +462,7 @@ export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
   ];
 
   console.log(
-    '📚 Insertando ofertas HU26 (con campo modalidad PRESENCIAL/VIRTUAL/Virtual/Presencial)...',
+    '📚 Insertando ofertas HU26 (con campo modalidad PRESENCIAL/VIRTUAL/VIRTUAL/PRESENCIAL)...',
   );
 
   for (const data of ofertasHU26) {
@@ -492,6 +492,6 @@ export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
   }
 
   console.log(
-    `✅ ${ofertasHU26.length} ofertas HU26 insertadas (3 PRESENCIAL + 3 VIRTUAL + 3 Virtual/Presencial)`,
+    `✅ ${ofertasHU26.length} ofertas HU26 insertadas (3 PRESENCIAL + 3 VIRTUAL + 3 VIRTUAL/PRESENCIAL)`,
   );
 }

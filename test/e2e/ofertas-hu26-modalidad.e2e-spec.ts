@@ -86,7 +86,7 @@ const mockOfertaAmbos = {
   id: 'a1b2c3d4-0003-4000-8000-000000000003',
   titulo: 'Física General (Presencial y Virtual)',
   descripcion: 'Clases de física en cualquier modalidad.',
-  modalidad: 'Virtual/Presencial',
+  modalidad: 'VIRTUAL/PRESENCIAL',
   precioHora: 20.0,
   areaConocimiento: 'Física',
   nivel: 'Universitario',
@@ -117,7 +117,7 @@ function assertOfertaDtoStructure(oferta: Record<string, unknown>): void {
   expect(typeof oferta.titulo).toBe('string');
 
   expect(oferta).toHaveProperty('modalidad');
-  expect(['PRESENCIAL', 'VIRTUAL', 'Virtual/Presencial']).toContain(oferta.modalidad);
+  expect(['PRESENCIAL', 'VIRTUAL', 'VIRTUAL/PRESENCIAL']).toContain(oferta.modalidad);
 
   expect(oferta).toHaveProperty('precioHora');
   expect(typeof oferta.precioHora).toBe('number');
@@ -310,14 +310,14 @@ describe('OfertasController (e2e) — HU26: Filtrar por modalidad', () => {
         .expect(200);
 
       expect(mockGetFilteredOfertas).toHaveBeenCalledWith(
-        expect.objectContaining({ modalidad: ['Virtual/Presencial'] }),
+        expect.objectContaining({ modalidad: ['VIRTUAL/PRESENCIAL'] }),
       );
 
       expect(response.body).toHaveProperty('total', 1);
       expect(response.body.data).toHaveLength(1);
       expect(
         (response.body.data as Array<{ modalidad: string }>)[0].modalidad,
-      ).toBe('Virtual/Presencial');
+      ).toBe('VIRTUAL/PRESENCIAL');
 
       assertOfertaDtoStructure(
         response.body.data[0] as Record<string, unknown>,
@@ -410,7 +410,7 @@ describe('OfertasController (e2e) — HU26: Filtrar por modalidad', () => {
       });
       expect(response.body.message).toEqual(
         expect.arrayContaining([
-          'Each modality must be one of the following values: PRESENCIAL, VIRTUAL, Virtual/Presencial',
+          'Each modality must be one of the following values: PRESENCIAL, VIRTUAL, VIRTUAL/PRESENCIAL',
         ]),
       );
 
@@ -440,7 +440,7 @@ describe('OfertasController (e2e) — HU26: Filtrar por modalidad', () => {
       // El mensaje debe indicar que hay valores no permitidos
       expect(response.body.message).toEqual(
         expect.arrayContaining([
-          expect.stringContaining('PRESENCIAL, VIRTUAL, Virtual/Presencial'),
+          expect.stringContaining('PRESENCIAL, VIRTUAL, VIRTUAL/PRESENCIAL'),
         ]),
       );
 

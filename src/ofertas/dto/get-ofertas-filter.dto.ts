@@ -1,13 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
-    IsArray,
-    IsIn,
-    IsNumber,
-    IsOptional,
-    IsPositive,
-    IsString,
-    Min,
+  IsArray,
+  IsIn,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+  Min,
 } from 'class-validator';
 import { OfferModality } from '../entities/oferta.entity';
 

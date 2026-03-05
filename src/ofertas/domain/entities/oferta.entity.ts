@@ -1,13 +1,13 @@
 import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    Index,
-    JoinColumn,
-    ManyToOne,
-    PrimaryGeneratedColumn,
-    Unique,
-    UpdateDateColumn,
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  Unique,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Tutor } from '../../../tutors/entities/tutor.entity';
 import { CreateOfertaDto } from '../../dto/create-oferta.dto';
@@ -60,7 +60,7 @@ export class Oferta {
 
   @Column({
     type: 'enum',
-    enum: ['PRESENCIAL', 'VIRTUAL', 'Virtual/Presencial'],
+    enum: ['PRESENCIAL', 'VIRTUAL', 'VIRTUAL/PRESENCIAL'],
     nullable: true,
   })
   modalidad?: string | null;
@@ -110,7 +110,7 @@ export class Oferta {
     if (lower === 'presencial') return 'PRESENCIAL';
     if (lower === 'virtual') return 'VIRTUAL';
     if (lower === 'virtual/presencial' || lower === 'ambos')
-      return 'Virtual/Presencial';
+      return 'VIRTUAL/PRESENCIAL';
     return null;
   }
 }

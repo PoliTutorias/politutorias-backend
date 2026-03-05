@@ -8,7 +8,7 @@ import { OfferModality } from '../../ofertas/entities/oferta.entity';
  * ── HU03: GET /api/offers ────────────────────────────────────────────────────
  * 13 ofertas diseñadas para cubrir todos los escenarios de la HU03:
  *   - Paginación (10 en página 1, 3 en página 2)
- *   - Filtro por modalidad: Virtual, Presencial, Virtual/Presencial, Híbrida
+ *   - Filtro por modalidad: Virtual, Presencial, VIRTUAL/PRESENCIAL, Híbrida
  *   - Filtro por áreas de conocimiento (tags), incluyendo AND lógico
  *   - Filtro por rango de precios (8–25 USD)
  *   - Ordenamiento por precio, rating y createdAt
@@ -50,11 +50,11 @@ export async function seedOfertas(dataSource: DataSource): Promise<void> {
       reviewsCount: 24,
       tutorId: '550e8400-e29b-41d4-a716-446655440001',
     },
-    // 2 ─ Virtual/Presencial / Matemáticas + Física / precio bajo
+    // 2 ─ VIRTUAL/PRESENCIAL / Matemáticas + Física / precio bajo
     {
       title: 'Física Mecánica - Dinámica y Estática',
       price: 10.0,
-      modality: 'Virtual/Presencial',
+      modality: 'VIRTUAL/PRESENCIAL',
       categories: ['Física', 'Matemáticas', 'Ingeniería'],
       description:
         'Fuerzas, movimiento, energía y momento. Resolución de problemas con enfoque práctico para ingeniería civil y mecánica.',
@@ -158,11 +158,11 @@ export async function seedOfertas(dataSource: DataSource): Promise<void> {
       reviewsCount: 28,
       tutorId: '550e8400-e29b-41d4-a716-446655440005',
     },
-    // 11 ─ Virtual/Presencial / Matemáticas (precio en rango 10–20)
+    // 11 ─ VIRTUAL/PRESENCIAL / Matemáticas (precio en rango 10–20)
     {
       title: 'Cálculo Vectorial y Multivariable',
       price: 13.0,
-      modality: 'Virtual/Presencial',
+      modality: 'VIRTUAL/PRESENCIAL',
       categories: ['Matemáticas', 'Cálculo', 'Ingeniería'],
       description:
         'Integrales de línea y superficie, gradiente, divergencia y rotacional. Teoremas de Green, Stokes y Gauss con aplicaciones reales.',
@@ -269,7 +269,7 @@ export async function seedOfertas(dataSource: DataSource): Promise<void> {
     {
       title: 'Cálculo de una Variable - Nivel Básico',
       price: 10.0,
-      modality: 'Virtual/Presencial',
+      modality: 'VIRTUAL/PRESENCIAL',
       categories: ['Matemáticas', 'Cálculo'],
       description:
         'Funciones, límites y derivadas básicas con ejercicios resueltos. Orientado a estudiantes de primer ciclo de ingeniería y ciencias.',
@@ -335,14 +335,14 @@ export async function seedOfertas(dataSource: DataSource): Promise<void> {
  * 9 ofertas con los tres valores del enum OfferModality (3 por modalidad):
  *   PRESENCIAL: tutorías cara a cara
  *   VIRTUAL:    tutorías en línea
- *   Virtual/Presencial: tutorías que admiten ambas modalidades
+ *   VIRTUAL/PRESENCIAL: tutorías que admiten ambas modalidades
  *
  * Casos de prueba habilitados:
  *   GET /api/ofertas                         → devuelve las 9 ofertas
  *   GET /api/ofertas?modalidad=PRESENCIAL    → devuelve las 3 presenciales
  *   GET /api/ofertas?modalidad=VIRTUAL       → devuelve las 3 virtuales
- *   GET /api/ofertas?modalidad=Virtual/Presencial → devuelve las 3 de ambas modalidades
- *   GET /api/ofertas?modalidad=PRESENCIAL,Virtual/Presencial → devuelve las 6 correspondientes
+ *   GET /api/ofertas?modalidad=VIRTUAL/PRESENCIAL → devuelve las 3 de ambas modalidades
+ *   GET /api/ofertas?modalidad=PRESENCIAL,VIRTUAL/PRESENCIAL → devuelve las 6 correspondientes
  *
  * Tutores asociados al tutor "en cero" (ZERO_TUTOR_ID) para no requerir
  * tutores adicionales más allá de los ya creados por seedTutors.
@@ -428,7 +428,7 @@ export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
       nivel: 'Universitario',
       tutorId: T3,
     },
-    // ─── Virtual/Presencial (3 ofertas) ────────────────────────────────────────────────
+    // ─── VIRTUAL/PRESENCIAL (3 ofertas) ────────────────────────────────────────────────
     {
       titulo: 'Física Mecánica — Presencial o Virtual',
       descripcion:
@@ -462,7 +462,7 @@ export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
   ];
 
   console.log(
-    '📚 Insertando ofertas HU26 (con campo modalidad PRESENCIAL/VIRTUAL/Virtual/Presencial)...',
+    '📚 Insertando ofertas HU26 (con campo modalidad PRESENCIAL/VIRTUAL/VIRTUAL/PRESENCIAL)...',
   );
 
   for (const data of ofertasHU26) {
@@ -492,6 +492,6 @@ export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
   }
 
   console.log(
-    `✅ ${ofertasHU26.length} ofertas HU26 insertadas (3 PRESENCIAL + 3 VIRTUAL + 3 Virtual/Presencial)`,
+    `✅ ${ofertasHU26.length} ofertas HU26 insertadas (3 PRESENCIAL + 3 VIRTUAL + 3 VIRTUAL/PRESENCIAL)`,
   );
 }

@@ -64,7 +64,7 @@ export class OfertasController {
     summary:
       'Listar ofertas de tutoría con filtro por modalidad y/o rango de precio',
     description:
-      'Obtiene ofertas de tutoría con filtros opcionales por `modalidad` (PRESENCIAL, VIRTUAL, Virtual/Presencial) ' +
+      'Obtiene ofertas de tutoría con filtros opcionales por `modalidad` (PRESENCIAL, VIRTUAL, VIRTUAL/PRESENCIAL) ' +
       'y por rango de precio (`minPrice`, `maxPrice`). Devuelve los datos del tutor embebidos en cada oferta.',
   })
   @ApiQuery({
@@ -72,8 +72,8 @@ export class OfertasController {
     required: false,
     type: String,
     description:
-      'Modalidades a filtrar separadas por coma (ej. PRESENCIAL,Virtual/Presencial)',
-    example: 'PRESENCIAL,Virtual/Presencial',
+      'Modalidades a filtrar separadas por coma (ej. PRESENCIAL,VIRTUAL/PRESENCIAL)',
+    example: 'PRESENCIAL,VIRTUAL/PRESENCIAL',
   })
   @ApiQuery({
     name: 'minPrice',
@@ -114,7 +114,7 @@ export class OfertasController {
       example: {
         statusCode: 400,
         message: [
-          'Each modality must be one of the following values: PRESENCIAL, VIRTUAL, Virtual/Presencial',
+          'Each modality must be one of the following values: PRESENCIAL, VIRTUAL, VIRTUAL/PRESENCIAL',
         ],
         error: 'Bad Request',
       },

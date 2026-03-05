@@ -60,7 +60,7 @@ export class Oferta {
 
   @Column({
     type: 'enum',
-    enum: ['PRESENCIAL', 'VIRTUAL', 'Virtual/Presencial'],
+    enum: ['PRESENCIAL', 'VIRTUAL', 'VIRTUAL/PRESENCIAL'],
     nullable: true,
   })
   modalidad?: string | null;
@@ -110,7 +110,7 @@ export class Oferta {
     if (lower === 'presencial') return 'PRESENCIAL';
     if (lower === 'virtual') return 'VIRTUAL';
     if (lower === 'virtual/presencial' || lower === 'ambos')
-      return 'Virtual/Presencial';
+      return 'VIRTUAL/PRESENCIAL';
     return null;
   }
 }

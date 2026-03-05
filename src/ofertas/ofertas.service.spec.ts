@@ -918,7 +918,7 @@ describe('OfertasService - findFilteredOfertas (Unit Tests) - HU27', () => {
 // 1. El método `getFilteredOfertas` aún no existe en OfertasService.
 // 2. La entidad `Oferta` usa campos en inglés (title, price, modality, createdAt)
 //    pero el contrato de HU26 requiere campos en español (titulo, precioHora,
-//    modalidad, fechaCreacion) y un enum PRESENCIAL/VIRTUAL/Virtual/Presencial.
+//    modalidad, fechaCreacion) y un enum PRESENCIAL/VIRTUAL/VIRTUAL/PRESENCIAL.
 // 3. El repositorio no tiene configurada la cláusula WHERE con `In([...])` sobre
 //    el campo `modalidad`.
 // 4. El mapeo de `tutor.calificacionPromedio` y `tutor.numResenas` a la raíz
@@ -929,7 +929,7 @@ describe('OfertasService - findFilteredOfertas (Unit Tests) - HU27', () => {
 //   - id: string (UUID)
 //   - titulo: string
 //   - descripcion: string | null
-//   - modalidad: 'PRESENCIAL' | 'VIRTUAL' | 'Virtual/Presencial'  (OfferModality enum)
+//   - modalidad: 'PRESENCIAL' | 'VIRTUAL' | 'VIRTUAL/PRESENCIAL'  (OfferModality enum)
 //   - precioHora: number (decimal)
 //   - areaConocimiento: string | null
 //   - nivel: string | null
@@ -960,7 +960,7 @@ interface MockOfertaEntityHU26 {
   id: string;
   titulo: string;
   descripcion: string | null;
-  modalidad: string; // 'PRESENCIAL' | 'VIRTUAL' | 'Virtual/Presencial'
+  modalidad: string; // 'PRESENCIAL' | 'VIRTUAL' | 'VIRTUAL/PRESENCIAL'
   precioHora: number;
   areaConocimiento: string | null;
   nivel: string | null;
@@ -1026,7 +1026,7 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
     id: 'oferta-hu26-0003-4000-8000-000000000003',
     titulo: 'Física General (cualquier modalidad)',
     descripcion: null,
-    modalidad: 'Virtual/Presencial',
+    modalidad: 'VIRTUAL/PRESENCIAL',
     precioHora: 20.0,
     areaConocimiento: 'Física',
     nivel: null,
@@ -1073,13 +1073,13 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
 
   // ── Escenario 1: Filtrar PRESENCIAL (frontend envía solo PRESENCIAL) ─────
   /**
-   * GIVEN: Repositorio con entidades PRESENCIAL, VIRTUAL y Virtual/Presencial.
+   * GIVEN: Repositorio con entidades PRESENCIAL, VIRTUAL y VIRTUAL/PRESENCIAL.
    * WHEN:  getFilteredOfertas({ modalidad: ['PRESENCIAL'] })
-   * THEN:  findAndCount se llama con where: { modalidad: In(['PRESENCIAL','Virtual/Presencial']) }
+   * THEN:  findAndCount se llama con where: { modalidad: In(['PRESENCIAL','VIRTUAL/PRESENCIAL']) }
    *        (expansión automática) y order: { fechaCreacion: 'DESC' }.
    */
-  describe('Escenario 1: filtro modalidad=["PRESENCIAL"] → expande a PRESENCIAL+Virtual/Presencial', () => {
-    it('debe expandir PRESENCIAL e incluir Virtual/Presencial en la query', async () => {
+  describe('Escenario 1: filtro modalidad=["PRESENCIAL"] → expande a PRESENCIAL+VIRTUAL/PRESENCIAL', () => {
+    it('debe expandir PRESENCIAL e incluir VIRTUAL/PRESENCIAL en la query', async () => {
       const entidadesFiltradas = [
         mockOfertaPresencialEntity,
         mockOfertaAmbosEntity,
@@ -1095,12 +1095,12 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
         }
       ).getFilteredOfertas({ modalidad: ['PRESENCIAL'] });
 
-      // El use case debe haber expandido PRESENCIAL → PRESENCIAL + Virtual/Presencial
+      // El use case debe haber expandido PRESENCIAL → PRESENCIAL + VIRTUAL/PRESENCIAL
       expect(mockHU26Repository.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
             titulo: Not(IsNull()),
-            modalidad: In(['PRESENCIAL', 'Virtual/Presencial']),
+            modalidad: In(['PRESENCIAL', 'VIRTUAL/PRESENCIAL']),
           },
           order: { fechaCreacion: 'DESC' },
         }),
@@ -1116,13 +1116,13 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
 
   // ── Escenario 2: Filtrar VIRTUAL (frontend envía solo VIRTUAL) ───────────
   /**
-   * GIVEN: Repositorio con entidades PRESENCIAL, VIRTUAL y Virtual/Presencial.
+   * GIVEN: Repositorio con entidades PRESENCIAL, VIRTUAL y VIRTUAL/PRESENCIAL.
    * WHEN:  getFilteredOfertas({ modalidad: ['VIRTUAL'] })
-   * THEN:  findAndCount se llama con where: { modalidad: In(['VIRTUAL','Virtual/Presencial']) }
+   * THEN:  findAndCount se llama con where: { modalidad: In(['VIRTUAL','VIRTUAL/PRESENCIAL']) }
    *        (expansión automática) y order: { fechaCreacion: 'DESC' }.
    */
-  describe('Escenario 2: filtro modalidad=["VIRTUAL"] → expande a VIRTUAL+Virtual/Presencial', () => {
-    it('debe expandir VIRTUAL e incluir Virtual/Presencial en la query', async () => {
+  describe('Escenario 2: filtro modalidad=["VIRTUAL"] → expande a VIRTUAL+VIRTUAL/PRESENCIAL', () => {
+    it('debe expandir VIRTUAL e incluir VIRTUAL/PRESENCIAL en la query', async () => {
       const entidadesFiltradas = [
         mockOfertaVirtualEntity,
         mockOfertaAmbosEntity,
@@ -1138,10 +1138,10 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
         }
       ).getFilteredOfertas({ modalidad: ['VIRTUAL'] });
 
-      // El use case debe haber expandido VIRTUAL → VIRTUAL + Virtual/Presencial
+      // El use case debe haber expandido VIRTUAL → VIRTUAL + VIRTUAL/PRESENCIAL
       expect(mockHU26Repository.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { titulo: Not(IsNull()), modalidad: In(['VIRTUAL', 'Virtual/Presencial']) },
+          where: { titulo: Not(IsNull()), modalidad: In(['VIRTUAL', 'VIRTUAL/PRESENCIAL']) },
           order: { fechaCreacion: 'DESC' },
         }),
       );
@@ -1153,15 +1153,15 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
     });
   });
 
-  // ── Escenario 3: Filtrar Virtual/Presencial únicamente ────────────────────
+  // ── Escenario 3: Filtrar VIRTUAL/PRESENCIAL únicamente ────────────────────
   /**
    * GIVEN: Repositorio con entidades de todas las modalidades.
-   * WHEN:  getFilteredOfertas({ modalidad: ['Virtual/Presencial'] })
-   * THEN:  findAndCount se llama con where: { modalidad: In(['Virtual/Presencial']) }
+   * WHEN:  getFilteredOfertas({ modalidad: ['VIRTUAL/PRESENCIAL'] })
+   * THEN:  findAndCount se llama con where: { modalidad: In(['VIRTUAL/PRESENCIAL']) }
    *        y order: { fechaCreacion: 'DESC' }.
    */
-  describe('Escenario 3: filtro modalidad=["Virtual/Presencial"]', () => {
-    it('debe llamar al repositorio con In(["Virtual/Presencial"]) y retornar solo entidades Virtual/Presencial', async () => {
+  describe('Escenario 3: filtro modalidad=["VIRTUAL/PRESENCIAL"]', () => {
+    it('debe llamar al repositorio con In(["VIRTUAL/PRESENCIAL"]) y retornar solo entidades VIRTUAL/PRESENCIAL', async () => {
       mockHU26Repository.findAndCount.mockResolvedValueOnce([
         [mockOfertaAmbosEntity],
         1,
@@ -1171,11 +1171,11 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
         service as unknown as Record<string, unknown> & {
           getFilteredOfertas: (dto: unknown) => Promise<unknown>;
         }
-      ).getFilteredOfertas({ modalidad: ['Virtual/Presencial'] });
+      ).getFilteredOfertas({ modalidad: ['VIRTUAL/PRESENCIAL'] });
 
       expect(mockHU26Repository.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { titulo: Not(IsNull()), modalidad: In(['Virtual/Presencial']) },
+          where: { titulo: Not(IsNull()), modalidad: In(['VIRTUAL/PRESENCIAL']) },
           order: { fechaCreacion: 'DESC' },
         }),
       );
@@ -1257,7 +1257,7 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
   // ── Escenario 5: Mapeo correcto de OfertaDto (Riesgos 1 y 2) ─────────────
   /**
    * GIVEN: Repositorio retorna una entidad completa con tutor anidado.
-   * WHEN:  getFilteredOfertas({ modalidad: ['PRESENCIAL', 'Virtual/Presencial'] })
+   * WHEN:  getFilteredOfertas({ modalidad: ['PRESENCIAL', 'VIRTUAL/PRESENCIAL'] })
    * THEN:  El DTO resultante tiene:
    *        - calificacionPromedio en la RAÍZ (no en tutor) — Riesgo 1
    *        - numResenas en la RAÍZ (no en tutor) — Riesgo 1
@@ -1275,7 +1275,7 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
         service as unknown as Record<string, unknown> & {
           getFilteredOfertas: (dto: unknown) => Promise<unknown>;
         }
-      ).getFilteredOfertas({ modalidad: ['PRESENCIAL', 'Virtual/Presencial'] });
+      ).getFilteredOfertas({ modalidad: ['PRESENCIAL', 'VIRTUAL/PRESENCIAL'] });
 
       const typedResult = result as {
         data: Array<Record<string, unknown>>;
@@ -1309,7 +1309,7 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
         service as unknown as Record<string, unknown> & {
           getFilteredOfertas: (dto: unknown) => Promise<unknown>;
         }
-      ).getFilteredOfertas({ modalidad: ['PRESENCIAL', 'Virtual/Presencial'] });
+      ).getFilteredOfertas({ modalidad: ['PRESENCIAL', 'VIRTUAL/PRESENCIAL'] });
 
       const typedResult = result as {
         data: Array<Record<string, unknown>>;
@@ -1332,7 +1332,7 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
   // ── Escenario 6: Sin resultados ───────────────────────────────────────────
   /**
    * GIVEN: Repositorio retorna [[], 0] para cualquier filtro.
-   * WHEN:  getFilteredOfertas({ modalidad: ['PRESENCIAL', 'Virtual/Presencial'] })
+   * WHEN:  getFilteredOfertas({ modalidad: ['PRESENCIAL', 'VIRTUAL/PRESENCIAL'] })
    * THEN:  El servicio retorna { data: [], total: 0 }.
    *
    * RIESGO 6: total debe ser exactamente 0.
@@ -1345,7 +1345,7 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
         service as unknown as Record<string, unknown> & {
           getFilteredOfertas: (dto: unknown) => Promise<unknown>;
         }
-      ).getFilteredOfertas({ modalidad: ['PRESENCIAL', 'Virtual/Presencial'] });
+      ).getFilteredOfertas({ modalidad: ['PRESENCIAL', 'VIRTUAL/PRESENCIAL'] });
 
       const typedResult = result as { data: unknown[]; total: number };
       expect(typedResult).toEqual({ data: [], total: 0 });

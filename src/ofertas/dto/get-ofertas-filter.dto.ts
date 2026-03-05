@@ -23,8 +23,8 @@ export class GetOfertasFilterDto {
   @ApiPropertyOptional({
     type: String,
     description:
-      'Modalidades a filtrar separadas por coma. Valores permitidos: PRESENCIAL, VIRTUAL, Virtual/Presencial',
-    example: 'PRESENCIAL,Virtual/Presencial',
+      'Modalidades a filtrar separadas por coma. Valores permitidos: PRESENCIAL, VIRTUAL, VIRTUAL/PRESENCIAL (también se acepta AMBOS como alias de VIRTUAL/PRESENCIAL)',
+    example: 'PRESENCIAL,AMBOS',
   })
   @IsOptional()
   @Transform(({ value }: { value: unknown }) => {
@@ -33,6 +33,8 @@ export class GetOfertasFilterDto {
         .split(',')
         .map((v) => {
           const trimmed = v.trim();
+          // Alias: AMBOS (frontend legacy) → VIRTUAL/PRESENCIAL
+          if (trimmed.toUpperCase() === 'AMBOS') return 'VIRTUAL/PRESENCIAL';
           // Búsqueda case-insensitive para aceptar variantes del enum
           return (
             VALID_MODALITIES.find(

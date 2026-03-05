@@ -2,12 +2,12 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import {
-  Between,
-  In,
-  IsNull,
-  LessThanOrEqual,
-  MoreThanOrEqual,
-  Not,
+    Between,
+    In,
+    IsNull,
+    LessThanOrEqual,
+    MoreThanOrEqual,
+    Not,
 } from 'typeorm';
 import { AvailabilityEntity } from '../disponibilidad/entities/availability.entity';
 import { Tutor } from '../tutors/entities/tutor.entity';
@@ -918,7 +918,7 @@ describe('OfertasService - findFilteredOfertas (Unit Tests) - HU27', () => {
 // 1. El método `getFilteredOfertas` aún no existe en OfertasService.
 // 2. La entidad `Oferta` usa campos en inglés (title, price, modality, createdAt)
 //    pero el contrato de HU26 requiere campos en español (titulo, precioHora,
-//    modalidad, fechaCreacion) y un enum PRESENCIAL/VIRTUAL/AMBOS.
+//    modalidad, fechaCreacion) y un enum PRESENCIAL/VIRTUAL/Virtual/Presencial.
 // 3. El repositorio no tiene configurada la cláusula WHERE con `In([...])` sobre
 //    el campo `modalidad`.
 // 4. El mapeo de `tutor.calificacionPromedio` y `tutor.numResenas` a la raíz
@@ -929,7 +929,7 @@ describe('OfertasService - findFilteredOfertas (Unit Tests) - HU27', () => {
 //   - id: string (UUID)
 //   - titulo: string
 //   - descripcion: string | null
-//   - modalidad: 'PRESENCIAL' | 'VIRTUAL' | 'AMBOS'  (OfferModality enum)
+//   - modalidad: 'PRESENCIAL' | 'VIRTUAL' | 'Virtual/Presencial'  (OfferModality enum)
 //   - precioHora: number (decimal)
 //   - areaConocimiento: string | null
 //   - nivel: string | null
@@ -960,7 +960,7 @@ interface MockOfertaEntityHU26 {
   id: string;
   titulo: string;
   descripcion: string | null;
-  modalidad: string; // 'PRESENCIAL' | 'VIRTUAL' | 'AMBOS'
+  modalidad: string; // 'PRESENCIAL' | 'VIRTUAL' | 'Virtual/Presencial'
   precioHora: number;
   areaConocimiento: string | null;
   nivel: string | null;
@@ -1026,7 +1026,7 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
     id: 'oferta-hu26-0003-4000-8000-000000000003',
     titulo: 'Física General (cualquier modalidad)',
     descripcion: null,
-    modalidad: 'AMBOS',
+    modalidad: 'Virtual/Presencial',
     precioHora: 20.0,
     areaConocimiento: 'Física',
     nivel: null,
@@ -1071,17 +1071,15 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
     jest.clearAllMocks();
   });
 
-  // ── Escenario 1: Filtrar PRESENCIAL (frontend envía PRESENCIAL,AMBOS) ─────
+  // ── Escenario 1: Filtrar PRESENCIAL (frontend envía solo PRESENCIAL) ─────
   /**
-   * GIVEN: Repositorio con entidades PRESENCIAL, VIRTUAL y AMBOS.
-   * WHEN:  getFilteredOfertas({ modalidad: ['PRESENCIAL', 'AMBOS'] })
-   * THEN:  findAndCount se llama con where: { modalidad: In(['PRESENCIAL','AMBOS']) }
-   *        y order: { fechaCreacion: 'DESC' }.
-   *
-   * Falla inicial: getFilteredOfertas no existe en OfertasService.
+   * GIVEN: Repositorio con entidades PRESENCIAL, VIRTUAL y Virtual/Presencial.
+   * WHEN:  getFilteredOfertas({ modalidad: ['PRESENCIAL'] })
+   * THEN:  findAndCount se llama con where: { modalidad: In(['PRESENCIAL','Virtual/Presencial']) }
+   *        (expansión automática) y order: { fechaCreacion: 'DESC' }.
    */
-  describe('Escenario 1: filtro modalidad=["PRESENCIAL","AMBOS"]', () => {
-    it('debe llamar al repositorio con In(["PRESENCIAL","AMBOS"]) y retornar las entidades correctas', async () => {
+  describe('Escenario 1: filtro modalidad=["PRESENCIAL"] → expande a PRESENCIAL+Virtual/Presencial', () => {
+    it('debe expandir PRESENCIAL e incluir Virtual/Presencial en la query', async () => {
       const entidadesFiltradas = [
         mockOfertaPresencialEntity,
         mockOfertaAmbosEntity,
@@ -1091,19 +1089,18 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
         2,
       ]);
 
-      // Llama al método NUEVO que todavía no existe → test falla aquí
       const result = await (
         service as unknown as Record<string, unknown> & {
           getFilteredOfertas: (dto: unknown) => Promise<unknown>;
         }
-      ).getFilteredOfertas({ modalidad: ['PRESENCIAL', 'AMBOS'] });
+      ).getFilteredOfertas({ modalidad: ['PRESENCIAL'] });
 
-      // Verifica llamada al repositorio con la cláusula WHERE correcta
+      // El use case debe haber expandido PRESENCIAL → PRESENCIAL + Virtual/Presencial
       expect(mockHU26Repository.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
             titulo: Not(IsNull()),
-            modalidad: In(['PRESENCIAL', 'AMBOS']),
+            modalidad: In(['PRESENCIAL', 'Virtual/Presencial']),
           },
           order: { fechaCreacion: 'DESC' },
         }),
@@ -1117,15 +1114,15 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
     });
   });
 
-  // ── Escenario 2: Filtrar VIRTUAL (frontend envía VIRTUAL,AMBOS) ───────────
+  // ── Escenario 2: Filtrar VIRTUAL (frontend envía solo VIRTUAL) ───────────
   /**
-   * GIVEN: Repositorio con entidades PRESENCIAL, VIRTUAL y AMBOS.
-   * WHEN:  getFilteredOfertas({ modalidad: ['VIRTUAL', 'AMBOS'] })
-   * THEN:  findAndCount se llama con where: { modalidad: In(['VIRTUAL','AMBOS']) }
-   *        y order: { fechaCreacion: 'DESC' }.
+   * GIVEN: Repositorio con entidades PRESENCIAL, VIRTUAL y Virtual/Presencial.
+   * WHEN:  getFilteredOfertas({ modalidad: ['VIRTUAL'] })
+   * THEN:  findAndCount se llama con where: { modalidad: In(['VIRTUAL','Virtual/Presencial']) }
+   *        (expansión automática) y order: { fechaCreacion: 'DESC' }.
    */
-  describe('Escenario 2: filtro modalidad=["VIRTUAL","AMBOS"]', () => {
-    it('debe llamar al repositorio con In(["VIRTUAL","AMBOS"]) y retornar las entidades correctas', async () => {
+  describe('Escenario 2: filtro modalidad=["VIRTUAL"] → expande a VIRTUAL+Virtual/Presencial', () => {
+    it('debe expandir VIRTUAL e incluir Virtual/Presencial en la query', async () => {
       const entidadesFiltradas = [
         mockOfertaVirtualEntity,
         mockOfertaAmbosEntity,
@@ -1139,11 +1136,12 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
         service as unknown as Record<string, unknown> & {
           getFilteredOfertas: (dto: unknown) => Promise<unknown>;
         }
-      ).getFilteredOfertas({ modalidad: ['VIRTUAL', 'AMBOS'] });
+      ).getFilteredOfertas({ modalidad: ['VIRTUAL'] });
 
+      // El use case debe haber expandido VIRTUAL → VIRTUAL + Virtual/Presencial
       expect(mockHU26Repository.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { titulo: Not(IsNull()), modalidad: In(['VIRTUAL', 'AMBOS']) },
+          where: { titulo: Not(IsNull()), modalidad: In(['VIRTUAL', 'Virtual/Presencial']) },
           order: { fechaCreacion: 'DESC' },
         }),
       );
@@ -1155,15 +1153,15 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
     });
   });
 
-  // ── Escenario 3: Filtrar AMBOS únicamente ─────────────────────────────────
+  // ── Escenario 3: Filtrar Virtual/Presencial únicamente ────────────────────
   /**
    * GIVEN: Repositorio con entidades de todas las modalidades.
-   * WHEN:  getFilteredOfertas({ modalidad: ['AMBOS'] })
-   * THEN:  findAndCount se llama con where: { modalidad: In(['AMBOS']) }
+   * WHEN:  getFilteredOfertas({ modalidad: ['Virtual/Presencial'] })
+   * THEN:  findAndCount se llama con where: { modalidad: In(['Virtual/Presencial']) }
    *        y order: { fechaCreacion: 'DESC' }.
    */
-  describe('Escenario 3: filtro modalidad=["AMBOS"]', () => {
-    it('debe llamar al repositorio con In(["AMBOS"]) y retornar solo entidades AMBOS', async () => {
+  describe('Escenario 3: filtro modalidad=["Virtual/Presencial"]', () => {
+    it('debe llamar al repositorio con In(["Virtual/Presencial"]) y retornar solo entidades Virtual/Presencial', async () => {
       mockHU26Repository.findAndCount.mockResolvedValueOnce([
         [mockOfertaAmbosEntity],
         1,
@@ -1173,11 +1171,11 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
         service as unknown as Record<string, unknown> & {
           getFilteredOfertas: (dto: unknown) => Promise<unknown>;
         }
-      ).getFilteredOfertas({ modalidad: ['AMBOS'] });
+      ).getFilteredOfertas({ modalidad: ['Virtual/Presencial'] });
 
       expect(mockHU26Repository.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { titulo: Not(IsNull()), modalidad: In(['AMBOS']) },
+          where: { titulo: Not(IsNull()), modalidad: In(['Virtual/Presencial']) },
           order: { fechaCreacion: 'DESC' },
         }),
       );
@@ -1259,7 +1257,7 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
   // ── Escenario 5: Mapeo correcto de OfertaDto (Riesgos 1 y 2) ─────────────
   /**
    * GIVEN: Repositorio retorna una entidad completa con tutor anidado.
-   * WHEN:  getFilteredOfertas({ modalidad: ['PRESENCIAL', 'AMBOS'] })
+   * WHEN:  getFilteredOfertas({ modalidad: ['PRESENCIAL', 'Virtual/Presencial'] })
    * THEN:  El DTO resultante tiene:
    *        - calificacionPromedio en la RAÍZ (no en tutor) — Riesgo 1
    *        - numResenas en la RAÍZ (no en tutor) — Riesgo 1
@@ -1277,7 +1275,7 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
         service as unknown as Record<string, unknown> & {
           getFilteredOfertas: (dto: unknown) => Promise<unknown>;
         }
-      ).getFilteredOfertas({ modalidad: ['PRESENCIAL', 'AMBOS'] });
+      ).getFilteredOfertas({ modalidad: ['PRESENCIAL', 'Virtual/Presencial'] });
 
       const typedResult = result as {
         data: Array<Record<string, unknown>>;
@@ -1311,7 +1309,7 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
         service as unknown as Record<string, unknown> & {
           getFilteredOfertas: (dto: unknown) => Promise<unknown>;
         }
-      ).getFilteredOfertas({ modalidad: ['PRESENCIAL', 'AMBOS'] });
+      ).getFilteredOfertas({ modalidad: ['PRESENCIAL', 'Virtual/Presencial'] });
 
       const typedResult = result as {
         data: Array<Record<string, unknown>>;
@@ -1334,7 +1332,7 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
   // ── Escenario 6: Sin resultados ───────────────────────────────────────────
   /**
    * GIVEN: Repositorio retorna [[], 0] para cualquier filtro.
-   * WHEN:  getFilteredOfertas({ modalidad: ['PRESENCIAL', 'AMBOS'] })
+   * WHEN:  getFilteredOfertas({ modalidad: ['PRESENCIAL', 'Virtual/Presencial'] })
    * THEN:  El servicio retorna { data: [], total: 0 }.
    *
    * RIESGO 6: total debe ser exactamente 0.
@@ -1347,7 +1345,7 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
         service as unknown as Record<string, unknown> & {
           getFilteredOfertas: (dto: unknown) => Promise<unknown>;
         }
-      ).getFilteredOfertas({ modalidad: ['PRESENCIAL', 'AMBOS'] });
+      ).getFilteredOfertas({ modalidad: ['PRESENCIAL', 'Virtual/Presencial'] });
 
       const typedResult = result as { data: unknown[]; total: number };
       expect(typedResult).toEqual({ data: [], total: 0 });

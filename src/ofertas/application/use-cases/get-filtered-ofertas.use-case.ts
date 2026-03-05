@@ -1,16 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
-  Between,
-  In,
-  IsNull,
-  LessThanOrEqual,
-  MoreThanOrEqual,
-  Not,
+    Between,
+    In,
+    IsNull,
+    LessThanOrEqual,
+    MoreThanOrEqual,
+    Not,
 } from 'typeorm';
 import { GetOfertasFilterDto } from '../../dto/get-ofertas-filter.dto';
 import {
-  IOfertaRepository,
-  OfertaFilterOptions,
+    IOfertaRepository,
+    OfertaFilterOptions,
 } from '../ports/oferta.repository.interface';
 
 /**
@@ -44,8 +44,11 @@ export class GetFilteredOfertasUseCase {
    * @param filterDto - DTO con `modalidad` opcional (array de strings).
    * @returns Par [entidades crudas, total] para que la capa superior haga el mapeo.
    *
-   * - Si `modalidad` está presente y no vacío → aplica `In([...])` sobre el campo.
-   * - Si `modalidad` es `undefined` o `[]`   → no añade cláusula WHERE (devuelve todo).
+   * Reglas de expansión de modalidad:
+   *  - `PRESENCIAL`       → también incluye `Virtual/Presencial`
+   *  - `VIRTUAL`          → también incluye `Virtual/Presencial`
+   *  - `Virtual/Presencial` sola → solo registros estrictamente `Virtual/Presencial`
+   * - Si `modalidad` es `undefined` o `[]` → no añade cláusula WHERE (devuelve todo).
    * - Siempre ordena por `fechaCreacion DESC` (más recientes primero).
    */
   async execute(filterDto: GetOfertasFilterDto): Promise<[unknown[], number]> {
@@ -55,7 +58,12 @@ export class GetFilteredOfertasUseCase {
     };
 
     if (filterDto.modalidad && filterDto.modalidad.length > 0) {
-      where['modalidad'] = In(filterDto.modalidad);
+      const expanded = new Set(filterDto.modalidad);
+      // PRESENCIAL o VIRTUAL implican incluir también Virtual/Presencial
+      if (expanded.has('PRESENCIAL') || expanded.has('VIRTUAL')) {
+        expanded.add('Virtual/Presencial');
+      }
+      where['modalidad'] = In([...expanded]);
     }
 
     if (filterDto.minPrice !== undefined && filterDto.maxPrice !== undefined) {

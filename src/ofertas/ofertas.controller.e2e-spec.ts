@@ -1,25 +1,25 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { Test, TestingModule } from '@nestjs/testing';
 import {
-  INestApplication,
-  ValidationPipe,
-  HttpStatus,
-  HttpException,
-  InternalServerErrorException,
+    HttpException,
+    HttpStatus,
+    INestApplication,
+    InternalServerErrorException,
+    ValidationPipe,
 } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
-import { OfertasController } from './ofertas.controller';
+import { v4 as uuid } from 'uuid';
 import { CreateOfertaUseCase } from './application/use-cases/create-oferta.use-case';
 import { GetAllOfertasUseCase } from './application/use-cases/get-all-ofertas.use-case';
-import { OfertasService } from './ofertas.service';
-import { CreateOfertaDto } from './dto/create-oferta.dto';
 import { Oferta } from './domain/entities/oferta.entity';
-import { v4 as uuid } from 'uuid';
+import { CreateOfertaDto } from './dto/create-oferta.dto';
 import {
-  PaginatedOffersResponse,
-  OfferResponseDto,
+    OfferResponseDto,
+    PaginatedOffersResponse,
 } from './dto/paginated-offers-response.dto';
+import { OfertasController } from './ofertas.controller';
+import { OfertasService } from './ofertas.service';
 
 // Mock de la implementación del CreateOfertaUseCase para controlarlo en los tests
 const mockCreateOfertaUseCase = {
@@ -39,7 +39,7 @@ const mockOfertasService = {
 
 describe('OfertasController (e2e)', () => {
   let app: INestApplication;
-  const tutorId = 'a1b2c3d4-e5f6-7890-1234-567890abcdef'; // ID de tutor hardcodeado en el controlador
+  const tutorId = '550e8400-e29b-41d4-a716-446655440000'; // ZERO_TUTOR_ID hardcodeado en el controlador
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({

@@ -97,7 +97,7 @@ async function runSeed() {
     // Ejecutar seed de ofertas
     await seedOfertas(AppDataSource);
 
-    // HU26: Seed de ofertas con campo modalidad (PRESENCIAL/VIRTUAL/AMBOS)
+    // HU26: Seed de ofertas con campo modalidad (PRESENCIAL/VIRTUAL/Virtual/Presencial)
     await seedOfertasHU26(AppDataSource);
 
     // Ejecutar seed de disponibilidad

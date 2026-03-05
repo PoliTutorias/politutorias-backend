@@ -1,24 +1,24 @@
 import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  ParseUUIDPipe,
-  Post,
-  Query,
-  UsePipes,
-  ValidationPipe,
+    Body,
+    Controller,
+    Get,
+    HttpCode,
+    HttpStatus,
+    Param,
+    ParseUUIDPipe,
+    Post,
+    Query,
+    UsePipes,
+    ValidationPipe,
 } from '@nestjs/common';
 import {
-  ApiBody,
-  ApiExtraModels,
-  ApiOperation,
-  ApiQuery,
-  ApiResponse,
-  ApiTags,
-  getSchemaPath,
+    ApiBody,
+    ApiExtraModels,
+    ApiOperation,
+    ApiQuery,
+    ApiResponse,
+    ApiTags,
+    getSchemaPath,
 } from '@nestjs/swagger';
 import { CreateOfertaUseCase } from './application/use-cases/create-oferta.use-case';
 import { GetAllOfertasUseCase } from './application/use-cases/get-all-ofertas.use-case';
@@ -64,7 +64,7 @@ export class OfertasController {
     summary:
       'Listar ofertas de tutoría con filtro por modalidad y/o rango de precio',
     description:
-      'Obtiene ofertas de tutoría con filtros opcionales por `modalidad` (PRESENCIAL, VIRTUAL, AMBOS) ' +
+      'Obtiene ofertas de tutoría con filtros opcionales por `modalidad` (PRESENCIAL, VIRTUAL, Virtual/Presencial) ' +
       'y por rango de precio (`minPrice`, `maxPrice`). Devuelve los datos del tutor embebidos en cada oferta.',
   })
   @ApiQuery({
@@ -72,8 +72,8 @@ export class OfertasController {
     required: false,
     type: String,
     description:
-      'Modalidades a filtrar separadas por coma (ej. PRESENCIAL,AMBOS)',
-    example: 'PRESENCIAL,AMBOS',
+      'Modalidades a filtrar separadas por coma (ej. PRESENCIAL,Virtual/Presencial)',
+    example: 'PRESENCIAL,Virtual/Presencial',
   })
   @ApiQuery({
     name: 'minPrice',
@@ -114,7 +114,7 @@ export class OfertasController {
       example: {
         statusCode: 400,
         message: [
-          'Each modality must be one of the following values: PRESENCIAL, VIRTUAL, AMBOS',
+          'Each modality must be one of the following values: PRESENCIAL, VIRTUAL, Virtual/Presencial',
         ],
         error: 'Bad Request',
       },

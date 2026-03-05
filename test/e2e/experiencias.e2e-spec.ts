@@ -14,6 +14,7 @@ import { ExperienciasController } from './../../src/experiencias/experiencias.co
 import { ExperienciasService } from './../../src/experiencias/experiencias.service';
 import { JwtAuthGuard } from './../../src/auth/guards/jwt-auth.guard';
 import { ExperienciaEntity } from '../../src/experiencias/entities/experiencia.entity';
+import { DEV_JWT_TOKEN, TEST_USER_ID } from '../../src/auth/jwt.constants';
 
 describe('ExperienciasController (e2e)', () => {
   let app: INestApplication;
@@ -26,7 +27,7 @@ describe('ExperienciasController (e2e)', () => {
   const mockJwtAuthGuard: CanActivate = {
     canActivate: jest.fn((context) => {
       const req = context.switchToHttp().getRequest<{ user: { id: string } }>();
-      req.user = { id: 'a-valid-uuid-tutor-id' }; // Simular usuario autenticado
+      req.user = { id: TEST_USER_ID }; // Simular usuario autenticado
       return true;
     }),
   };
@@ -66,14 +67,14 @@ describe('ExperienciasController (e2e)', () => {
         const req = context
           .switchToHttp()
           .getRequest<{ user: { id: string } }>();
-        req.user = { id: 'a-valid-uuid-tutor-id' };
+        req.user = { id: TEST_USER_ID };
         return true;
       });
   });
 
   // Escenario 1: Registro Exitoso
   it('should create an experience and return 201 CREATED', async () => {
-    const tutorId = 'a-valid-uuid-tutor-id';
+    const tutorId = TEST_USER_ID;
     const experienciaDto = {
       puesto: 'Profesor de Cálculo I',
       institucion: 'Universidad Nacional',
@@ -93,7 +94,7 @@ describe('ExperienciasController (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/experiencias')
-      .set('Authorization', `Bearer some-jwt-token`) // Token ficticio, el guard lo permite
+      .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`) // Token ficticio, el guard lo permite
       .send(experienciaDto)
       .expect(HttpStatus.CREATED)
       .expect((res) => {
@@ -124,7 +125,7 @@ describe('ExperienciasController (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/experiencias')
-      .set('Authorization', `Bearer some-jwt-token`)
+      .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
       .send(invalidExperienciaDto)
       .expect(HttpStatus.BAD_REQUEST)
       .expect((res) => {
@@ -147,7 +148,7 @@ describe('ExperienciasController (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/experiencias')
-      .set('Authorization', `Bearer some-jwt-token`)
+      .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
       .send(invalidExperienciaDto)
       .expect(HttpStatus.BAD_REQUEST)
       .expect((res) => {
@@ -172,7 +173,7 @@ describe('ExperienciasController (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/experiencias')
-      .set('Authorization', `Bearer some-jwt-token`)
+      .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
       .send(invalidExperienciaDto)
       .expect(HttpStatus.BAD_REQUEST)
       .expect((res) => {
@@ -224,7 +225,7 @@ describe('ExperienciasController (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/experiencias')
-      .set('Authorization', `Bearer some-jwt-token`)
+      .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
       .send(experienciaDto)
       .expect(HttpStatus.INTERNAL_SERVER_ERROR)
       .expect((res) => {

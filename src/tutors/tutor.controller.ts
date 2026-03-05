@@ -22,7 +22,8 @@ import {
 import { Request } from 'express';
 import { StorageService } from '../storage/storage.service';
 import { RegistrarDatosBasicosDto } from './dto/registrar-datos-basicos.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { DEV_JWT_TOKEN } from '../auth/jwt.constants';
 import {
   TutorResponseDto,
   TutorResponseMapper,
@@ -104,6 +105,7 @@ export class TutorController {
         success: true,
         message: 'Datos básicos registrados con éxito',
         data: TutorResponseMapper.toResponseDto(tutor),
+        token: DEV_JWT_TOKEN,
       };
     } catch {
       throw new InternalServerErrorException({

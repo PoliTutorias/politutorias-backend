@@ -37,13 +37,15 @@ import {
   RegistrarDatosBasicosDto,
   Semestres,
 } from './dto/registrar-datos-basicos.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TutorController } from './tutor.controller';
 import { TutorService } from './tutor.service';
+import { StorageService } from '../storage/storage.service';
+import { TEST_USER_ID, DEV_JWT_TOKEN } from '../auth/jwt.constants';
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── Datos de prueba fijos ─────────────────────────────────────────────────
-const MOCK_USER_ID = 'user-uuid-123';
+// ── Datos de prueba fijos ──────────────────────────────────────────────────────
+const MOCK_USER_ID = TEST_USER_ID;
 
 const VALID_DTO: RegistrarDatosBasicosDto = {
   nombreCompleto: 'Juan Pérez',
@@ -169,6 +171,7 @@ describe('TutorController (e2e) — HU34 [usuario autenticado]', () => {
           semestreActual: VALID_DTO.semestreActual,
           biografiaCorta: VALID_DTO.biografiaCorta,
         }),
+        token: DEV_JWT_TOKEN,
       });
 
       // El servicio fue llamado con userId y dto correctos
@@ -207,6 +210,7 @@ describe('TutorController (e2e) — HU34 [usuario autenticado]', () => {
           userId: MOCK_USER_ID,
           nombreCompleto: 'Juan Pérez Actualizado',
         }),
+        token: DEV_JWT_TOKEN,
       });
 
       expect(mockTutorService.registrarDatosBasicos).toHaveBeenCalledTimes(1);

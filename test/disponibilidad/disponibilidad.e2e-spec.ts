@@ -11,6 +11,7 @@ import { DisponibilidadController } from '../../src/disponibilidad/disponibilida
 import { CreateAvailabilityUseCase } from '../../src/disponibilidad/application/use-cases/create-availability.use-case';
 import { JwtAuthGuard } from '../../src/auth/guards/jwt-auth.guard';
 import { CreateAvailabilityDto } from '../../src/disponibilidad/dto/create-availability.dto';
+import { DEV_JWT_TOKEN, TEST_USER_ID } from '../../src/auth/jwt.constants';
 
 describe('DisponibilidadController (E2E)', () => {
   let app: INestApplication;
@@ -37,13 +38,7 @@ describe('DisponibilidadController (E2E)', () => {
           throw new UnauthorizedException();
         }
 
-        // Extraer tutorId del header si está disponible
-
-        const tutorId =
-          authHeader.split('valid-jwt-token-').pop()?.split(' ')[0] ||
-          'default-tutor-id';
-
-        request.user = { id: tutorId };
+        request.user = { id: TEST_USER_ID };
         return true;
       }),
     } as any;
@@ -88,15 +83,14 @@ describe('DisponibilidadController (E2E)', () => {
      * Then: 201 Created, DisponibilidadService.save called once, response matches contract.
      */
     it('ESC-1: Debería registrar exitosamente una nueva disponibilidad', async () => {
-      const tutorId = '550e8400-e29b-41d4-a716-446655440000';
       const createAvailabilityDto: CreateAvailabilityDto = {
-        tutorId,
+        tutorId: TEST_USER_ID,
         blocks: [{ day: 'Lun', hour: '09:00' }],
       };
 
       const mockResponse = {
         message: 'Disponibilidad registrada exitosamente para el tutor.',
-        tutorId,
+        tutorId: TEST_USER_ID,
         blocks: [{ id: 'uuid-block-1', day: 'Lun', hour: '09:00' }],
       };
 
@@ -105,14 +99,14 @@ describe('DisponibilidadController (E2E)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/api/disponibilidad')
-        .set('Authorization', `Bearer valid-jwt-token-${tutorId}`)
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
         .send(createAvailabilityDto);
 
       expect(response.status).toBe(HttpStatus.CREATED);
       expect(response.body).toEqual(mockResponse);
       expect(createAvailabilityUseCase.execute).toHaveBeenCalledTimes(1);
       expect(createAvailabilityUseCase.execute).toHaveBeenCalledWith(
-        tutorId,
+        TEST_USER_ID,
         createAvailabilityDto.blocks,
       );
     });
@@ -124,9 +118,8 @@ describe('DisponibilidadController (E2E)', () => {
      * Then: 201 Created, DisponibilidadService.save called, response matches contract.
      */
     it('ESC-2: Debería actualizar exitosamente la disponibilidad existente', async () => {
-      const tutorId = '550e8400-e29b-41d4-a716-446655440001';
       const createAvailabilityDto: CreateAvailabilityDto = {
-        tutorId,
+        tutorId: TEST_USER_ID,
         blocks: [
           { day: 'Mié', hour: '11:00' },
           { day: 'Jue', hour: '12:00' },
@@ -135,7 +128,7 @@ describe('DisponibilidadController (E2E)', () => {
 
       const mockResponse = {
         message: 'Disponibilidad registrada exitosamente para el tutor.',
-        tutorId,
+        tutorId: TEST_USER_ID,
         blocks: [
           { id: 'uuid-block-2', day: 'Mié', hour: '11:00' },
           { id: 'uuid-block-3', day: 'Jue', hour: '12:00' },
@@ -146,14 +139,14 @@ describe('DisponibilidadController (E2E)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/api/disponibilidad')
-        .set('Authorization', `Bearer valid-jwt-token-${tutorId}`)
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
         .send(createAvailabilityDto);
 
       expect(response.status).toBe(HttpStatus.CREATED);
       expect(response.body).toEqual(mockResponse);
       expect(createAvailabilityUseCase.execute).toHaveBeenCalledTimes(1);
       expect(createAvailabilityUseCase.execute).toHaveBeenCalledWith(
-        tutorId,
+        TEST_USER_ID,
         createAvailabilityDto.blocks,
       );
     });
@@ -165,7 +158,6 @@ describe('DisponibilidadController (E2E)', () => {
      * Then: 201 Created, service called with JWT tutorId, response tutorId is uuid-tutor-C.
      */
     it('ESC-3: TutorId del JWT debe tener prioridad sobre el del DTO', async () => {
-      const jwtTutorId = '550e8400-e29b-41d4-a716-446655440002';
       const dtoDifferentTutorId = '550e8400-e29b-41d4-a716-446655440099';
       const createAvailabilityDto: CreateAvailabilityDto = {
         tutorId: dtoDifferentTutorId,
@@ -174,7 +166,7 @@ describe('DisponibilidadController (E2E)', () => {
 
       const mockResponse = {
         message: 'Disponibilidad registrada exitosamente para el tutor.',
-        tutorId: jwtTutorId,
+        tutorId: TEST_USER_ID,
         blocks: [{ id: 'uuid-block-4', day: 'Vie', hour: '14:00' }],
       };
 
@@ -182,16 +174,16 @@ describe('DisponibilidadController (E2E)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/api/disponibilidad')
-        .set('Authorization', `Bearer valid-jwt-token-${jwtTutorId}`)
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
         .send(createAvailabilityDto);
 
       expect(response.status).toBe(HttpStatus.CREATED);
-      expect(response.body.tutorId).toBe(jwtTutorId);
+      expect(response.body.tutorId).toBe(TEST_USER_ID);
       expect(response.body.tutorId).not.toBe(dtoDifferentTutorId);
       expect(createAvailabilityUseCase.execute).toHaveBeenCalledTimes(1);
       // UseCase debe ser llamado con tutorId del JWT
       expect(createAvailabilityUseCase.execute).toHaveBeenCalledWith(
-        jwtTutorId,
+        TEST_USER_ID,
         expect.any(Array),
       );
     });
@@ -228,15 +220,14 @@ describe('DisponibilidadController (E2E)', () => {
      * Then: 400 Bad Request, message: "Se debe seleccionar al menos un horario disponible."
      */
     it('ESC-5: Debería retornar 400 Bad Request si blocks está vacío', async () => {
-      const tutorId = '550e8400-e29b-41d4-a716-446655440003';
       const createAvailabilityDto: CreateAvailabilityDto = {
-        tutorId,
+        tutorId: TEST_USER_ID,
         blocks: [],
       };
 
       const response = await request(app.getHttpServer())
         .post('/api/disponibilidad')
-        .set('Authorization', `Bearer valid-jwt-token-${tutorId}`)
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
         .send(createAvailabilityDto);
 
       expect(response.status).toBe(HttpStatus.BAD_REQUEST);
@@ -262,15 +253,14 @@ describe('DisponibilidadController (E2E)', () => {
      * Then: 400 Bad Request, message array contains "El día no puede estar vacío."
      */
     it('ESC-6: Debería retornar 400 Bad Request si day es nulo o vacío', async () => {
-      const tutorId = '550e8400-e29b-41d4-a716-446655440004';
       const createAvailabilityDto = {
-        tutorId,
+        tutorId: TEST_USER_ID,
         blocks: [{ day: null, hour: '09:00' }],
       };
 
       const response = await request(app.getHttpServer())
         .post('/api/disponibilidad')
-        .set('Authorization', `Bearer valid-jwt-token-${tutorId}`)
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
         .send(createAvailabilityDto);
 
       expect(response.status).toBe(HttpStatus.BAD_REQUEST);
@@ -294,15 +284,14 @@ describe('DisponibilidadController (E2E)', () => {
      * Then: 400 Bad Request, message array contains "La hora no puede estar vacía."
      */
     it('ESC-7: Debería retornar 400 Bad Request si hour es vacío', async () => {
-      const tutorId = '550e8400-e29b-41d4-a716-446655440005';
       const createAvailabilityDto: CreateAvailabilityDto = {
-        tutorId,
+        tutorId: TEST_USER_ID,
         blocks: [{ day: 'Lun', hour: '' }],
       };
 
       const response = await request(app.getHttpServer())
         .post('/api/disponibilidad')
-        .set('Authorization', `Bearer valid-jwt-token-${tutorId}`)
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
         .send(createAvailabilityDto);
 
       expect(response.status).toBe(HttpStatus.BAD_REQUEST);
@@ -326,9 +315,8 @@ describe('DisponibilidadController (E2E)', () => {
      * Then: 500 Internal Server Error, response matches contract.
      */
     it('ESC-8: Debería retornar 500 Internal Server Error si el servicio falla', async () => {
-      const tutorId = '550e8400-e29b-41d4-a716-446655440006';
       const createAvailabilityDto: CreateAvailabilityDto = {
-        tutorId,
+        tutorId: TEST_USER_ID,
         blocks: [{ day: 'Lun', hour: '09:00' }],
       };
 
@@ -338,7 +326,7 @@ describe('DisponibilidadController (E2E)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/api/disponibilidad')
-        .set('Authorization', `Bearer valid-jwt-token-${tutorId}`)
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
         .send(createAvailabilityDto);
 
       expect(response.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);

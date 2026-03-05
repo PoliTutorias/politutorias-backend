@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AvailabilityEntity } from '../disponibilidad/entities/availability.entity';
 import { Tutor } from '../tutors/entities/tutor.entity';
 import { IOfertaRepository } from './application/ports/oferta.repository.interface';
 import { CreateOfertaUseCase } from './application/use-cases/create-oferta.use-case';
@@ -14,7 +15,7 @@ import { OfertasService } from './ofertas.service';
 import { TutorOfertasController } from './tutor-ofertas.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Oferta, Tutor])],
+  imports: [TypeOrmModule.forFeature([Oferta, Tutor, AvailabilityEntity])],
   controllers: [OfertasController, TutorOfertasController],
   providers: [
     CreateOfertaUseCase,

@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
-    HttpStatus,
-    INestApplication,
-    InternalServerErrorException,
-    ValidationPipe,
+  HttpStatus,
+  INestApplication,
+  InternalServerErrorException,
+  ValidationPipe,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
@@ -152,9 +152,7 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
         data: [MOCK_OFERTA_1, MOCK_OFERTA_2, MOCK_OFERTA_3],
         total: 3,
       };
-      mockOfertasService.getFilteredOfertas.mockResolvedValueOnce(
-        mockResponse,
-      );
+      mockOfertasService.getFilteredOfertas.mockResolvedValueOnce(mockResponse);
 
       await request(app.getHttpServer())
         .get('/api/ofertas')
@@ -207,9 +205,7 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
         data: [MOCK_OFERTA_1, MOCK_OFERTA_2],
         total: 2,
       };
-      mockOfertasService.getFilteredOfertas.mockResolvedValueOnce(
-        mockResponse,
-      );
+      mockOfertasService.getFilteredOfertas.mockResolvedValueOnce(mockResponse);
 
       await request(app.getHttpServer())
         .get('/api/ofertas?minPrice=10&maxPrice=20')
@@ -236,9 +232,7 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
         data: [MOCK_OFERTA_1, MOCK_OFERTA_3],
         total: 2,
       };
-      mockOfertasService.getFilteredOfertas.mockResolvedValueOnce(
-        mockResponse,
-      );
+      mockOfertasService.getFilteredOfertas.mockResolvedValueOnce(mockResponse);
 
       await request(app.getHttpServer())
         .get('/api/ofertas?minPrice=15')
@@ -261,9 +255,7 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
         data: [MOCK_OFERTA_1, MOCK_OFERTA_2],
         total: 2,
       };
-      mockOfertasService.getFilteredOfertas.mockResolvedValueOnce(
-        mockResponse,
-      );
+      mockOfertasService.getFilteredOfertas.mockResolvedValueOnce(mockResponse);
 
       await request(app.getHttpServer())
         .get('/api/ofertas?maxPrice=15')

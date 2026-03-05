@@ -23,7 +23,7 @@ export async function seedTutors(dataSource: DataSource): Promise<void> {
     // ── Tutor "en cero" — sólo para asociar ofertas creadas desde la API ──
     {
       id: ZERO_TUTOR_ID,
-      userId: 'seed-user-000',
+      userId: 'test-user-123',
       nombreCompleto: 'Tutor de Pruebas',
       numeroWhatsapp: '0000000000',
       facultad: Facultades.FIS_SISTEMAS,

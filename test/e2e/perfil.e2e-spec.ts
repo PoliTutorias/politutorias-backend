@@ -14,6 +14,7 @@ import { PerfilController } from './../../src/perfil/perfil.controller';
 import { PerfilService } from './../../src/perfil/perfil.service';
 import { JwtAuthGuard } from './../../src/auth/guards/jwt-auth.guard';
 import { PerfilProfesionalEntity } from '../../src/perfil/entities/perfil-profesional.entity';
+import { DEV_JWT_TOKEN, TEST_USER_ID } from '../../src/auth/jwt.constants';
 
 describe('PerfilController (e2e)', () => {
   let app: INestApplication;
@@ -24,7 +25,7 @@ describe('PerfilController (e2e)', () => {
   const mockJwtAuthGuard: CanActivate = {
     canActivate: jest.fn((context) => {
       const req = context.switchToHttp().getRequest<{ user: { id: string } }>();
-      req.user = { id: 'a-valid-uuid-tutor-id' };
+      req.user = { id: TEST_USER_ID };
       return true;
     }),
   };
@@ -61,14 +62,14 @@ describe('PerfilController (e2e)', () => {
         const req = context
           .switchToHttp()
           .getRequest<{ user: { id: string } }>();
-        req.user = { id: 'a-valid-uuid-tutor-id' };
+        req.user = { id: TEST_USER_ID };
         return true;
       });
   });
 
   // Escenario 1: Finalización Exitosa del Perfil (Creación/Actualización)
   it('should finalize the professional profile and return 200 OK', async () => {
-    const tutorId = 'a-valid-uuid-tutor-id';
+    const tutorId = TEST_USER_ID;
     const perfilProfesionalDto = {
       materias: ['Cálculo', 'Física'],
     };
@@ -84,7 +85,7 @@ describe('PerfilController (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/perfil/finalizar')
-      .set('Authorization', `Bearer some-jwt-token`)
+      .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
       .send(perfilProfesionalDto)
       .expect(HttpStatus.OK)
       .expect((res) => {
@@ -105,7 +106,7 @@ describe('PerfilController (e2e)', () => {
 
   // Escenario 2: Actualización de Materias a Vacío
   it('should update materias to an empty array and return 200 OK', async () => {
-    const tutorId = 'a-valid-uuid-tutor-id';
+    const tutorId = TEST_USER_ID;
     const perfilProfesionalDto = {
       materias: [],
     };
@@ -121,7 +122,7 @@ describe('PerfilController (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/perfil/finalizar')
-      .set('Authorization', `Bearer some-jwt-token`)
+      .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
       .send(perfilProfesionalDto)
       .expect(HttpStatus.OK)
       .expect((res) => {
@@ -145,7 +146,7 @@ describe('PerfilController (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/perfil/finalizar')
-      .set('Authorization', `Bearer some-jwt-token`)
+      .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
       .send(invalidPerfilProfesionalDto)
       .expect(HttpStatus.BAD_REQUEST)
       .expect((res) => {
@@ -178,7 +179,7 @@ describe('PerfilController (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/perfil/finalizar')
-      .set('Authorization', `Bearer some-jwt-token`)
+      .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
       .send(invalidPerfilProfesionalDto)
       .expect(HttpStatus.BAD_REQUEST)
       .expect((res) => {
@@ -218,7 +219,7 @@ describe('PerfilController (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/perfil/finalizar')
-      .set('Authorization', `Bearer some-jwt-token`)
+      .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
       .send(perfilProfesionalDto)
       .expect(HttpStatus.INTERNAL_SERVER_ERROR)
       .expect((res) => {

@@ -26,9 +26,9 @@
  */
 
 import {
-    INestApplication,
-    InternalServerErrorException,
-    ValidationPipe,
+  INestApplication,
+  InternalServerErrorException,
+  ValidationPipe,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
@@ -234,8 +234,12 @@ describe('OfertasController (e2e) — HU26: Filtrar por modalidad', () => {
       expect(response.body.data).toHaveLength(2);
 
       // Estructura completa de cada OfertaDto (Riesgos 1 y 2)
-      assertOfertaDtoStructure(response.body.data[0] as Record<string, unknown>);
-      assertOfertaDtoStructure(response.body.data[1] as Record<string, unknown>);
+      assertOfertaDtoStructure(
+        response.body.data[0] as Record<string, unknown>,
+      );
+      assertOfertaDtoStructure(
+        response.body.data[1] as Record<string, unknown>,
+      );
 
       // Los datos devueltos coinciden exactamente con el mock configurado
       expect(response.body).toEqual(mockResponse);
@@ -275,8 +279,12 @@ describe('OfertasController (e2e) — HU26: Filtrar por modalidad', () => {
       expect(Array.isArray(response.body.data)).toBe(true);
       expect(response.body.data).toHaveLength(2);
 
-      assertOfertaDtoStructure(response.body.data[0] as Record<string, unknown>);
-      assertOfertaDtoStructure(response.body.data[1] as Record<string, unknown>);
+      assertOfertaDtoStructure(
+        response.body.data[0] as Record<string, unknown>,
+      );
+      assertOfertaDtoStructure(
+        response.body.data[1] as Record<string, unknown>,
+      );
 
       expect(response.body).toEqual(mockResponse);
 
@@ -315,7 +323,9 @@ describe('OfertasController (e2e) — HU26: Filtrar por modalidad', () => {
         (response.body.data as Array<{ modalidad: string }>)[0].modalidad,
       ).toBe('AMBOS');
 
-      assertOfertaDtoStructure(response.body.data[0] as Record<string, unknown>);
+      assertOfertaDtoStructure(
+        response.body.data[0] as Record<string, unknown>,
+      );
 
       expect(response.body).toEqual(mockResponse);
     });

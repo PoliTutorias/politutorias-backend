@@ -7,7 +7,6 @@ import {
   UseGuards,
   Req,
   InternalServerErrorException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -16,7 +15,6 @@ import {
   ApiBearerAuth,
   ApiOperation,
 } from '@nestjs/swagger';
-import { validate as validateUUID } from 'uuid';
 import { Request } from 'express';
 import { CreateAvailabilityUseCase } from './application/use-cases/create-availability.use-case';
 import { CreateAvailabilityDto } from './dto/create-availability.dto';
@@ -85,13 +83,6 @@ export class DisponibilidadController {
     @Req() req: AuthenticatedRequest,
   ) {
     const tutorIdFromToken = req.user.id;
-
-    // Validar que tutorId sea un UUID válido
-    if (!validateUUID(tutorIdFromToken)) {
-      throw new UnauthorizedException(
-        'Token JWT inválido: tutorId no es un UUID válido.',
-      );
-    }
 
     try {
       const result = await this.createAvailabilityUseCase.execute(

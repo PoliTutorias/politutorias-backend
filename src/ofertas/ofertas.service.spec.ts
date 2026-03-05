@@ -1207,8 +1207,9 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
       );
 
       // La condición WHERE NO debe contener ninguna clave `modalidad`
-      const callArgs = mockHU26Repository.findAndCount.mock
-        .calls[0][0] as Record<string, unknown>;
+      const firstCall = mockHU26Repository.findAndCount.mock
+        .calls[0] as unknown[];
+      const callArgs = firstCall[0] as Record<string, unknown>;
       const whereClause = callArgs.where as Record<string, unknown>;
       expect(whereClause).not.toHaveProperty('modalidad');
 

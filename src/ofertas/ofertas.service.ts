@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { FindManyOptions, Repository } from 'typeorm';
 import { FilterQueryParams } from '../common/dtos/filter-query-params.dto';
+import { AvailabilityEntity } from '../disponibilidad/entities/availability.entity';
 import { FindOfertasByPriceUseCase } from './application/use-cases/find-ofertas-by-price.use-case';
 import { GetFilteredOfertasUseCase } from './application/use-cases/get-filtered-ofertas.use-case';
 import { Oferta } from './domain/entities/oferta.entity';
@@ -30,13 +31,13 @@ export class OfertasService {
   constructor(
     @InjectRepository(Oferta)
     private readonly ofertaRepository: Repository<Oferta>,
+    @InjectRepository(AvailabilityEntity)
+    private readonly availabilityRepository: Repository<AvailabilityEntity>,
   ) {
     this.findOfertasByPriceUseCase = new FindOfertasByPriceUseCase(
       this.ofertaRepository,
       new OfertaMapper(),
     );
-    // Oferta domain entity ahora incluye las columnas HU26 (modalidad, titulo,
-    // precioHora, etc.) y es el único gestor del schema de la tabla "ofertas".
     this.getFilteredOfertasUseCase = new GetFilteredOfertasUseCase({
       findAndCountFiltered: (options) =>
         this.ofertaRepository.findAndCount({
@@ -51,11 +52,6 @@ export class OfertasService {
    *
    * @param tutorId - UUID del tutor
    * @returns Array de OfertaDto (vacío si no hay ofertas)
-   *
-   * Mapeo de campos:
-   * - modality → isPresencial (true solo si es exactamente "Presencial")
-   * - price → pricePerHour
-   * - categories → tags
    */
   async findAllByTutorId(tutorId: string): Promise<OfertaDto[]> {
     const offers = await this.ofertaRepository.find({
@@ -70,26 +66,15 @@ export class OfertasService {
       id: offer.id,
       title: offer.title,
       description: offer.description,
-      isPresencial: offer.modality === 'Presencial', // Mapeo requerido
-      pricePerHour: offer.price, // Mapeo requerido
-      tags: offer.categories, // Mapeo requerido
-      createdAt: offer.createdAt.toISOString(), // Formato ISO 8601
+      isPresencial: offer.modality === 'Presencial',
+      pricePerHour: offer.price,
+      tags: offer.categories,
+      createdAt: offer.createdAt.toISOString(),
     }));
   }
 
   /**
-   * Mapea una entidad `Oferta` (con relación `tutor` cargada) al DTO de respuesta.
-   *
-   * Responsabilidad única: transformación de entidad → DTO (SRP / Mapper Pattern).
-   *
-   * Conversiones aplicadas:
-   *  - `price`       : decimal → `number` via `parseFloat`
-   *  - `categories`  → `tags`
-   *  - `tutor.photoUrl` → `tutor.photo`
-   *  - `createdAt`   : `Date` → ISO 8601 `string` via `toISOString()`
-   *
-   * @param offer - Entidad `Oferta` con `tutor` cargado a través de `leftJoinAndSelect`
-   * @returns `OfferResponseDto` listo para serializar en la respuesta HTTP
+   * Mapea una entidad `Oferta` al DTO de respuesta.
    */
   private mapToOfferResponseDto(offer: Oferta): OfferResponseDto {
     return {
@@ -114,18 +99,6 @@ export class OfertasService {
 
   /**
    * HU17: Busca y pagina ofertas de tutoría por término de búsqueda.
-   *
-   * Responsabilidad: orquestar la consulta (QueryBuilder), paginación
-   * y delegar el mapeo de entidades a `mapToOfferResponseDto`.
-   *
-   * @param query - Parámetros de consulta (searchTerm, page, limit)
-   * @returns Respuesta paginada con ofertas que coinciden con el criterio
-   *
-   * Búsqueda:
-   * - Busca en el título de la oferta (title) o nombre del tutor (nombreCompleto)
-   * - Búsqueda insensible a mayúsculas/minúsculas mediante LOWER()
-   * - Si searchTerm está vacío o es solo espacios, retorna todas las ofertas
-   * - Ordena por fecha de creación (más recientes primero)
    */
   async searchOffers(
     query: OffersQueryParams,
@@ -133,11 +106,8 @@ export class OfertasService {
     const { searchTerm, page = 1, limit = 10 } = query;
 
     const queryBuilder = this.ofertaRepository.createQueryBuilder('offer');
-
-    // Cargar relación tutor para acceder a su nombre y foto en el mapeo
     queryBuilder.leftJoinAndSelect('offer.tutor', 'tutor');
 
-    // Aplicar filtro de búsqueda solo cuando el término no es vacío/solo espacios
     if (searchTerm && searchTerm.trim() !== '') {
       queryBuilder.andWhere(
         '(LOWER(offer.title) LIKE LOWER(:searchTerm) OR LOWER(tutor.nombreCompleto) LIKE LOWER(:searchTerm))',
@@ -145,10 +115,8 @@ export class OfertasService {
       );
     }
 
-    // Ordenamiento por defecto: más recientes primero
     queryBuilder.orderBy('offer.createdAt', 'DESC');
 
-    // Calcular offset y aplicar paginación
     const skip = (page - 1) * limit;
     queryBuilder.skip(skip).take(limit);
 
@@ -172,11 +140,6 @@ export class OfertasService {
 
   /**
    * HU27: Filtra ofertas por rango de precio (minPrice / maxPrice).
-   *
-   * Delega la lógica de filtrado y mapeo a `FindOfertasByPriceUseCase`.
-   *
-   * @param filterParams - Parámetros opcionales `minPrice` y `maxPrice`.
-   * @returns Objeto con el array de DTOs de respuesta y el total de registros.
    */
   async findFilteredOfertas(
     filterParams: FilterQueryParams,
@@ -185,22 +148,37 @@ export class OfertasService {
   }
 
   /**
-   * HU26: Filtra ofertas por modalidad (PRESENCIAL / VIRTUAL / AMBOS).
+   * HU26 + HU16: Filtra ofertas por modalidad, precio y/o disponibilidad.
    *
-   * Actúa como orquestador de capa de aplicación:
-   *  1. Delega la lógica de filtrado a `GetFilteredOfertasUseCase` (SRP).
-   *  2. Transforma las entidades crudas a DTOs de respuesta (responsabilidad
-   *     de presentación que permanece en esta capa para mantener compatibilidad
-   *     con los tests E2E existentes que mockean este método completo).
-   *  3. Atrapa errores genéricos y los convierte en `InternalServerErrorException`.
+   * Si `disponibilidad` está presente, busca tutorIds que tengan
+   * disponibilidad en ese día y los inyecta como filtro adicional
+   * en el use-case existente.
    *
-   * @param filterDto - DTO con campo opcional `modalidad` (array de strings).
+   * @param filterDto - DTO con campos opcionales `modalidad`, `minPrice`, `maxPrice`, `disponibilidad`.
    * @returns Objeto con `data` (array de OfertaItemDto) y `total` (conteo).
    */
   async getFilteredOfertas(
     filterDto: GetOfertasFilterDto,
   ): Promise<{ data: OfertaItemDto[]; total: number }> {
     try {
+      // HU16: Si se filtra por disponibilidad, primero obtener los tutorIds relevantes
+      if (filterDto.disponibilidad) {
+        const availabilities = await this.availabilityRepository.find({
+          where: { day: filterDto.disponibilidad },
+          select: ['tutorId'],
+        });
+
+        const tutorIds = [...new Set(availabilities.map((a) => a.tutorId))];
+
+        if (tutorIds.length === 0) {
+          return { data: [], total: 0 };
+        }
+
+        // Inyectar los tutorIds encontrados como filtro adicional
+        (filterDto as GetOfertasFilterDto & { tutorIds?: string[] }).tutorIds =
+          tutorIds;
+      }
+
       const [entities, total] =
         await this.getFilteredOfertasUseCase.execute(filterDto);
 
@@ -210,7 +188,7 @@ export class OfertasService {
 
       return { data, total };
     } catch (error) {
-      console.error('Error al filtrar ofertas por modalidad:', error);
+      console.error('Error al filtrar ofertas:', error);
       throw new InternalServerErrorException(
         'Error interno al filtrar ofertas.',
       );

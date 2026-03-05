@@ -76,6 +76,11 @@ async function runSeed() {
       DROP TABLE IF EXISTS availability               CASCADE;
       DROP TABLE IF EXISTS ofertas                    CASCADE;
       DROP TABLE IF EXISTS tutors                     CASCADE;
+
+      -- Eliminar tipos ENUM huérfanos para que synchronize los recree con los valores actuales
+      DROP TYPE IF EXISTS tutors_facultad_enum         CASCADE;
+      DROP TYPE IF EXISTS tutors_semestreactual_enum   CASCADE;
+      DROP TYPE IF EXISTS ofertas_modalidad_enum       CASCADE;
     `);
     await PreDataSource.destroy();
     console.log('✅ Tablas eliminadas');

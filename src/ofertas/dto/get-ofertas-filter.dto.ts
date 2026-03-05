@@ -6,6 +6,7 @@ import {
   IsNumber,
   IsOptional,
   IsPositive,
+  IsString,
   Min,
 } from 'class-validator';
 import { OfferModality } from '../entities/oferta.entity';
@@ -63,4 +64,18 @@ export class GetOfertasFilterDto {
   @IsNumber({}, { message: 'maxPrice debe ser un número válido.' })
   @IsPositive({ message: 'maxPrice debe ser un número positivo.' })
   maxPrice?: number;
+
+  @ApiPropertyOptional({
+    type: String,
+    description:
+      'Día de la semana para filtrar por disponibilidad del tutor. Valores: Lun, Mar, Mié, Jue, Vie, Sáb, Dom',
+    example: 'Lun',
+  })
+  @IsOptional()
+  @IsString({ message: 'disponibilidad debe ser un texto válido.' })
+  @IsIn(['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'], {
+    message:
+      'disponibilidad debe ser uno de: Lun, Mar, Mié, Jue, Vie, Sáb, Dom',
+  })
+  disponibilidad?: string;
 }

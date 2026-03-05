@@ -1,13 +1,13 @@
 import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  Index,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-  Unique,
-  UpdateDateColumn,
+    Column,
+    CreateDateColumn,
+    Entity,
+    Index,
+    JoinColumn,
+    ManyToOne,
+    PrimaryGeneratedColumn,
+    Unique,
+    UpdateDateColumn,
 } from 'typeorm';
 import { Tutor } from '../../../tutors/entities/tutor.entity';
 import { CreateOfertaDto } from '../../dto/create-oferta.dto';
@@ -60,7 +60,7 @@ export class Oferta {
 
   @Column({
     type: 'enum',
-    enum: ['PRESENCIAL', 'VIRTUAL', 'AMBOS'],
+    enum: ['PRESENCIAL', 'VIRTUAL', 'Virtual/Presencial'],
     nullable: true,
   })
   modalidad?: string | null;
@@ -97,6 +97,20 @@ export class Oferta {
     oferta.categories = dto.categories;
     oferta.description = dto.description;
     oferta.tutorId = tutorId;
+    // HU26: poblar columnas HU26 para que los filtros de modalidad funcionen
+    oferta.titulo = dto.title;
+    oferta.descripcion = dto.description;
+    oferta.precioHora = dto.price;
+    oferta.modalidad = Oferta.toOfferModality(dto.modality);
     return oferta;
+  }
+
+  private static toOfferModality(modality: string): string | null {
+    const lower = (modality ?? '').toLowerCase();
+    if (lower === 'presencial') return 'PRESENCIAL';
+    if (lower === 'virtual') return 'VIRTUAL';
+    if (lower === 'virtual/presencial' || lower === 'ambos')
+      return 'Virtual/Presencial';
+    return null;
   }
 }

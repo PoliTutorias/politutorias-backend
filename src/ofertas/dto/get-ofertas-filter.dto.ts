@@ -1,13 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
-  IsArray,
-  IsIn,
-  IsNumber,
-  IsOptional,
-  IsPositive,
-  IsString,
-  Min,
+    IsArray,
+    IsIn,
+    IsNumber,
+    IsOptional,
+    IsPositive,
+    IsString,
+    Min,
 } from 'class-validator';
 import { OfferModality } from '../entities/oferta.entity';
 
@@ -23,15 +23,23 @@ export class GetOfertasFilterDto {
   @ApiPropertyOptional({
     type: String,
     description:
-      'Modalidades a filtrar separadas por coma. Valores permitidos: PRESENCIAL, VIRTUAL, AMBOS',
-    example: 'PRESENCIAL,AMBOS',
+      'Modalidades a filtrar separadas por coma. Valores permitidos: PRESENCIAL, VIRTUAL, Virtual/Presencial',
+    example: 'PRESENCIAL,Virtual/Presencial',
   })
   @IsOptional()
   @Transform(({ value }: { value: unknown }) => {
     if (typeof value === 'string') {
       return value
         .split(',')
-        .map((v) => v.trim().toUpperCase())
+        .map((v) => {
+          const trimmed = v.trim();
+          // Búsqueda case-insensitive para aceptar variantes del enum
+          return (
+            VALID_MODALITIES.find(
+              (m) => m.toLowerCase() === trimmed.toLowerCase(),
+            ) ?? trimmed
+          );
+        })
         .filter(Boolean);
     }
     return value as string[];

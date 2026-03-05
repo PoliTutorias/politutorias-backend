@@ -335,14 +335,14 @@ export async function seedOfertas(dataSource: DataSource): Promise<void> {
  * 9 ofertas con los tres valores del enum OfferModality (3 por modalidad):
  *   PRESENCIAL: tutorías cara a cara
  *   VIRTUAL:    tutorías en línea
- *   AMBOS:      tutorías que admiten ambas modalidades
+ *   Virtual/Presencial: tutorías que admiten ambas modalidades
  *
  * Casos de prueba habilitados:
  *   GET /api/ofertas                         → devuelve las 9 ofertas
  *   GET /api/ofertas?modalidad=PRESENCIAL    → devuelve las 3 presenciales
  *   GET /api/ofertas?modalidad=VIRTUAL       → devuelve las 3 virtuales
- *   GET /api/ofertas?modalidad=AMBOS         → devuelve las 3 de ambos
- *   GET /api/ofertas?modalidad=PRESENCIAL,AMBOS → devuelve las 6 correspondientes
+ *   GET /api/ofertas?modalidad=Virtual/Presencial → devuelve las 3 de ambas modalidades
+ *   GET /api/ofertas?modalidad=PRESENCIAL,Virtual/Presencial → devuelve las 6 correspondientes
  *
  * Tutores asociados al tutor "en cero" (ZERO_TUTOR_ID) para no requerir
  * tutores adicionales más allá de los ya creados por seedTutors.
@@ -428,7 +428,7 @@ export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
       nivel: 'Universitario',
       tutorId: T3,
     },
-    // ─── AMBOS (3 ofertas) ──────────────────────────────────────────────────
+    // ─── Virtual/Presencial (3 ofertas) ────────────────────────────────────────────────
     {
       titulo: 'Física Mecánica — Presencial o Virtual',
       descripcion:
@@ -462,7 +462,7 @@ export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
   ];
 
   console.log(
-    '📚 Insertando ofertas HU26 (con campo modalidad PRESENCIAL/VIRTUAL/AMBOS)...',
+    '📚 Insertando ofertas HU26 (con campo modalidad PRESENCIAL/VIRTUAL/Virtual/Presencial)...',
   );
 
   for (const data of ofertasHU26) {
@@ -492,6 +492,6 @@ export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
   }
 
   console.log(
-    `✅ ${ofertasHU26.length} ofertas HU26 insertadas (3 PRESENCIAL + 3 VIRTUAL + 3 AMBOS)`,
+    `✅ ${ofertasHU26.length} ofertas HU26 insertadas (3 PRESENCIAL + 3 VIRTUAL + 3 Virtual/Presencial)`,
   );
 }

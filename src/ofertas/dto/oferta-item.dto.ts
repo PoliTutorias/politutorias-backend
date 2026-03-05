@@ -77,7 +77,7 @@ export class OfertaItemDto {
 
   @ApiProperty({
     description: 'Modalidad de la tutoría',
-    enum: ['PRESENCIAL', 'VIRTUAL', 'Virtual/Presencial'],
+    enum: ['PRESENCIAL', 'VIRTUAL', 'VIRTUAL/PRESENCIAL'],
     example: 'VIRTUAL',
   })
   @Expose()

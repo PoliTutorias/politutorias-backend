@@ -15,7 +15,7 @@ import { Tutor } from '../../tutors/entities/tutor.entity';
 export enum OfferModality {
   PRESENCIAL = 'PRESENCIAL',
   VIRTUAL = 'VIRTUAL',
-  AMBOS = 'Virtual/Presencial',
+  AMBOS = 'VIRTUAL/PRESENCIAL',
 }
 
 /**

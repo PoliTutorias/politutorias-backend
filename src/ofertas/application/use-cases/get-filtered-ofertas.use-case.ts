@@ -45,9 +45,9 @@ export class GetFilteredOfertasUseCase {
    * @returns Par [entidades crudas, total] para que la capa superior haga el mapeo.
    *
    * Reglas de expansión de modalidad:
-   *  - `PRESENCIAL`       → también incluye `Virtual/Presencial`
-   *  - `VIRTUAL`          → también incluye `Virtual/Presencial`
-   *  - `Virtual/Presencial` sola → solo registros estrictamente `Virtual/Presencial`
+   *  - `PRESENCIAL`       → también incluye `VIRTUAL/PRESENCIAL`
+   *  - `VIRTUAL`          → también incluye `VIRTUAL/PRESENCIAL`
+   *  - `VIRTUAL/PRESENCIAL` sola → solo registros estrictamente `VIRTUAL/PRESENCIAL`
    * - Si `modalidad` es `undefined` o `[]` → no añade cláusula WHERE (devuelve todo).
    * - Siempre ordena por `fechaCreacion DESC` (más recientes primero).
    */
@@ -59,9 +59,9 @@ export class GetFilteredOfertasUseCase {
 
     if (filterDto.modalidad && filterDto.modalidad.length > 0) {
       const expanded = new Set(filterDto.modalidad);
-      // PRESENCIAL o VIRTUAL implican incluir también Virtual/Presencial
+      // PRESENCIAL o VIRTUAL implican incluir también VIRTUAL/PRESENCIAL
       if (expanded.has('PRESENCIAL') || expanded.has('VIRTUAL')) {
-        expanded.add('Virtual/Presencial');
+        expanded.add('VIRTUAL/PRESENCIAL');
       }
       where['modalidad'] = In([...expanded]);
     }

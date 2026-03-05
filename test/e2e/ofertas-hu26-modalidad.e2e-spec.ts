@@ -86,7 +86,7 @@ const mockOfertaAmbos = {
   id: 'a1b2c3d4-0003-4000-8000-000000000003',
   titulo: 'Física General (Presencial y Virtual)',
   descripcion: 'Clases de física en cualquier modalidad.',
-  modalidad: 'Virtual/Presencial',
+  modalidad: 'VIRTUAL/PRESENCIAL',
   precioHora: 20.0,
   areaConocimiento: 'Física',
   nivel: 'Universitario',
@@ -117,7 +117,7 @@ function assertOfertaDtoStructure(oferta: Record<string, unknown>): void {
   expect(typeof oferta.titulo).toBe('string');
 
   expect(oferta).toHaveProperty('modalidad');
-  expect(['PRESENCIAL', 'VIRTUAL', 'Virtual/Presencial']).toContain(oferta.modalidad);
+  expect(['PRESENCIAL', 'VIRTUAL', 'VIRTUAL/PRESENCIAL']).toContain(oferta.modalidad);
 
   expect(oferta).toHaveProperty('precioHora');
   expect(typeof oferta.precioHora).toBe('number');
@@ -199,12 +199,12 @@ describe('OfertasController (e2e) — HU26: Filtrar por modalidad', () => {
 
   // ── Escenario 1: Filtrar por PRESENCIAL ──────────────────────────────────
   /**
-   * GIVEN: Existen ofertas PRESENCIAL, VIRTUAL y Virtual/Presencial en la base de datos.
+   * GIVEN: Existen ofertas PRESENCIAL, VIRTUAL y VIRTUAL/PRESENCIAL en la base de datos.
    * WHEN:  GET /api/ofertas?modalidad=PRESENCIAL
-   * THEN:  200 con ofertas PRESENCIAL y Virtual/Presencial (expansión automática en use case).
+   * THEN:  200 con ofertas PRESENCIAL y VIRTUAL/PRESENCIAL (expansión automática en use case).
    */
   describe('Escenario 1: Filtrar por modalidad=PRESENCIAL', () => {
-    it('debe retornar 200 con ofertas PRESENCIAL y Virtual/Presencial (expansión automática)', async () => {
+    it('debe retornar 200 con ofertas PRESENCIAL y VIRTUAL/PRESENCIAL (expansión automática)', async () => {
       const mockResponse = {
         data: [mockOfertaPresencial, mockOfertaAmbos],
         total: 2,
@@ -239,7 +239,7 @@ describe('OfertasController (e2e) — HU26: Filtrar por modalidad', () => {
       // Los datos devueltos coinciden exactamente con el mock configurado
       expect(response.body).toEqual(mockResponse);
 
-      // Sólo deben aparecer modalidades PRESENCIAL y Virtual/Presencial
+      // Sólo deben aparecer modalidades PRESENCIAL y VIRTUAL/PRESENCIAL
       const modalidades: string[] = (
         response.body.data as Array<{ modalidad: string }>
       ).map((o) => o.modalidad);
@@ -249,12 +249,12 @@ describe('OfertasController (e2e) — HU26: Filtrar por modalidad', () => {
 
   // ── Escenario 2: Filtrar por VIRTUAL ─────────────────────────────────────
   /**
-   * GIVEN: Existen ofertas PRESENCIAL, VIRTUAL y Virtual/Presencial.
+   * GIVEN: Existen ofertas PRESENCIAL, VIRTUAL y VIRTUAL/PRESENCIAL.
    * WHEN:  GET /api/ofertas?modalidad=VIRTUAL
-   * THEN:  200 con ofertas VIRTUAL y Virtual/Presencial (expansión automática en use case).
+   * THEN:  200 con ofertas VIRTUAL y VIRTUAL/PRESENCIAL (expansión automática en use case).
    */
   describe('Escenario 2: Filtrar por modalidad=VIRTUAL', () => {
-    it('debe retornar 200 con ofertas VIRTUAL y Virtual/Presencial (expansión automática)', async () => {
+    it('debe retornar 200 con ofertas VIRTUAL y VIRTUAL/PRESENCIAL (expansión automática)', async () => {
       const mockResponse = {
         data: [mockOfertaVirtual, mockOfertaAmbos],
         total: 2,
@@ -291,14 +291,14 @@ describe('OfertasController (e2e) — HU26: Filtrar por modalidad', () => {
     });
   });
 
-  // ── Escenario 3: Filtrar por Virtual/Presencial ──────────────────────────────
+  // ── Escenario 3: Filtrar por VIRTUAL/PRESENCIAL ──────────────────────────────────────
   /**
-   * GIVEN: Existen ofertas PRESENCIAL, VIRTUAL y Virtual/Presencial.
-   * WHEN:  GET /api/ofertas?modalidad=Virtual/Presencial
-   * THEN:  200 sólo con ofertas Virtual/Presencial.
+   * GIVEN: Existen ofertas PRESENCIAL, VIRTUAL y VIRTUAL/PRESENCIAL.
+   * WHEN:  GET /api/ofertas?modalidad=VIRTUAL/PRESENCIAL
+   * THEN:  200 sólo con ofertas VIRTUAL/PRESENCIAL.
    */
-  describe('Escenario 3: Filtrar por modalidad=Virtual/Presencial (solo)', () => {
-    it('debe retornar 200 únicamente con ofertas Virtual/Presencial', async () => {
+  describe('Escenario 3: Filtrar por modalidad=VIRTUAL/PRESENCIAL (solo)', () => {
+    it('debe retornar 200 únicamente con ofertas VIRTUAL/PRESENCIAL', async () => {
       const mockResponse = {
         data: [mockOfertaAmbos],
         total: 1,
@@ -306,18 +306,18 @@ describe('OfertasController (e2e) — HU26: Filtrar por modalidad', () => {
       mockGetFilteredOfertas.mockResolvedValue(mockResponse);
 
       const response = await request(app.getHttpServer())
-        .get('/api/ofertas?modalidad=Virtual%2FPresencial')
+        .get('/api/ofertas?modalidad=VIRTUAL%2FPRESENCIAL')
         .expect(200);
 
       expect(mockGetFilteredOfertas).toHaveBeenCalledWith(
-        expect.objectContaining({ modalidad: ['Virtual/Presencial'] }),
+        expect.objectContaining({ modalidad: ['VIRTUAL/PRESENCIAL'] }),
       );
 
       expect(response.body).toHaveProperty('total', 1);
       expect(response.body.data).toHaveLength(1);
       expect(
         (response.body.data as Array<{ modalidad: string }>)[0].modalidad,
-      ).toBe('Virtual/Presencial');
+      ).toBe('VIRTUAL/PRESENCIAL');
 
       assertOfertaDtoStructure(
         response.body.data[0] as Record<string, unknown>,
@@ -368,8 +368,8 @@ describe('OfertasController (e2e) — HU26: Filtrar por modalidad', () => {
 
   // ── Escenario 5: No hay ofertas que coincidan ───────────────────────────
   /**
-   * GIVEN: No existen ofertas PRESENCIAL ni Virtual/Presencial.
-   * WHEN:  GET /api/ofertas?modalidad=PRESENCIAL,Virtual/Presencial
+   * GIVEN: No existen ofertas PRESENCIAL ni VIRTUAL/PRESENCIAL.
+   * WHEN:  GET /api/ofertas?modalidad=PRESENCIAL,VIRTUAL/PRESENCIAL
    * THEN:  200 con data vacío y total=0.
    *
    * RIESGO 6: El campo `total` debe ser exactamente 0.
@@ -379,7 +379,7 @@ describe('OfertasController (e2e) — HU26: Filtrar por modalidad', () => {
       mockGetFilteredOfertas.mockResolvedValue({ data: [], total: 0 });
 
       const response = await request(app.getHttpServer())
-        .get('/api/ofertas?modalidad=PRESENCIAL,Virtual%2FPresencial')
+        .get('/api/ofertas?modalidad=PRESENCIAL,VIRTUAL%2FPRESENCIAL')
         .expect(200);
 
       expect(response.body).toEqual({ data: [], total: 0 });
@@ -395,7 +395,7 @@ describe('OfertasController (e2e) — HU26: Filtrar por modalidad', () => {
    * THEN:  400 con el mensaje exacto del contrato.
    *
    * RIESGO 5: El formato del error 400 debe ser exactamente el acordado.
-   * Falla inicial porque: el DTO no tiene @IsIn para 'PRESENCIAL|VIRTUAL|Virtual/Presencial'.
+   * Falla inicial porque: el DTO no tiene @IsIn para 'PRESENCIAL|VIRTUAL|VIRTUAL/PRESENCIAL'.
    */
   describe('Escenario 6: Valor de modalidad inválido', () => {
     it('debe retornar 400 con mensaje de error exacto del contrato', async () => {
@@ -410,7 +410,7 @@ describe('OfertasController (e2e) — HU26: Filtrar por modalidad', () => {
       });
       expect(response.body.message).toEqual(
         expect.arrayContaining([
-          'Each modality must be one of the following values: PRESENCIAL, VIRTUAL, Virtual/Presencial',
+          'Each modality must be one of the following values: PRESENCIAL, VIRTUAL, VIRTUAL/PRESENCIAL',
         ]),
       );
 
@@ -422,7 +422,7 @@ describe('OfertasController (e2e) — HU26: Filtrar por modalidad', () => {
   // ── Escenario 7: Mezcla de valores válidos e inválidos ────────────────────
   /**
    * GIVEN: El sistema está operativo.
-   * WHEN:  GET /api/ofertas?modalidad=PRESENCIAL,MAL_VALOR,Virtual/Presencial
+   * WHEN:  GET /api/ofertas?modalidad=PRESENCIAL,MAL_VALOR,VIRTUAL/PRESENCIAL
    * THEN:  400 indicando que 'MAL_VALOR' no es un valor permitido.
    *
    * RIESGO 4: La coherencia del enum debe garantizarse en todos los valores del array.
@@ -430,7 +430,7 @@ describe('OfertasController (e2e) — HU26: Filtrar por modalidad', () => {
   describe('Escenario 7: Combinación de valores válidos e inválidos', () => {
     it('debe retornar 400 cuando hay al menos un valor inválido en la lista', async () => {
       const response = await request(app.getHttpServer())
-        .get('/api/ofertas?modalidad=PRESENCIAL,MAL_VALOR,Virtual%2FPresencial')
+        .get('/api/ofertas?modalidad=PRESENCIAL,MAL_VALOR,VIRTUAL%2FPRESENCIAL')
         .expect(400);
 
       expect(response.body).toMatchObject({
@@ -440,7 +440,7 @@ describe('OfertasController (e2e) — HU26: Filtrar por modalidad', () => {
       // El mensaje debe indicar que hay valores no permitidos
       expect(response.body.message).toEqual(
         expect.arrayContaining([
-          expect.stringContaining('PRESENCIAL, VIRTUAL, Virtual/Presencial'),
+          expect.stringContaining('PRESENCIAL, VIRTUAL, VIRTUAL/PRESENCIAL'),
         ]),
       );
 

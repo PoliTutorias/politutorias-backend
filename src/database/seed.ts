@@ -1,16 +1,17 @@
-import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
-import { Oferta } from '../ofertas/domain/entities/oferta.entity';
-import { Tutor } from '../tutors/entities/tutor.entity';
+import { DataSource } from 'typeorm';
 import { AvailabilityEntity } from '../disponibilidad/entities/availability.entity';
 import { ExperienciaEntity } from '../experiencias/entities/experiencia.entity';
-import { PerfilProfesionalEntity } from '../perfil/entities/perfil-profesional.entity';
 import { MateriaEntity } from '../materias/entities/materia.entity';
-import { seedTutors } from './seeds/tutors.seed';
-import { seedOfertas } from './seeds/ofertas.seed';
+import { Oferta } from '../ofertas/domain/entities/oferta.entity';
+import { OfertaEntity } from '../ofertas/entities/oferta.entity';
+import { PerfilProfesionalEntity } from '../perfil/entities/perfil-profesional.entity';
+import { Tutor } from '../tutors/entities/tutor.entity';
 import { seedDisponibilidad } from './seeds/disponibilidad.seed';
 import { seedExperiencias } from './seeds/experiencias.seed';
+import { seedOfertas, seedOfertasHU26 } from './seeds/ofertas.seed';
 import { seedPerfilesProfesionales } from './seeds/perfil-profesional.seed';
+import { seedTutors } from './seeds/tutors.seed';
 
 // Cargar variables de entorno
 config();
@@ -25,6 +26,7 @@ const sslConfig = dbHost.includes('rds.amazonaws.com')
 const ALL_ENTITIES = [
   Tutor,
   Oferta,
+  OfertaEntity,
   AvailabilityEntity,
   ExperienciaEntity,
   PerfilProfesionalEntity,
@@ -89,6 +91,9 @@ async function runSeed() {
 
     // Ejecutar seed de ofertas
     await seedOfertas(AppDataSource);
+
+    // HU26: Seed de ofertas con campo modalidad (PRESENCIAL/VIRTUAL/AMBOS)
+    await seedOfertasHU26(AppDataSource);
 
     // Ejecutar seed de disponibilidad
     await seedDisponibilidad(AppDataSource);

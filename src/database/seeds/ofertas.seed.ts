@@ -1,5 +1,6 @@
 import { DataSource } from 'typeorm';
 import { Oferta } from '../../ofertas/domain/entities/oferta.entity';
+import { OfferModality } from '../../ofertas/entities/oferta.entity';
 
 /**
  * Seed de Ofertas para HU03, HU17 y HU27.
@@ -324,5 +325,173 @@ export async function seedOfertas(dataSource: DataSource): Promise<void> {
 
   console.log(
     `✅ ${ofertas.length} ofertas insertadas exitosamente (13 HU03 + 3 HU17 + 6 HU27)`,
+  );
+}
+
+/**
+ * Seed de OfertaEntity para HU26.
+ *
+ * ── HU26: GET /api/ofertas?modalidad= ────────────────────────────────────────
+ * 9 ofertas con los tres valores del enum OfferModality (3 por modalidad):
+ *   PRESENCIAL: tutorías cara a cara
+ *   VIRTUAL:    tutorías en línea
+ *   AMBOS:      tutorías que admiten ambas modalidades
+ *
+ * Casos de prueba habilitados:
+ *   GET /api/ofertas                         → devuelve las 9 ofertas
+ *   GET /api/ofertas?modalidad=PRESENCIAL    → devuelve las 3 presenciales
+ *   GET /api/ofertas?modalidad=VIRTUAL       → devuelve las 3 virtuales
+ *   GET /api/ofertas?modalidad=AMBOS         → devuelve las 3 de ambos
+ *   GET /api/ofertas?modalidad=PRESENCIAL,AMBOS → devuelve las 6 correspondientes
+ *
+ * Tutores asociados al tutor "en cero" (ZERO_TUTOR_ID) para no requerir
+ * tutores adicionales más allá de los ya creados por seedTutors.
+ */
+export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
+  // UUIDs de tutores creados por seedTutors
+  const T1 = '550e8400-e29b-41d4-a716-446655440001'; // Juan Carlos Pérez
+  const T2 = '550e8400-e29b-41d4-a716-446655440002'; // María Fernanda González
+  const T3 = '550e8400-e29b-41d4-a716-446655440003'; // Carlos Alberto Rodríguez
+
+  // `OfertaEntity` y `Oferta` comparten la tabla "ofertas". La entidad `Oferta`
+  // define columnas legacy NOT NULL (title, price, modality, description, categories).
+  // Para evitar violaciones de NOT NULL al insertar campos HU26, se usa un INSERT
+  // raw que rellena ambas familias de columnas en una sola instrucción.
+  const ofertasHU26: {
+    titulo: string;
+    descripcion: string;
+    modalidad: OfferModality;
+    precioHora: number;
+    areaConocimiento: string;
+    nivel: string;
+    tutorId: string;
+  }[] = [
+    // ─── PRESENCIAL (3 ofertas) ─────────────────────────────────────────────
+    {
+      titulo: 'Cálculo Diferencial — Presencial',
+      descripcion:
+        'Tutorías presenciales de límites, derivadas e integrales con resolución guiada de ejercicios de examen.',
+      modalidad: OfferModality.PRESENCIAL,
+      precioHora: 18.5,
+      areaConocimiento: 'Matemáticas',
+      nivel: 'Universitario',
+      tutorId: T1,
+    },
+    {
+      titulo: 'Redes de Computadoras — Presencial',
+      descripcion:
+        'Clases presenciales de protocolos TCP/IP, enrutamiento, subnetting y configuración de switches.',
+      modalidad: OfferModality.PRESENCIAL,
+      precioHora: 22.0,
+      areaConocimiento: 'Ingeniería de Sistemas',
+      nivel: 'Universitario',
+      tutorId: T2,
+    },
+    {
+      titulo: 'Química General — Presencial',
+      descripcion:
+        'Estequiometría, reacciones ácido-base y electroquímica. Resolución de problemas de parciales con material de apoyo.',
+      modalidad: OfferModality.PRESENCIAL,
+      precioHora: 14.0,
+      areaConocimiento: 'Química',
+      nivel: 'Universitario',
+      tutorId: T3,
+    },
+    // ─── VIRTUAL (3 ofertas) ────────────────────────────────────────────────
+    {
+      titulo: 'Álgebra Lineal — Virtual',
+      descripcion:
+        'Clases en línea de vectores, matrices, transformaciones lineales y diagonalización con ejemplos en Python.',
+      modalidad: OfferModality.VIRTUAL,
+      precioHora: 15.0,
+      areaConocimiento: 'Matemáticas',
+      nivel: 'Universitario',
+      tutorId: T1,
+    },
+    {
+      titulo: 'Programación con Python — Virtual',
+      descripcion:
+        'Desde sintaxis básica hasta POO, manejo de archivos y librerías NumPy/Pandas. Proyecto práctico incluido.',
+      modalidad: OfferModality.VIRTUAL,
+      precioHora: 20.0,
+      areaConocimiento: 'Programación',
+      nivel: 'Universitario',
+      tutorId: T2,
+    },
+    {
+      titulo: 'Inglés Técnico para Ingeniería — Virtual',
+      descripcion:
+        'Comprensión lectora técnica, redacción de informes y preparación de presentaciones académicas en inglés.',
+      modalidad: OfferModality.VIRTUAL,
+      precioHora: 12.0,
+      areaConocimiento: 'Idiomas',
+      nivel: 'Universitario',
+      tutorId: T3,
+    },
+    // ─── AMBOS (3 ofertas) ──────────────────────────────────────────────────
+    {
+      titulo: 'Física Mecánica — Presencial o Virtual',
+      descripcion:
+        'Cinemática, dinámica, trabajo y energía. Disponible en modalidad presencial o en línea según preferencia.',
+      modalidad: OfferModality.AMBOS,
+      precioHora: 17.0,
+      areaConocimiento: 'Física',
+      nivel: 'Universitario',
+      tutorId: T1,
+    },
+    {
+      titulo: 'Estructuras de Datos — Presencial o Virtual',
+      descripcion:
+        'Listas enlazadas, árboles, grafos y ordenamiento. Análisis de complejidad Big-O con implementaciones en Java.',
+      modalidad: OfferModality.AMBOS,
+      precioHora: 25.0,
+      areaConocimiento: 'Programación',
+      nivel: 'Universitario',
+      tutorId: T2,
+    },
+    {
+      titulo: 'Probabilidad y Estadística — Pres. o Virtual',
+      descripcion:
+        'Variables aleatorias, distribuciones, pruebas de hipótesis. Modalidad flexible según disponibilidad.',
+      modalidad: OfferModality.AMBOS,
+      precioHora: 16.0,
+      areaConocimiento: 'Matemáticas',
+      nivel: 'Universitario',
+      tutorId: T3,
+    },
+  ];
+
+  console.log(
+    '📚 Insertando ofertas HU26 (con campo modalidad PRESENCIAL/VIRTUAL/AMBOS)...',
+  );
+
+  for (const data of ofertasHU26) {
+    // INSERT raw: puebla columnas legacy NOT NULL (title, price, modality,
+    // description, categories) y las nuevas columnas HU26 en una sola sentencia.
+    await dataSource.query(
+      `INSERT INTO "ofertas"
+         ("title", "price", "modality", "description", "categories",
+          "titulo", "descripcion", "modalidad", "precioHora",
+          "areaConocimiento", "nivel", "tutorId")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      [
+        data.titulo, // title  (legacy NOT NULL — reutiliza titulo)
+        data.precioHora, // price  (legacy NOT NULL — reutiliza precioHora)
+        data.modalidad, // modality (legacy NOT NULL)
+        data.descripcion, // description (legacy NOT NULL)
+        '', // categories (legacy NOT NULL, vacío para registros HU26)
+        data.titulo, // titulo  (HU26)
+        data.descripcion, // descripcion (HU26)
+        data.modalidad, // modalidad  (HU26 enum)
+        data.precioHora, // precioHora (HU26)
+        data.areaConocimiento,
+        data.nivel,
+        data.tutorId,
+      ],
+    );
+  }
+
+  console.log(
+    `✅ ${ofertasHU26.length} ofertas HU26 insertadas (3 PRESENCIAL + 3 VIRTUAL + 3 AMBOS)`,
   );
 }

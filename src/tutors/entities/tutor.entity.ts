@@ -44,6 +44,12 @@ export class Tutor {
   @Column({ type: 'text', nullable: true })
   fotoPerfil: string | null;
 
+  @Column({ type: 'float', nullable: true, default: 0 })
+  calificacionPromedio: number;
+
+  @Column({ type: 'int', nullable: true, default: 0 })
+  numResenas: number;
+
   @CreateDateColumn()
   createdAt: Date;
 

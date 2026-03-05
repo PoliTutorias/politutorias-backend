@@ -20,16 +20,15 @@ import {
   ApiTags,
   getSchemaPath,
 } from '@nestjs/swagger';
-import { FilterQueryParams } from '../common/dtos/filter-query-params.dto';
 import { CreateOfertaUseCase } from './application/use-cases/create-oferta.use-case';
 import { GetAllOfertasUseCase } from './application/use-cases/get-all-ofertas.use-case';
 import { Oferta } from './domain/entities/oferta.entity';
 import { CreateOfertaDto } from './dto/create-oferta.dto';
-import { OfertaResponseDto } from './dto/oferta-response.dto';
+import { GetOfertasFilterDto } from './dto/get-ofertas-filter.dto';
+import { OfertaItemDto, TutorBasicDto } from './dto/oferta-item.dto';
 import { OfertaDto } from './dto/oferta.dto';
 import { OffersQueryParams } from './dto/offers-query.dto';
 import { PaginatedOffersResponse } from './dto/paginated-offers-response.dto';
-import { TutorResponseDto } from './dto/tutor-response.dto';
 import { OfertasService } from './ofertas.service';
 
 const SUCCESS_MESSAGE = 'Oferta creada exitosamente';
@@ -60,12 +59,21 @@ export class OfertasController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @ApiExtraModels(OfertaResponseDto, TutorResponseDto)
+  @ApiExtraModels(OfertaItemDto, TutorBasicDto)
   @ApiOperation({
-    summary: 'Listar ofertas de tutoría con filtro por rango de precio',
+    summary:
+      'Listar ofertas de tutoría con filtro por modalidad y/o rango de precio',
     description:
-      'Obtiene ofertas de tutoría con filtros opcionales por `minPrice` y `maxPrice`. ' +
-      'Los precios son inclusivos (>=, <=). Devuelve los datos del tutor embebidos en cada oferta.',
+      'Obtiene ofertas de tutoría con filtros opcionales por `modalidad` (PRESENCIAL, VIRTUAL, AMBOS) ' +
+      'y por rango de precio (`minPrice`, `maxPrice`). Devuelve los datos del tutor embebidos en cada oferta.',
+  })
+  @ApiQuery({
+    name: 'modalidad',
+    required: false,
+    type: String,
+    description:
+      'Modalidades a filtrar separadas por coma (ej. PRESENCIAL,AMBOS)',
+    example: 'PRESENCIAL,AMBOS',
   })
   @ApiQuery({
     name: 'minPrice',
@@ -83,13 +91,13 @@ export class OfertasController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Lista de ofertas filtradas por rango de precio',
+    description: 'Lista de ofertas filtradas',
     schema: {
       type: 'object',
       properties: {
-        ofertas: {
+        data: {
           type: 'array',
-          items: { $ref: getSchemaPath(OfertaResponseDto) },
+          items: { $ref: getSchemaPath(OfertaItemDto) },
         },
         total: {
           type: 'integer',
@@ -105,7 +113,9 @@ export class OfertasController {
     schema: {
       example: {
         statusCode: 400,
-        message: ['minPrice debe ser un número válido.'],
+        message: [
+          'Each modality must be one of the following values: PRESENCIAL, VIRTUAL, AMBOS',
+        ],
         error: 'Bad Request',
       },
     },
@@ -123,9 +133,9 @@ export class OfertasController {
   })
   async findAll(
     @Query(new ValidationPipe({ transform: true, whitelist: true }))
-    filterParams: FilterQueryParams,
-  ): Promise<{ ofertas: OfertaResponseDto[]; total: number }> {
-    return this.ofertasService.findFilteredOfertas(filterParams);
+    filterDto: GetOfertasFilterDto,
+  ): Promise<{ data: OfertaItemDto[]; total: number }> {
+    return this.ofertasService.getFilteredOfertas(filterDto);
   }
 
   /**

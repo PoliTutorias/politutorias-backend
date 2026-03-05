@@ -63,7 +63,7 @@ export async function seedTutors(dataSource: DataSource): Promise<void> {
       userId: 'seed-user-003',
       nombreCompleto: 'Carlos Alberto Rodríguez',
       numeroWhatsapp: '3001234003',
-      facultad: Facultades.FCEC,
+      facultad: Facultades.FC_CIENCIAS,
       semestreActual: Semestres.DECIMO,
       biografiaCorta:
         'Matemático con enfoque en álgebra lineal y fundamentos de machine learning. Bilingüe español-inglés con enfoque en resolución de ejercicios prácticos.',
@@ -87,7 +87,7 @@ export async function seedTutors(dataSource: DataSource): Promise<void> {
       userId: 'seed-user-005',
       nombreCompleto: 'Roberto Alejandro Silva',
       numeroWhatsapp: '3001234005',
-      facultad: Facultades.FCEC,
+      facultad: Facultades.FIEE_ELECTRICA,
       semestreActual: Semestres.DECIMO,
       biografiaCorta:
         'Ingeniero eléctrico con experiencia en circuitos, SQL avanzado y optimización de sistemas embebidos. Tutoría presencial y virtual disponible.',
@@ -99,7 +99,7 @@ export async function seedTutors(dataSource: DataSource): Promise<void> {
       userId: 'seed-user-006',
       nombreCompleto: 'Laura Daniela Torres',
       numeroWhatsapp: '3001234006',
-      facultad: Facultades.FIAL,
+      facultad: Facultades.FCA_ADMINISTRATIVAS,
       semestreActual: Semestres.SEXTO,
       biografiaCorta:
         'Tutora de inglés técnico y comunicación académica. Metodología basada en casos reales de ingeniería. Ayudo a preparar presentaciones y redacción de informes.',
@@ -111,7 +111,7 @@ export async function seedTutors(dataSource: DataSource): Promise<void> {
       userId: 'seed-user-007',
       nombreCompleto: 'Andrés Felipe Moreno',
       numeroWhatsapp: '3001234007',
-      facultad: Facultades.FCBT,
+      facultad: Facultades.FIQA_QUIMICA,
       semestreActual: Semestres.OCTAVO,
       biografiaCorta:
         'Biólogo especializado en bioquímica y microbiología. Experiencia en tutorías de laboratorio, análisis de datos biológicos y preparación de exámenes de ciencias.',

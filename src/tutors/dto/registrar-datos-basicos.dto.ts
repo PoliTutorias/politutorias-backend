@@ -13,11 +13,14 @@ import {
 
 export enum Facultades {
   FIS_SISTEMAS = 'FIS - Sistemas',
-  FCEC = 'FCEC',
-  FIAL = 'FIAL',
-  FCBT = 'FCBT',
-  FCCMH = 'FCCMH',
-  FCEF = 'FCEF',
+  FIEE_ELECTRICA = 'FIEE - Eléctrica y Electrónica',
+  FC_CIENCIAS = 'FC - Ciencias',
+  FICA_CIVIL = 'FICA - Civil y Ambiental',
+  FIM_MECANICA = 'FIM - Mecánica',
+  FIQA_QUIMICA = 'FIQA - Química y Agroindustria',
+  FIGP_GEOLOGIA = 'FIGP - Geología y Petróleos',
+  FCA_ADMINISTRATIVAS = 'FCA - Ciencias Administrativas',
+  ESFOT_TECNOLOGOS = 'ESFOT - Formación de Tecnólogos',
 }
 
 export enum Semestres {

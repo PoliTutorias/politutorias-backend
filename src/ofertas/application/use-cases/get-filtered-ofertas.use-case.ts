@@ -1,16 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
-    Between,
-    In,
-    IsNull,
-    LessThanOrEqual,
-    MoreThanOrEqual,
-    Not,
+  Between,
+  In,
+  IsNull,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+  Not,
 } from 'typeorm';
 import { GetOfertasFilterDto } from '../../dto/get-ofertas-filter.dto';
 import {
-    IOfertaRepository,
-    OfertaFilterOptions,
+  IOfertaRepository,
+  OfertaFilterOptions,
 } from '../ports/oferta.repository.interface';
 
 /**

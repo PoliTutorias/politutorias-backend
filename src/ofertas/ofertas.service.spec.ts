@@ -2,12 +2,12 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import {
-    Between,
-    In,
-    IsNull,
-    LessThanOrEqual,
-    MoreThanOrEqual,
-    Not,
+  Between,
+  In,
+  IsNull,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+  Not,
 } from 'typeorm';
 import { AvailabilityEntity } from '../disponibilidad/entities/availability.entity';
 import { Tutor } from '../tutors/entities/tutor.entity';
@@ -1141,7 +1141,10 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
       // El use case debe haber expandido VIRTUAL → VIRTUAL + VIRTUAL/PRESENCIAL
       expect(mockHU26Repository.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { titulo: Not(IsNull()), modalidad: In(['VIRTUAL', 'VIRTUAL/PRESENCIAL']) },
+          where: {
+            titulo: Not(IsNull()),
+            modalidad: In(['VIRTUAL', 'VIRTUAL/PRESENCIAL']),
+          },
           order: { fechaCreacion: 'DESC' },
         }),
       );
@@ -1175,7 +1178,10 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
 
       expect(mockHU26Repository.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { titulo: Not(IsNull()), modalidad: In(['VIRTUAL/PRESENCIAL']) },
+          where: {
+            titulo: Not(IsNull()),
+            modalidad: In(['VIRTUAL/PRESENCIAL']),
+          },
           order: { fechaCreacion: 'DESC' },
         }),
       );

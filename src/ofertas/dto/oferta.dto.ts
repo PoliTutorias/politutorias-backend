@@ -3,7 +3,7 @@
  *
  * Representa la estructura de datos que se retorna al frontend.
  * Los campos están mapeados desde la entidad Oferta:
- * - modality → isPresencial (boolean)
+ * - modality → modality (string: PRESENCIAL, VIRTUAL, VIRTUAL/PRESENCIAL)
  * - price → pricePerHour (number)
  * - categories → tags (string[])
  */
@@ -11,7 +11,7 @@ export class OfertaDto {
   id: string;
   title: string;
   description: string;
-  isPresencial: boolean;
+  modality: string;
   pricePerHour: number;
   tags: string[];
   createdAt: string;

@@ -130,7 +130,7 @@ describe('OfertasService - findAllByTutorId (Unit Tests) - HU02', () => {
         title: 'Cálculo en una Variable',
         description:
           'Me enfoco en ejercicios de MRU y aplicaciones de derivadas e integrales.',
-        isPresencial: true, // CRÍTICO: modality === "Presencial" → true
+        modality: 'Presencial', // CRÍTICO: devuelve modality directamente
         pricePerHour: 10.0, // CRÍTICO: price → pricePerHour
         tags: [
           'Matemática',
@@ -147,7 +147,7 @@ describe('OfertasService - findAllByTutorId (Unit Tests) - HU02', () => {
         id: '22222222-2222-2222-2222-222222222222',
         title: 'Física General',
         description: 'Clases de física con énfasis en mecánica clásica.',
-        isPresencial: false, // CRÍTICO: modality !== "Presencial" → false
+        modality: 'Virtual', // CRÍTICO: devuelve value original de modality
         pricePerHour: 15.0,
         tags: ['Física', 'Formación Básica'],
         createdAt: '2023-10-28T14:20:00.000Z',
@@ -158,7 +158,7 @@ describe('OfertasService - findAllByTutorId (Unit Tests) - HU02', () => {
         id: '33333333-3333-3333-3333-333333333333',
         title: 'Química Orgánica',
         description: 'Estudio de compuestos orgánicos y reacciones.',
-        isPresencial: false, // CRÍTICO: modality !== "Presencial" → false
+        modality: 'Híbrida', // CRÍTICO: devuelve value original de modality
         pricePerHour: 20.0,
         tags: ['Química', 'Ciencias'],
         createdAt: '2023-10-29T09:15:00.000Z',
@@ -166,7 +166,6 @@ describe('OfertasService - findAllByTutorId (Unit Tests) - HU02', () => {
 
       // Verifica que los DTOs NO contienen campos de la entidad
       result.forEach((dto) => {
-        expect(dto).not.toHaveProperty('modality');
         expect(dto).not.toHaveProperty('price');
         expect(dto).not.toHaveProperty('categories');
         expect(dto).not.toHaveProperty('tutorId');
@@ -175,9 +174,9 @@ describe('OfertasService - findAllByTutorId (Unit Tests) - HU02', () => {
     });
 
     /**
-     * Test específico para validar la lógica de mapeo isPresencial
+     * Test específico para validar la lógica de mapeo de modality
      */
-    it('should map isPresencial to true only when modality is exactly "Presencial"', async () => {
+    it('should map modality directly from entity', async () => {
       const tutorId = 'a1b2c3d4-e5f6-7890-1234-567890abcdef';
 
       const mockOfertaEntities: Partial<Oferta>[] = [
@@ -185,7 +184,7 @@ describe('OfertasService - findAllByTutorId (Unit Tests) - HU02', () => {
           id: '1',
           title: 'Test 1',
           description: 'Test description',
-          modality: 'Presencial', // → true
+          modality: 'Presencial', // Debe devolver 'Presencial'
           price: 10,
           categories: ['Test'],
           tutorId: tutorId,
@@ -196,7 +195,7 @@ describe('OfertasService - findAllByTutorId (Unit Tests) - HU02', () => {
           id: '2',
           title: 'Test 2',
           description: 'Test description',
-          modality: 'presencial', // case-sensitive: → false
+          modality: 'Virtual', // Debe devolver 'Virtual'
           price: 10,
           categories: ['Test'],
           tutorId: tutorId,
@@ -207,7 +206,7 @@ describe('OfertasService - findAllByTutorId (Unit Tests) - HU02', () => {
           id: '3',
           title: 'Test 3',
           description: 'Test description',
-          modality: 'Virtual', // → false
+          modality: 'VIRTUAL/PRESENCIAL', // Debe devolver 'VIRTUAL/PRESENCIAL'
           price: 10,
           categories: ['Test'],
           tutorId: tutorId,
@@ -218,18 +217,7 @@ describe('OfertasService - findAllByTutorId (Unit Tests) - HU02', () => {
           id: '4',
           title: 'Test 4',
           description: 'Test description',
-          modality: 'Híbrida', // → false
-          price: 10,
-          categories: ['Test'],
-          tutorId: tutorId,
-          createdAt: new Date('2023-10-27T10:30:00.000Z'),
-          updatedAt: new Date('2023-10-27T10:30:00.000Z'),
-        },
-        {
-          id: '5',
-          title: 'Test 5',
-          description: 'Test description',
-          modality: '', // empty string → false
+          modality: 'Híbrida', // Debe devolver 'Híbrida'
           price: 10,
           categories: ['Test'],
           tutorId: tutorId,
@@ -242,12 +230,11 @@ describe('OfertasService - findAllByTutorId (Unit Tests) - HU02', () => {
 
       const result = await service.findAllByTutorId(tutorId);
 
-      // CRÍTICO: Solo "Presencial" (case-sensitive) debe ser true
-      expect(result[0].isPresencial).toBe(true);
-      expect(result[1].isPresencial).toBe(false); // "presencial" minúsculas
-      expect(result[2].isPresencial).toBe(false); // "Virtual"
-      expect(result[3].isPresencial).toBe(false); // "Híbrida"
-      expect(result[4].isPresencial).toBe(false); // ""
+      // CRÍTICO: Devuelve el valor de modality directamente
+      expect(result[0].modality).toBe('Presencial');
+      expect(result[1].modality).toBe('Virtual');
+      expect(result[2].modality).toBe('VIRTUAL/PRESENCIAL');
+      expect(result[3].modality).toBe('Híbrida');
     });
   });
 

@@ -26,9 +26,9 @@
  */
 
 import {
-    INestApplication,
-    InternalServerErrorException,
-    ValidationPipe,
+  INestApplication,
+  InternalServerErrorException,
+  ValidationPipe,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
@@ -117,7 +117,9 @@ function assertOfertaDtoStructure(oferta: Record<string, unknown>): void {
   expect(typeof oferta.titulo).toBe('string');
 
   expect(oferta).toHaveProperty('modalidad');
-  expect(['PRESENCIAL', 'VIRTUAL', 'VIRTUAL/PRESENCIAL']).toContain(oferta.modalidad);
+  expect(['PRESENCIAL', 'VIRTUAL', 'VIRTUAL/PRESENCIAL']).toContain(
+    oferta.modalidad,
+  );
 
   expect(oferta).toHaveProperty('precioHora');
   expect(typeof oferta.precioHora).toBe('number');

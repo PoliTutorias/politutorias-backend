@@ -13,7 +13,7 @@ export class AvailabilityEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid')
+  @Column('varchar', { length: 255, nullable: true })
   tutorId: string;
 
   @Column('varchar', { length: 3 })

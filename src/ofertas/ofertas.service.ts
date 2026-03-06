@@ -66,7 +66,7 @@ export class OfertasService {
       id: offer.id,
       title: offer.title,
       description: offer.description,
-      isPresencial: offer.modality === 'Presencial',
+      modality: offer.modality,
       pricePerHour: offer.price,
       tags: offer.categories,
       createdAt: offer.createdAt.toISOString(),

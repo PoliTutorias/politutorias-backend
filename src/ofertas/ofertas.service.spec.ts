@@ -1143,7 +1143,7 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
         expect.objectContaining({
           where: {
             titulo: Not(IsNull()),
-            modalidad: In(['VIRTUAL', 'Virtual/Presencial']),
+            modalidad: In(['VIRTUAL', 'VIRTUAL/PRESENCIAL']),
           },
           order: { fechaCreacion: 'DESC' },
         }),
@@ -1180,7 +1180,7 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
         expect.objectContaining({
           where: {
             titulo: Not(IsNull()),
-            modalidad: In(['Virtual/Presencial']),
+            modalidad: In(['VIRTUAL/PRESENCIAL']),
           },
           order: { fechaCreacion: 'DESC' },
         }),

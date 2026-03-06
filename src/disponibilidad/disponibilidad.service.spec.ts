@@ -24,10 +24,12 @@ describe('CreateAvailabilityUseCase', () => {
 
     // Mock de DataSource con transacción que ejecuta el callback
     const mockDataSource = {
-      transaction: jest.fn((callback: any) => callback({
-        delete: jest.fn().mockResolvedValue({ affected: 1 }),
-        save: jest.fn().mockResolvedValue([]),
-      })),
+      transaction: jest.fn((callback: (manager: any) => Promise<any>) =>
+        callback({
+          delete: jest.fn().mockResolvedValue({ affected: 1 }),
+          save: jest.fn().mockResolvedValue([]),
+        }),
+      ),
     } as unknown as jest.Mocked<DataSource>;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -74,14 +76,12 @@ describe('CreateAvailabilityUseCase', () => {
 
       // Mock del DataSource para que ejecute la transacción correctamente
       const mockManager = {
-        delete: jest
-          .fn()
-          .mockResolvedValue({ affected: 1 }),
+        delete: jest.fn().mockResolvedValue({ affected: 1 }),
         save: jest.fn().mockResolvedValue([mockEntity]),
       };
 
-      (dataSource.transaction as jest.Mock).mockImplementation((callback) =>
-        callback(mockManager),
+      (dataSource.transaction as jest.Mock).mockImplementation(
+        (callback: (manager: any) => Promise<any>) => callback(mockManager),
       );
 
       // Mock del repositorio
@@ -138,14 +138,12 @@ describe('CreateAvailabilityUseCase', () => {
 
       // Mock del DataSource
       const mockManager = {
-        delete: jest
-          .fn()
-          .mockResolvedValue({ affected: 2 }),
+        delete: jest.fn().mockResolvedValue({ affected: 2 }),
         save: jest.fn().mockResolvedValue(mockCreatedEntities),
       };
 
-      (dataSource.transaction as jest.Mock).mockImplementation((callback) =>
-        callback(mockManager),
+      (dataSource.transaction as jest.Mock).mockImplementation(
+        (callback: (manager: any) => Promise<any>) => callback(mockManager),
       );
 
       // Mock del repositorio para crear entidades
@@ -192,15 +190,17 @@ describe('CreateAvailabilityUseCase', () => {
       ];
 
       // Mock del DataSource para que la transacción lance error DENTRO del callback
-      (dataSource.transaction as jest.Mock).mockImplementation((callback) => {
-        const mockManager = {
-          delete: jest
-            .fn()
-            .mockRejectedValue(new Error('Database connection failed')),
-          save: jest.fn(),
-        };
-        return callback(mockManager);
-      });
+      (dataSource.transaction as jest.Mock).mockImplementation(
+        (callback: (manager: any) => Promise<any>) => {
+          const mockManager = {
+            delete: jest
+              .fn()
+              .mockRejectedValue(new Error('Database connection failed')),
+            save: jest.fn(),
+          };
+          return callback(mockManager);
+        },
+      );
 
       await expect(
         useCase.execute(tutorId, availabilityBlocks),
@@ -223,17 +223,17 @@ describe('CreateAvailabilityUseCase', () => {
       ];
 
       // Mock del DataSource donde save falla
-      (dataSource.transaction as jest.Mock).mockImplementation((callback) => {
-        const mockManager = {
-          delete: jest
-            .fn()
-            .mockResolvedValue({ affected: 1 }),
-          save: jest
-            .fn()
-            .mockRejectedValue(new Error('Database constraint violation')),
-        };
-        return callback(mockManager);
-      });
+      (dataSource.transaction as jest.Mock).mockImplementation(
+        (callback: (manager: any) => Promise<any>) => {
+          const mockManager = {
+            delete: jest.fn().mockResolvedValue({ affected: 1 }),
+            save: jest
+              .fn()
+              .mockRejectedValue(new Error('Database constraint violation')),
+          };
+          return callback(mockManager);
+        },
+      );
 
       await expect(
         useCase.execute(tutorId, availabilityBlocks),
@@ -243,4 +243,3 @@ describe('CreateAvailabilityUseCase', () => {
     });
   });
 });
-

@@ -365,6 +365,8 @@ export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
     areaConocimiento: string;
     nivel: string;
     tutorId: string;
+    rating: number;
+    reviewsCount: number;
   }[] = [
     // ─── PRESENCIAL (3 ofertas) ─────────────────────────────────────────────
     {
@@ -376,6 +378,8 @@ export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
       areaConocimiento: 'Matemáticas',
       nivel: 'Universitario',
       tutorId: T1,
+      rating: 4.7,
+      reviewsCount: 22,
     },
     {
       titulo: 'Redes de Computadoras — Presencial',
@@ -386,6 +390,8 @@ export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
       areaConocimiento: 'Ingeniería de Sistemas',
       nivel: 'Universitario',
       tutorId: T2,
+      rating: 4.5,
+      reviewsCount: 18,
     },
     {
       titulo: 'Química General — Presencial',
@@ -396,6 +402,8 @@ export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
       areaConocimiento: 'Química',
       nivel: 'Universitario',
       tutorId: T3,
+      rating: 4.3,
+      reviewsCount: 11,
     },
     // ─── VIRTUAL (3 ofertas) ────────────────────────────────────────────────
     {
@@ -407,6 +415,8 @@ export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
       areaConocimiento: 'Matemáticas',
       nivel: 'Universitario',
       tutorId: T1,
+      rating: 4.6,
+      reviewsCount: 15,
     },
     {
       titulo: 'Programación con Python — Virtual',
@@ -417,6 +427,8 @@ export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
       areaConocimiento: 'Programación',
       nivel: 'Universitario',
       tutorId: T2,
+      rating: 4.9,
+      reviewsCount: 35,
     },
     {
       titulo: 'Inglés Técnico para Ingeniería — Virtual',
@@ -427,6 +439,8 @@ export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
       areaConocimiento: 'Idiomas',
       nivel: 'Universitario',
       tutorId: T3,
+      rating: 4.1,
+      reviewsCount: 9,
     },
     // ─── VIRTUAL/PRESENCIAL (3 ofertas) ────────────────────────────────────────────────
     {
@@ -438,6 +452,8 @@ export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
       areaConocimiento: 'Física',
       nivel: 'Universitario',
       tutorId: T1,
+      rating: 4.4,
+      reviewsCount: 19,
     },
     {
       titulo: 'Estructuras de Datos — Presencial o Virtual',
@@ -448,6 +464,8 @@ export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
       areaConocimiento: 'Programación',
       nivel: 'Universitario',
       tutorId: T2,
+      rating: 4.8,
+      reviewsCount: 27,
     },
     {
       titulo: 'Probabilidad y Estadística — Pres. o Virtual',
@@ -458,6 +476,8 @@ export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
       areaConocimiento: 'Matemáticas',
       nivel: 'Universitario',
       tutorId: T3,
+      rating: 4.2,
+      reviewsCount: 13,
     },
   ];
 
@@ -471,15 +491,18 @@ export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
     await dataSource.query(
       `INSERT INTO "ofertas"
          ("title", "price", "modality", "description", "categories",
+          "rating", "reviewsCount",
           "titulo", "descripcion", "modalidad", "precioHora",
           "areaConocimiento", "nivel", "tutorId")
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
       [
         data.titulo, // title  (legacy NOT NULL — reutiliza titulo)
         data.precioHora, // price  (legacy NOT NULL — reutiliza precioHora)
         data.modalidad, // modality (legacy NOT NULL)
         data.descripcion, // description (legacy NOT NULL)
-        '', // categories (legacy NOT NULL, vacío para registros HU26)
+        data.areaConocimiento, // categories (legacy NOT NULL — usar área de conocimiento)
+        data.rating, // rating
+        data.reviewsCount, // reviewsCount
         data.titulo, // titulo  (HU26)
         data.descripcion, // descripcion (HU26)
         data.modalidad, // modalidad  (HU26 enum)

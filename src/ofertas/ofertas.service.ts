@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
-import { FindManyOptions, Repository } from 'typeorm';
+import { FindManyOptions, In, Repository } from 'typeorm';
 import { FilterQueryParams } from '../common/dtos/filter-query-params.dto';
 import { AvailabilityEntity } from '../disponibilidad/entities/availability.entity';
 import { FindOfertasByPriceUseCase } from './application/use-cases/find-ofertas-by-price.use-case';
@@ -76,7 +76,10 @@ export class OfertasService {
   /**
    * Mapea una entidad `Oferta` al DTO de respuesta.
    */
-  private mapToOfferResponseDto(offer: Oferta): OfferResponseDto {
+  private mapToOfferResponseDto(
+    offer: Oferta,
+    availability?: { day: string; hour: string }[],
+  ): OfferResponseDto {
     return {
       id: offer.id,
       title: offer.title,
@@ -86,6 +89,7 @@ export class OfertasService {
       tags: offer.categories,
       rating: offer.rating,
       reviewsCount: offer.reviewsCount,
+      availability: availability ?? [],
       tutor: offer.tutor
         ? {
             id: offer.tutor.id,
@@ -123,8 +127,39 @@ export class OfertasService {
     try {
       const [ofertas, totalResults] = await queryBuilder.getManyAndCount();
 
+      // Batch fetch availability for all tutors in this page
+      const tutorIds = [
+        ...new Set(
+          ofertas
+            .map((o) => o.tutorId)
+            .filter((id): id is string => id != null),
+        ),
+      ];
+
+      const availabilityMap = new Map<
+        string,
+        { day: string; hour: string }[]
+      >();
+      if (tutorIds.length > 0) {
+        const allAvailability = await this.availabilityRepository.find({
+          where: { tutorId: In(tutorIds) },
+          order: { day: 'ASC', hour: 'ASC' },
+        });
+
+        for (const av of allAvailability) {
+          const existing = availabilityMap.get(av.tutorId) ?? [];
+          existing.push({ day: av.day, hour: av.hour });
+          availabilityMap.set(av.tutorId, existing);
+        }
+      }
+
       return {
-        offers: ofertas.map((offer) => this.mapToOfferResponseDto(offer)),
+        offers: ofertas.map((offer) =>
+          this.mapToOfferResponseDto(
+            offer,
+            availabilityMap.get(offer.tutorId) ?? [],
+          ),
+        ),
         totalResults,
         currentPage: page,
         itemsPerPage: limit,
@@ -185,6 +220,35 @@ export class OfertasService {
       const data = plainToInstance(OfertaItemDto, entities, {
         excludeExtraneousValues: true,
       });
+
+      // Batch fetch availability for all tutors in the result set
+      const tutorIdsForAvail = [
+        ...new Set(
+          entities
+            .map((e: Oferta) => e.tutorId)
+            .filter((id): id is string => id != null),
+        ),
+      ];
+
+      if (tutorIdsForAvail.length > 0) {
+        const allAvailability = await this.availabilityRepository.find({
+          where: { tutorId: In(tutorIdsForAvail) },
+          order: { day: 'ASC', hour: 'ASC' },
+        });
+
+        const availMap = new Map<string, { day: string; hour: string }[]>();
+        for (const av of allAvailability) {
+          const existing = availMap.get(av.tutorId) ?? [];
+          existing.push({ day: av.day, hour: av.hour });
+          availMap.set(av.tutorId, existing);
+        }
+
+        // Inject horarios into each DTO
+        for (let i = 0; i < data.length; i++) {
+          const entity = entities[i] as Oferta;
+          data[i].horarios = availMap.get(entity.tutorId) ?? [];
+        }
+      }
 
       return { data, total };
     } catch (error) {

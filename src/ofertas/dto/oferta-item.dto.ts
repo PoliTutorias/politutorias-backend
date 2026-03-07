@@ -147,4 +147,15 @@ export class OfertaItemDto {
     value instanceof Date ? value.toISOString() : (value as string),
   )
   fechaCreacion: string;
+
+  /** Bloques de disponibilidad del tutor (inyectados manualmente post-transform) */
+  @ApiProperty({
+    description: 'Horarios de disponibilidad del tutor',
+    example: [
+      { day: 'Lun', hour: '14:00' },
+      { day: 'Mar', hour: '09:00' },
+    ],
+    required: false,
+  })
+  horarios?: { day: string; hour: string }[];
 }

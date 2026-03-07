@@ -183,13 +183,16 @@ export class OfertasService {
   }
 
   /**
-   * HU26 + HU16: Filtra ofertas por modalidad, precio y/o disponibilidad.
+   * HU26 + HU16 + HU17: Filtra ofertas por modalidad, precio, disponibilidad
+   * y/o término de búsqueda (searchTerm).
    *
    * Si `disponibilidad` está presente, busca tutorIds que tengan
-   * disponibilidad en ese día y los inyecta como filtro adicional
-   * en el use-case existente.
+   * disponibilidad en ese día y los inyecta como filtro adicional.
    *
-   * @param filterDto - DTO con campos opcionales `modalidad`, `minPrice`, `maxPrice`, `disponibilidad`.
+   * Si `searchTerm` está presente, aplica una búsqueda LIKE sobre el título
+   * de la oferta y el nombre del tutor, combinándola con los demás filtros.
+   *
+   * @param filterDto - DTO con campos opcionales `modalidad`, `minPrice`, `maxPrice`, `disponibilidad`, `searchTerm`.
    * @returns Objeto con `data` (array de OfertaItemDto) y `total` (conteo).
    */
   async getFilteredOfertas(
@@ -197,25 +200,92 @@ export class OfertasService {
   ): Promise<{ data: OfertaItemDto[]; total: number }> {
     try {
       // HU16: Si se filtra por disponibilidad, primero obtener los tutorIds relevantes
+      let availTutorIds: string[] | undefined;
       if (filterDto.disponibilidad) {
         const availabilities = await this.availabilityRepository.find({
           where: { day: filterDto.disponibilidad },
           select: ['tutorId'],
         });
 
-        const tutorIds = [...new Set(availabilities.map((a) => a.tutorId))];
+        availTutorIds = [...new Set(availabilities.map((a) => a.tutorId))];
 
-        if (tutorIds.length === 0) {
+        if (availTutorIds.length === 0) {
           return { data: [], total: 0 };
         }
-
-        // Inyectar los tutorIds encontrados como filtro adicional
-        (filterDto as GetOfertasFilterDto & { tutorIds?: string[] }).tutorIds =
-          tutorIds;
       }
 
-      const [entities, total] =
-        await this.getFilteredOfertasUseCase.execute(filterDto);
+      let entities: Oferta[];
+      let total: number;
+
+      // Determine if we need QueryBuilder (when searchTerm is present)
+      const trimmedSearch = filterDto.searchTerm?.trim();
+      if (trimmedSearch && trimmedSearch.length > 0) {
+        // Use QueryBuilder to combine text search with filters
+        const qb = this.ofertaRepository.createQueryBuilder('oferta');
+        qb.leftJoinAndSelect('oferta.tutor', 'tutor');
+
+        // Always exclude legacy records with null titulo
+        qb.andWhere('oferta.titulo IS NOT NULL');
+
+        // Text search on titulo and tutor name
+        qb.andWhere(
+          '(LOWER(oferta.titulo) LIKE LOWER(:searchTerm) OR LOWER(tutor.nombreCompleto) LIKE LOWER(:searchTerm))',
+          { searchTerm: `%${trimmedSearch}%` },
+        );
+
+        // Modalidad filter
+        if (filterDto.modalidad && filterDto.modalidad.length > 0) {
+          const expanded = new Set(filterDto.modalidad);
+          if (expanded.has('PRESENCIAL') || expanded.has('VIRTUAL')) {
+            expanded.add('VIRTUAL/PRESENCIAL');
+          }
+          qb.andWhere('oferta.modalidad IN (:...modalidades)', {
+            modalidades: [...expanded],
+          });
+        }
+
+        // Price filter
+        if (
+          filterDto.minPrice !== undefined &&
+          filterDto.maxPrice !== undefined
+        ) {
+          qb.andWhere('oferta.precioHora BETWEEN :minPrice AND :maxPrice', {
+            minPrice: filterDto.minPrice,
+            maxPrice: filterDto.maxPrice,
+          });
+        } else if (filterDto.minPrice !== undefined) {
+          qb.andWhere('oferta.precioHora >= :minPrice', {
+            minPrice: filterDto.minPrice,
+          });
+        } else if (filterDto.maxPrice !== undefined) {
+          qb.andWhere('oferta.precioHora <= :maxPrice', {
+            maxPrice: filterDto.maxPrice,
+          });
+        }
+
+        // Disponibilidad filter (tutorIds)
+        if (availTutorIds && availTutorIds.length > 0) {
+          qb.andWhere('oferta.tutorId IN (:...tutorIds)', {
+            tutorIds: availTutorIds,
+          });
+        }
+
+        qb.orderBy('oferta.fechaCreacion', 'DESC');
+
+        [entities, total] = await qb.getManyAndCount();
+      } else {
+        // No searchTerm: use the existing use-case (preserves original logic)
+        if (availTutorIds) {
+          (
+            filterDto as GetOfertasFilterDto & { tutorIds?: string[] }
+          ).tutorIds = availTutorIds;
+        }
+
+        const [rawEntities, rawTotal] =
+          await this.getFilteredOfertasUseCase.execute(filterDto);
+        entities = rawEntities as Oferta[];
+        total = rawTotal;
+      }
 
       const data = plainToInstance(OfertaItemDto, entities, {
         excludeExtraneousValues: true,
@@ -245,7 +315,7 @@ export class OfertasService {
 
         // Inject horarios into each DTO
         for (let i = 0; i < data.length; i++) {
-          const entity = entities[i] as Oferta;
+          const entity = entities[i];
           data[i].horarios = availMap.get(entity.tutorId) ?? [];
         }
       }

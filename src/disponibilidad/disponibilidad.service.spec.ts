@@ -72,6 +72,8 @@ describe('CreateAvailabilityUseCase', () => {
         tutorId,
         day: 'Lun',
         hour: '09:00',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       // Mock del DataSource para que ejecute la transacción correctamente
@@ -127,12 +129,16 @@ describe('CreateAvailabilityUseCase', () => {
           tutorId,
           day: 'Mié',
           hour: '11:00',
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
         {
           id: 'uuid-block-3',
           tutorId,
           day: 'Jue',
           hour: '12:00',
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       ];
 
@@ -150,8 +156,10 @@ describe('CreateAvailabilityUseCase', () => {
       availabilityRepository.create.mockImplementation((dto) => ({
         id: mockCreatedEntities.find(
           (e) => e.day === dto.day && e.hour === dto.hour,
-        )?.id,
+        )?.id ?? '',
         ...dto,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       }));
 
       const result = await useCase.execute(tutorId, availabilityBlocks);

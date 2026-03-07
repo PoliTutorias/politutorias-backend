@@ -51,4 +51,15 @@ export class DisponibilidadService {
       );
     }
   }
+
+  /**
+   * HU07: Consultar disponibilidad del tutor
+   * Retorna todos los bloques de disponibilidad para un tutor dado
+   */
+  async findByTutorId(tutorId: string): Promise<AvailabilityEntity[]> {
+    return this.availabilityRepository.find({
+      where: { tutorId },
+      order: { day: 'ASC', hour: 'ASC' },
+    });
+  }
 }

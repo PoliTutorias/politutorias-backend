@@ -184,6 +184,7 @@ describe('CreateAvailabilityUseCase', () => {
      *       "Error interno al guardar la disponibilidad."
      */
     it('ESC-8: Debería lanzar InternalServerErrorException si delete falla', async () => {
+      jest.spyOn(console, 'error').mockImplementation();
       const tutorId = 'uuid-tutor-D';
       const availabilityBlocks: AvailabilityBlockDto[] = [
         { day: 'Lun', hour: '09:00' },
@@ -217,6 +218,7 @@ describe('CreateAvailabilityUseCase', () => {
      *       "Error interno al guardar la disponibilidad."
      */
     it('ESC-8: Debería lanzar InternalServerErrorException si saveAll falla', async () => {
+      jest.spyOn(console, 'error').mockImplementation();
       const tutorId = 'uuid-tutor-E';
       const availabilityBlocks: AvailabilityBlockDto[] = [
         { day: 'Lun', hour: '09:00' },

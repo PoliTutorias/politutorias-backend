@@ -641,6 +641,7 @@ describe('OfertasService - searchOffers (Unit Tests) - HU17', () => {
 
   describe('Scenario 12: Manejo de InternalServerErrorException', () => {
     it('should throw InternalServerErrorException with agreed message when DB throws', async () => {
+      jest.spyOn(console, 'error').mockImplementation();
       mockQBHU17.getManyAndCount.mockRejectedValue(
         new Error('DB connection lost'),
       );

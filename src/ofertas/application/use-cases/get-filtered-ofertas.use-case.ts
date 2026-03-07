@@ -77,7 +77,7 @@ export class GetFilteredOfertasUseCase {
     // HU16: Filtrar por tutorIds (inyectados por OfertasService cuando hay filtro de disponibilidad)
     const dtoWithTutors = filterDto as { tutorIds?: string[] };
     if (dtoWithTutors.tutorIds && dtoWithTutors.tutorIds.length > 0) {
-      where['tutor'] = { id: In(dtoWithTutors.tutorIds) };
+      where['tutorId'] = In(dtoWithTutors.tutorIds);
     }
 
     const options: OfertaFilterOptions = {

@@ -88,4 +88,14 @@ export class GetOfertasFilterDto {
       'disponibilidad debe ser uno de: Lun, Mar, Mié, Jue, Vie, Sáb, Dom',
   })
   disponibilidad?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    description:
+      'Término de búsqueda para filtrar por título de la oferta o nombre del tutor',
+    example: 'Cálculo',
+  })
+  @IsOptional()
+  @IsString({ message: 'searchTerm debe ser un texto válido.' })
+  searchTerm?: string;
 }

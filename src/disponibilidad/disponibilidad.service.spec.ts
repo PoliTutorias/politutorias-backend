@@ -154,9 +154,10 @@ describe('CreateAvailabilityUseCase', () => {
 
       // Mock del repositorio para crear entidades
       availabilityRepository.create.mockImplementation((dto) => ({
-        id: mockCreatedEntities.find(
-          (e) => e.day === dto.day && e.hour === dto.hour,
-        )?.id ?? '',
+        id:
+          mockCreatedEntities.find(
+            (e) => e.day === dto.day && e.hour === dto.hour,
+          )?.id ?? '',
         ...dto,
         createdAt: new Date(),
         updatedAt: new Date(),

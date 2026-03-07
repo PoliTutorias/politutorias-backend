@@ -431,7 +431,7 @@ describe('OfertasService - searchOffers (Unit Tests) - HU17', () => {
         },
         {
           provide: getRepositoryToken(AvailabilityEntity),
-          useValue: { find: jest.fn() },
+          useValue: { find: jest.fn().mockResolvedValue([]) },
         },
       ],
     }).compile();

@@ -73,6 +73,21 @@ export class OfferResponseDto {
   reviewsCount: number;
 
   @ApiProperty({
+    description: 'Bloques de disponibilidad del tutor',
+    example: [
+      { day: 'Lun', hour: '14:00' },
+      { day: 'Lun', hour: '15:00' },
+    ],
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: { day: { type: 'string' }, hour: { type: 'string' } },
+    },
+    required: false,
+  })
+  availability?: { day: string; hour: string }[];
+
+  @ApiProperty({
     description: 'Información del tutor',
     type: TutorResponseDto,
     nullable: true,

@@ -164,14 +164,30 @@ jobs:
           PGSSLMODE: require
           DB_NAME_STAGING: politutorias_staging
         run: |
-          echo "[INFO] Verificando si la base de datos '$DB_NAME_STAGING' existe..."
+          echo "[INFO] Verificando conectividad con RDS..."
 
+          # Paso 1: Verificar que podemos conectarnos al RDS
+          if ! PGPASSWORD="$DB_PASSWORD" psql \
+            -h "$DB_HOST" \
+            -p "$DB_PORT" \
+            -U "$DB_USER" \
+            -d postgres \
+            -c "SELECT 1" > /dev/null 2>&1; then
+            echo "[ERROR] No se pudo conectar al servidor RDS en $DB_HOST:$DB_PORT"
+            echo "[ERROR] Verifica que el Security Group del RDS permita conexiones desde GitHub Actions."
+            echo "[ERROR] El deploy continuará, pero la BD podría no existir."
+            exit 1
+          fi
+          echo "[OK] Conexión a RDS establecida."
+
+          # Paso 2: Verificar si la BD existe
+          echo "[INFO] Verificando si la base de datos '$DB_NAME_STAGING' existe..."
           DB_EXISTS=$(PGPASSWORD="$DB_PASSWORD" psql \
             -h "$DB_HOST" \
             -p "$DB_PORT" \
             -U "$DB_USER" \
             -d postgres \
-            -tAc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME_STAGING'" 2>/dev/null || echo "0")
+            -tAc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME_STAGING'")
 
           if [ "$DB_EXISTS" = "1" ]; then
             echo "[OK] Base de datos '$DB_NAME_STAGING' ya existe."
@@ -183,7 +199,21 @@ jobs:
               -U "$DB_USER" \
               -d postgres \
               -c "CREATE DATABASE $DB_NAME_STAGING"
-            echo "[OK] Base de datos '$DB_NAME_STAGING' creada exitosamente."
+
+            # Verificar que se creó correctamente
+            DB_VERIFY=$(PGPASSWORD="$DB_PASSWORD" psql \
+              -h "$DB_HOST" \
+              -p "$DB_PORT" \
+              -U "$DB_USER" \
+              -d postgres \
+              -tAc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME_STAGING'")
+
+            if [ "$DB_VERIFY" = "1" ]; then
+              echo "[OK] Base de datos '$DB_NAME_STAGING' creada y verificada exitosamente."
+            else
+              echo "[ERROR] No se pudo crear la base de datos '$DB_NAME_STAGING'."
+              exit 1
+            fi
           fi
 
       - name: "Deploy a Elastic Beanstalk Staging"
@@ -237,6 +267,36 @@ jobs:
 
           echo "[OK] Seed ejecutado exitosamente en staging"
 
+      - name: "Health Check Post-Deploy"
+        run: |
+          echo "[INFO] Esperando 30s para que el servidor arranque..."
+          sleep 30
+
+          STAGING_URL="http://${{ env.EB_ENV_STAGING }}.eba-qnyktbf8.${{ env.AWS_REGION }}.elasticbeanstalk.com"
+
+          echo "[INFO] Verificando health del backend en $STAGING_URL..."
+
+          # Verificar endpoint básico
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$STAGING_URL/" --max-time 15 || echo "000")
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "[OK] Endpoint raíz respondió 200."
+          else
+            echo "[WARN] Endpoint raíz respondió $HTTP_CODE."
+          fi
+
+          # Verificar endpoint de API que requiere BD
+          HTTP_CODE_API=$(curl -s -o /dev/null -w "%{http_code}" "$STAGING_URL/api/ofertas/search?page=1&limit=1" --max-time 15 || echo "000")
+          if [ "$HTTP_CODE_API" = "200" ]; then
+            echo "[OK] API /api/ofertas/search respondió 200 - BD conectada correctamente."
+          else
+            echo "[ERROR] API /api/ofertas/search respondió $HTTP_CODE_API"
+            echo "[ERROR] El backend puede estar activo pero SIN conexión a la BD."
+            echo "[ERROR] Verifica las variables de entorno DB_NAME, DB_HOST, DB_USER en Elastic Beanstalk."
+            exit 1
+          fi
+
+          echo "[OK] Health check completado exitosamente."
+
   # ==========================================
   # JOB 3: DEPLOY A PRODUCCIÓN (CD - main)
   # ==========================================
@@ -286,14 +346,29 @@ jobs:
           PGSSLMODE: require
           DB_NAME_PROD: politutorias_prod
         run: |
-          echo "[INFO] Verificando si la base de datos '$DB_NAME_PROD' existe..."
+          echo "[INFO] Verificando conectividad con RDS..."
 
+          # Paso 1: Verificar que podemos conectarnos al RDS
+          if ! PGPASSWORD="$DB_PASSWORD" psql \
+            -h "$DB_HOST" \
+            -p "$DB_PORT" \
+            -U "$DB_USER" \
+            -d postgres \
+            -c "SELECT 1" > /dev/null 2>&1; then
+            echo "[ERROR] No se pudo conectar al servidor RDS en $DB_HOST:$DB_PORT"
+            echo "[ERROR] Verifica que el Security Group del RDS permita conexiones desde GitHub Actions."
+            exit 1
+          fi
+          echo "[OK] Conexión a RDS establecida."
+
+          # Paso 2: Verificar si la BD existe
+          echo "[INFO] Verificando si la base de datos '$DB_NAME_PROD' existe..."
           DB_EXISTS=$(PGPASSWORD="$DB_PASSWORD" psql \
             -h "$DB_HOST" \
             -p "$DB_PORT" \
             -U "$DB_USER" \
             -d postgres \
-            -tAc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME_PROD'" 2>/dev/null || echo "0")
+            -tAc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME_PROD'")
 
           if [ "$DB_EXISTS" = "1" ]; then
             echo "[OK] Base de datos '$DB_NAME_PROD' ya existe."
@@ -305,7 +380,21 @@ jobs:
               -U "$DB_USER" \
               -d postgres \
               -c "CREATE DATABASE $DB_NAME_PROD"
-            echo "[OK] Base de datos '$DB_NAME_PROD' creada exitosamente."
+
+            # Verificar que se creó correctamente
+            DB_VERIFY=$(PGPASSWORD="$DB_PASSWORD" psql \
+              -h "$DB_HOST" \
+              -p "$DB_PORT" \
+              -U "$DB_USER" \
+              -d postgres \
+              -tAc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME_PROD'")
+
+            if [ "$DB_VERIFY" = "1" ]; then
+              echo "[OK] Base de datos '$DB_NAME_PROD' creada y verificada exitosamente."
+            else
+              echo "[ERROR] No se pudo crear la base de datos '$DB_NAME_PROD'."
+              exit 1
+            fi
           fi
 
       - name: "Deploy a Elastic Beanstalk Production"
@@ -341,16 +430,33 @@ jobs:
           # Desplegar a producción
           eb deploy ${{ env.EB_ENV_PROD }} --label "ver-${{ github.run_number }}" --timeout 20
 
-      # TODO: Descomentar cuando se implemente el endpoint /api/admin/seed
-      # - name: "Ejecutar Seed Production"
-      #   run: |
-      #     echo "Esperando 120s a que el servidor arranque después del deploy..."
-      #     sleep 120
-      #     URL_PROD="http://${{ env.EB_ENV_PROD }}.eba-qnyktbf8.us-east-1.elasticbeanstalk.com"
-      #     echo "Ejecutando Seed en: $URL_PROD"
-      #     curl -X POST "$URL_PROD/api/admin/seed" \
-      #       -H "x-api-key: super-clave-secreta-para-seed" \
-      #       -H "Content-Type: application/json" \
-      #       --max-time 300 \
-      #       --retry 3 \
-      #       --retry-delay 10
+      - name: "Health Check Post-Deploy"
+        run: |
+          echo "[INFO] Esperando 30s para que el servidor arranque..."
+          sleep 30
+
+          PROD_URL="http://${{ env.EB_ENV_PROD }}.eba-qnyktbf8.${{ env.AWS_REGION }}.elasticbeanstalk.com"
+
+          echo "[INFO] Verificando health del backend en $PROD_URL..."
+
+          # Verificar endpoint básico
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$PROD_URL/" --max-time 15 || echo "000")
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "[OK] Endpoint raíz respondió 200."
+          else
+            echo "[WARN] Endpoint raíz respondió $HTTP_CODE."
+          fi
+
+          # Verificar endpoint de API que requiere BD
+          HTTP_CODE_API=$(curl -s -o /dev/null -w "%{http_code}" "$PROD_URL/api/ofertas/search?page=1&limit=1" --max-time 15 || echo "000")
+          if [ "$HTTP_CODE_API" = "200" ]; then
+            echo "[OK] API /api/ofertas/search respondió 200 - BD conectada correctamente."
+          else
+            echo "[ERROR] API /api/ofertas/search respondió $HTTP_CODE_API"
+            echo "[ERROR] El backend puede estar activo pero SIN conexión a la BD."
+            echo "[ERROR] Verifica las variables de entorno DB_NAME, DB_HOST, DB_USER en Elastic Beanstalk."
+            exit 1
+          fi
+
+          echo "[OK] Health check completado exitosamente."
+

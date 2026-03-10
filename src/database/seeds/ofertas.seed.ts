@@ -329,6 +329,59 @@ export async function seedOfertas(dataSource: DataSource): Promise<void> {
 }
 
 /**
+ * UUID fijo de la oferta de detalle para HU-32.
+ * Usado para probar GET /api/ofertas/:id de forma reproducible.
+ * IMPORTANTE: Mantener sincronizado con cualquier prueba E2E de HU-32.
+ */
+export const HU32_OFERTA_DETALLE_ID = 'b2c3d4e5-f6a7-4890-b234-567890abcdef';
+
+/**
+ * Seed de oferta dedicada para HU-32: Ver Detalles de la Oferta.
+ *
+ * ── HU-32: GET /api/ofertas/:id ─────────────────────────────────────────────
+ * Inserta una oferta con UUID fijo y todos sus datos relevantes para
+ * poder probar el endpoint de detalle con un ID conocido y predecible.
+ *
+ * La oferta se asocia a Juan Carlos Pérez (tutor 001) que tiene:
+ *   - Disponibilidad: Lun 08:00, Lun 09:00, Mar 16:00, Jue 10:00, Vie 14:00, Vie 15:00
+ *   - Experiencias: Monitor de Cálculo, Tutor de POO, Auxiliar Docente
+ *   - Materias: Cálculo Diferencial, Cálculo Integral, Álgebra Lineal, POO
+ *
+ * Casos de prueba habilitados:
+ *   GET /api/ofertas/b2c3d4e5-f6a7-4890-b234-567890abcdef  → 200 con detalle completo
+ *   GET /api/ofertas/00000000-0000-0000-0000-000000000000  → 404 Not Found
+ *   GET /api/ofertas/no-es-uuid                            → 400 Bad Request
+ */
+export async function seedOfertaDetalleHU32(
+  dataSource: DataSource,
+): Promise<void> {
+  const ofertaRepository = dataSource.getRepository(Oferta);
+
+  const ofertaDetalle: Partial<Oferta> & { id: string } = {
+    id: HU32_OFERTA_DETALLE_ID,
+    title: 'Cálculo Diferencial — Detalle Completo',
+    price: 14.5,
+    modality: 'VIRTUAL/PRESENCIAL',
+    categories: ['Matemáticas', 'Cálculo', 'Ingeniería'],
+    description:
+      'Tutoría especializada en límites, derivadas e integrales con enfoque ' +
+      'en aplicaciones de ingeniería. Incluye resolución de exámenes anteriores, ' +
+      'material de apoyo descargable y seguimiento personalizado de avance. ' +
+      'Disponible en modalidad virtual o presencial según la preferencia del estudiante.',
+    rating: 4.9,
+    reviewsCount: 31,
+    tutorId: '550e8400-e29b-41d4-a716-446655440001', // Juan Carlos Pérez
+  };
+
+  console.log('📚 Insertando oferta dedicada HU-32...');
+
+  const oferta = ofertaRepository.create(ofertaDetalle);
+  await ofertaRepository.save(oferta);
+
+  console.log(`✅ Oferta HU-32 insertada con ID: ${HU32_OFERTA_DETALLE_ID}`);
+}
+
+/**
  * Seed de OfertaEntity para HU26.
  *
  * ── HU26: GET /api/ofertas?modalidad= ────────────────────────────────────────

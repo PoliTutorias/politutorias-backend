@@ -8,11 +8,11 @@ import { PerfilProfesionalEntity } from '../../../perfil/entities/perfil-profesi
 import { Tutor } from '../../../tutors/entities/tutor.entity';
 import { Oferta } from '../../domain/entities/oferta.entity';
 import {
-    DisponibilidadItemDto,
-    ExperienciaTutorDto,
-    MateriaTutorDto,
-    OfertaDetalleResponseDto,
-    TutorDetalleDto,
+  DisponibilidadItemDto,
+  ExperienciaTutorDto,
+  MateriaTutorDto,
+  OfertaDetalleResponseDto,
+  TutorDetalleDto,
 } from '../../dto/oferta-detalle-response.dto';
 
 /**
@@ -109,7 +109,13 @@ export class GetOfertaByIdUseCase {
     const materias = this.combineMaterias(materiasFromTable, perfilProfesional);
 
     // 6. Mapear a DTO de respuesta
-    return this.mapToDto(oferta, tutor, uniqueAvailability, experiencias, materias);
+    return this.mapToDto(
+      oferta,
+      tutor,
+      uniqueAvailability,
+      experiencias,
+      materias,
+    );
   }
 
   /**

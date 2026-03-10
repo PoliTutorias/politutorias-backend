@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AvailabilityEntity } from '../disponibilidad/entities/availability.entity';
 import { ExperienciaEntity } from '../experiencias/entities/experiencia.entity';
 import { MateriaEntity } from '../materias/entities/materia.entity';
+import { PerfilProfesionalEntity } from '../perfil/entities/perfil-profesional.entity';
 import { Tutor } from '../tutors/entities/tutor.entity';
 import { IOfertaRepository } from './application/ports/oferta.repository.interface';
 import { CreateOfertaUseCase } from './application/use-cases/create-oferta.use-case';
@@ -25,6 +26,7 @@ import { TutorOfertasController } from './tutor-ofertas.controller';
       AvailabilityEntity,
       ExperienciaEntity,
       MateriaEntity,
+      PerfilProfesionalEntity,
     ]),
   ],
   controllers: [OfertasController, TutorOfertasController],

@@ -1,25 +1,26 @@
 import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  ParseUUIDPipe,
-  Post,
-  Query,
-  UsePipes,
-  ValidationPipe,
+    Body,
+    Controller,
+    Get,
+    Headers,
+    HttpCode,
+    HttpStatus,
+    Param,
+    ParseUUIDPipe,
+    Post,
+    Query,
+    UsePipes,
+    ValidationPipe,
 } from '@nestjs/common';
 import {
-  ApiBody,
-  ApiExtraModels,
-  ApiOperation,
-  ApiParam,
-  ApiQuery,
-  ApiResponse,
-  ApiTags,
-  getSchemaPath,
+    ApiBody,
+    ApiExtraModels,
+    ApiOperation,
+    ApiParam,
+    ApiQuery,
+    ApiResponse,
+    ApiTags,
+    getSchemaPath,
 } from '@nestjs/swagger';
 import { CreateOfertaUseCase } from './application/use-cases/create-oferta.use-case';
 import { GetAllOfertasUseCase } from './application/use-cases/get-all-ofertas.use-case';
@@ -313,7 +314,8 @@ export class OfertasController {
   @ApiOperation({
     summary: 'Crear oferta de tutoría',
     description:
-      'Crea una nueva oferta de tutoría con los datos proporcionados',
+      'Crea una nueva oferta de tutoría con los datos proporcionados. ' +
+      'Se puede enviar el header X-Tutor-Id para asociar la oferta al tutor correcto.',
   })
   @ApiBody({
     type: CreateOfertaDto,
@@ -379,10 +381,12 @@ export class OfertasController {
   })
   async create(
     @Body() createOfertaDto: CreateOfertaDto,
+    @Headers('x-tutor-id') tutorIdHeader?: string,
   ): Promise<CreateOfertaResponse> {
+    const tutorId = tutorIdHeader || this.tutorId;
     const oferta = await this.createOfertaUseCase.execute(
       createOfertaDto,
-      this.tutorId,
+      tutorId,
     );
     return this.buildSuccessResponse(oferta);
   }

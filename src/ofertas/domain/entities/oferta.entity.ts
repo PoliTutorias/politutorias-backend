@@ -1,13 +1,13 @@
 import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  Index,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-  Unique,
-  UpdateDateColumn,
+    Column,
+    CreateDateColumn,
+    Entity,
+    Index,
+    JoinColumn,
+    ManyToOne,
+    PrimaryGeneratedColumn,
+    Unique,
+    UpdateDateColumn,
 } from 'typeorm';
 import { Tutor } from '../../../tutors/entities/tutor.entity';
 import { CreateOfertaDto } from '../../dto/create-oferta.dto';
@@ -102,6 +102,7 @@ export class Oferta {
     oferta.descripcion = dto.description;
     oferta.precioHora = dto.price;
     oferta.modalidad = Oferta.toOfferModality(dto.modality);
+    oferta.areaConocimiento = dto.categories?.[0] ?? null;
     return oferta;
   }
 

@@ -15,6 +15,7 @@ import {
   ApiBody,
   ApiExtraModels,
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiResponse,
   ApiTags,
@@ -25,6 +26,7 @@ import { GetAllOfertasUseCase } from './application/use-cases/get-all-ofertas.us
 import { Oferta } from './domain/entities/oferta.entity';
 import { CreateOfertaDto } from './dto/create-oferta.dto';
 import { GetOfertasFilterDto } from './dto/get-ofertas-filter.dto';
+import { OfertaDetalleResponseDto } from './dto/oferta-detalle-response.dto';
 import { OfertaItemDto, TutorBasicDto } from './dto/oferta-item.dto';
 import { OfertaDto } from './dto/oferta.dto';
 import { OffersQueryParams } from './dto/offers-query.dto';
@@ -235,6 +237,75 @@ export class OfertasController {
     @Query() query: OffersQueryParams,
   ): Promise<PaginatedOffersResponse> {
     return this.ofertasService.searchOffers(query);
+  }
+
+  /**
+   * HU-32: Ver detalles de una oferta de tutoría.
+   *
+   * Endpoint público (no requiere JWT).
+   * Debe declararse DESPUÉS de @Get('search') para evitar colisiones de rutas.
+   *
+   * @route GET /api/ofertas/:id
+   * @param id - UUID de la oferta
+   * @returns OfertaDetalleResponseDto con todos los detalles
+   */
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Ver detalles de una oferta de tutoría',
+    description:
+      'Retorna el detalle completo de una oferta: título, precio, modalidad, descripción, ' +
+      'categorías, rating, disponibilidad del tutor, experiencias y materias.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'UUID de la oferta',
+    type: String,
+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Detalle de la oferta obtenido exitosamente',
+    type: OfertaDetalleResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'UUID inválido',
+    schema: {
+      example: {
+        statusCode: 400,
+        message: 'Validation failed (uuid is expected)',
+        error: 'Bad Request',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Oferta no encontrada',
+    schema: {
+      example: {
+        statusCode: 404,
+        message:
+          'Oferta con id a1b2c3d4-e5f6-7890-1234-567890abcdef no encontrada.',
+        error: 'Not Found',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Error interno del servidor',
+    schema: {
+      example: {
+        statusCode: 500,
+        message: 'Error interno al obtener el detalle de la oferta.',
+        error: 'Internal Server Error',
+      },
+    },
+  })
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<OfertaDetalleResponseDto> {
+    return this.ofertasService.findOne(id);
   }
 
   @Post()

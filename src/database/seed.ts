@@ -9,7 +9,12 @@ import { PerfilProfesionalEntity } from '../perfil/entities/perfil-profesional.e
 import { Tutor } from '../tutors/entities/tutor.entity';
 import { seedDisponibilidad } from './seeds/disponibilidad.seed';
 import { seedExperiencias } from './seeds/experiencias.seed';
-import { seedOfertas, seedOfertasHU26 } from './seeds/ofertas.seed';
+import { seedMaterias } from './seeds/materias.seed';
+import {
+  seedOfertas,
+  seedOfertaDetalleHU32,
+  seedOfertasHU26,
+} from './seeds/ofertas.seed';
 import { seedPerfilesProfesionales } from './seeds/perfil-profesional.seed';
 import { seedTutors } from './seeds/tutors.seed';
 
@@ -107,6 +112,14 @@ async function runSeed() {
     // (deben ir DESPUÉS de seedTutors por FK tutorId)
     await seedExperiencias(AppDataSource);
     await seedPerfilesProfesionales(AppDataSource);
+
+    // HU-32: Materias de tutores (tabla tutor_materias)
+    // (debe ir DESPUÉS de seedTutors por FK tutorId)
+    await seedMaterias(AppDataSource);
+
+    // HU-32: Oferta con UUID fijo para probar GET /api/ofertas/:id
+    // (debe ir DESPUÉS de seedTutors por FK tutorId)
+    await seedOfertaDetalleHU32(AppDataSource);
 
     console.log('🎉 Seed completado exitosamente');
   } catch (error) {

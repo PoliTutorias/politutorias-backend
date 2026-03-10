@@ -4,11 +4,13 @@ import { plainToInstance } from 'class-transformer';
 import { FindManyOptions, In, Repository } from 'typeorm';
 import { FilterQueryParams } from '../common/dtos/filter-query-params.dto';
 import { AvailabilityEntity } from '../disponibilidad/entities/availability.entity';
+import { GetOfertaByIdUseCase } from './application/use-cases/get-oferta-by-id.use-case';
 import { FindOfertasByPriceUseCase } from './application/use-cases/find-ofertas-by-price.use-case';
 import { GetFilteredOfertasUseCase } from './application/use-cases/get-filtered-ofertas.use-case';
 import { Oferta } from './domain/entities/oferta.entity';
 import { GetOfertasFilterDto } from './dto/get-ofertas-filter.dto';
 import { OfertaItemDto } from './dto/oferta-item.dto';
+import { OfertaDetalleResponseDto } from './dto/oferta-detalle-response.dto';
 import { OfertaResponseDto } from './dto/oferta-response.dto';
 import { OfertaDto } from './dto/oferta.dto';
 import { OffersQueryParams } from './dto/offers-query.dto';
@@ -21,7 +23,8 @@ import { OfertaMapper } from './mappers/oferta.mapper';
 /**
  * Servicio para gestionar ofertas de tutoría.
  *
- * Incluye funcionalidad de HU02 (obtener ofertas por tutor) y HU17 (búsqueda de ofertas).
+ * Incluye funcionalidad de HU02 (obtener ofertas por tutor), HU17 (búsqueda de ofertas)
+ * y HU32 (ver detalle de una oferta).
  */
 @Injectable()
 export class OfertasService {
@@ -33,6 +36,7 @@ export class OfertasService {
     private readonly ofertaRepository: Repository<Oferta>,
     @InjectRepository(AvailabilityEntity)
     private readonly availabilityRepository: Repository<AvailabilityEntity>,
+    private readonly getOfertaByIdUseCase: GetOfertaByIdUseCase,
   ) {
     this.findOfertasByPriceUseCase = new FindOfertasByPriceUseCase(
       this.ofertaRepository,
@@ -45,6 +49,17 @@ export class OfertasService {
           relations: ['tutor'],
         } as FindManyOptions<Oferta>),
     });
+  }
+
+  /**
+   * HU32: Obtiene el detalle completo de una oferta de tutoría por su ID.
+   *
+   * @param id - UUID de la oferta
+   * @returns OfertaDetalleResponseDto con datos de la oferta y el tutor
+   * @throws NotFoundException si la oferta no existe (RN-02)
+   */
+  async findOne(id: string): Promise<OfertaDetalleResponseDto> {
+    return this.getOfertaByIdUseCase.execute(id);
   }
 
   /**

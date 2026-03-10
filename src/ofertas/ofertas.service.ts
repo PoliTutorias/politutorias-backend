@@ -4,19 +4,20 @@ import { plainToInstance } from 'class-transformer';
 import { FindManyOptions, In, Repository } from 'typeorm';
 import { FilterQueryParams } from '../common/dtos/filter-query-params.dto';
 import { AvailabilityEntity } from '../disponibilidad/entities/availability.entity';
-import { GetOfertaByIdUseCase } from './application/use-cases/get-oferta-by-id.use-case';
+import { Tutor } from '../tutors/entities/tutor.entity';
 import { FindOfertasByPriceUseCase } from './application/use-cases/find-ofertas-by-price.use-case';
 import { GetFilteredOfertasUseCase } from './application/use-cases/get-filtered-ofertas.use-case';
+import { GetOfertaByIdUseCase } from './application/use-cases/get-oferta-by-id.use-case';
 import { Oferta } from './domain/entities/oferta.entity';
 import { GetOfertasFilterDto } from './dto/get-ofertas-filter.dto';
-import { OfertaItemDto } from './dto/oferta-item.dto';
 import { OfertaDetalleResponseDto } from './dto/oferta-detalle-response.dto';
+import { OfertaItemDto } from './dto/oferta-item.dto';
 import { OfertaResponseDto } from './dto/oferta-response.dto';
 import { OfertaDto } from './dto/oferta.dto';
 import { OffersQueryParams } from './dto/offers-query.dto';
 import {
-  OfferResponseDto,
-  PaginatedOffersResponse,
+    OfferResponseDto,
+    PaginatedOffersResponse,
 } from './dto/paginated-offers-response.dto';
 import { OfertaMapper } from './mappers/oferta.mapper';
 
@@ -36,6 +37,8 @@ export class OfertasService {
     private readonly ofertaRepository: Repository<Oferta>,
     @InjectRepository(AvailabilityEntity)
     private readonly availabilityRepository: Repository<AvailabilityEntity>,
+    @InjectRepository(Tutor)
+    private readonly tutorRepository: Repository<Tutor>,
     private readonly getOfertaByIdUseCase: GetOfertaByIdUseCase,
   ) {
     this.findOfertasByPriceUseCase = new FindOfertasByPriceUseCase(
@@ -222,7 +225,28 @@ export class OfertasService {
           select: ['tutorId'],
         });
 
-        availTutorIds = [...new Set(availabilities.map((a) => a.tutorId))];
+        const rawIds = [...new Set(availabilities.map((a) => a.tutorId))];
+
+        if (rawIds.length === 0) {
+          return { data: [], total: 0 };
+        }
+
+        // Resolver cualquier userId (no-UUID) a su tutor UUID real,
+        // ya que ofertas.tutorId es de tipo uuid en PostgreSQL.
+        const UUID_RE =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const uuids = rawIds.filter((id) => UUID_RE.test(id));
+        const nonUuids = rawIds.filter((id) => !UUID_RE.test(id));
+
+        if (nonUuids.length > 0) {
+          const tutors = await this.tutorRepository.find({
+            where: nonUuids.map((uid) => ({ userId: uid })),
+            select: ['id'],
+          });
+          uuids.push(...tutors.map((t) => t.id));
+        }
+
+        availTutorIds = [...new Set(uuids)];
 
         if (availTutorIds.length === 0) {
           return { data: [], total: 0 };

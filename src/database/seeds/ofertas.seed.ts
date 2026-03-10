@@ -364,10 +364,9 @@ export async function seedOfertaDetalleHU32(
     modality: 'VIRTUAL/PRESENCIAL',
     categories: ['Matemáticas', 'Cálculo', 'Ingeniería'],
     description:
-      'Tutoría especializada en límites, derivadas e integrales con enfoque ' +
-      'en aplicaciones de ingeniería. Incluye resolución de exámenes anteriores, ' +
-      'material de apoyo descargable y seguimiento personalizado de avance. ' +
-      'Disponible en modalidad virtual o presencial según la preferencia del estudiante.',
+      'Límites, derivadas e integrales aplicados a ingeniería. ' +
+      'Incluye resolución de exámenes anteriores y material de apoyo. ' +
+      'Modalidad virtual o presencial según preferencia del estudiante.',
     rating: 4.9,
     reviewsCount: 31,
     tutorId: '550e8400-e29b-41d4-a716-446655440001', // Juan Carlos Pérez

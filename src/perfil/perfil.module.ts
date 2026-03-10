@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { PerfilController } from './perfil.controller';
-import { PerfilService } from './perfil.service';
-import { PerfilProfesionalEntity } from './entities/perfil-profesional.entity';
 import { ExperienciaEntity } from '../experiencias/entities/experiencia.entity';
 import { MateriaEntity } from '../materias/entities/materia.entity';
-import { PerfilProfesionalTypeOrmRepository } from './infrastructure/typeorm-perfil-profesional.repository';
+import { Tutor } from '../tutors/entities/tutor.entity';
 import { PERFIL_PROFESIONAL_REPOSITORY_TOKEN } from './domain/ports/perfil-profesional.repository.port';
+import { PerfilProfesionalEntity } from './entities/perfil-profesional.entity';
+import { PerfilProfesionalTypeOrmRepository } from './infrastructure/typeorm-perfil-profesional.repository';
+import { PerfilController } from './perfil.controller';
+import { PerfilService } from './perfil.service';
 
 /**
  * PerfilModule — HU42
@@ -20,6 +21,7 @@ import { PERFIL_PROFESIONAL_REPOSITORY_TOKEN } from './domain/ports/perfil-profe
       PerfilProfesionalEntity,
       ExperienciaEntity,
       MateriaEntity,
+      Tutor,
     ]),
   ],
   controllers: [PerfilController],

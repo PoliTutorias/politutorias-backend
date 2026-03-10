@@ -102,6 +102,7 @@ export class Oferta {
     oferta.descripcion = dto.description;
     oferta.precioHora = dto.price;
     oferta.modalidad = Oferta.toOfferModality(dto.modality);
+    oferta.areaConocimiento = dto.categories?.[0] ?? null;
     return oferta;
   }
 

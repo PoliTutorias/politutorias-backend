@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Tutor } from '../tutors/entities/tutor.entity';
+import { EXPERIENCIA_REPOSITORY_TOKEN } from './domain/ports/experiencia.repository.port';
+import { ExperienciaEntity } from './entities/experiencia.entity';
 import { ExperienciasController } from './experiencias.controller';
 import { ExperienciasService } from './experiencias.service';
-import { ExperienciaEntity } from './entities/experiencia.entity';
 import { ExperienciaTypeOrmRepository } from './infrastructure/typeorm-experiencia.repository';
-import { EXPERIENCIA_REPOSITORY_TOKEN } from './domain/ports/experiencia.repository.port';
 
 /**
  * ExperienciasModule — HU42
@@ -13,7 +14,7 @@ import { EXPERIENCIA_REPOSITORY_TOKEN } from './domain/ports/experiencia.reposit
  *   Controller (HTTP) → Service (Facade) → UseCase → Repository Port → TypeORM Adapter
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([ExperienciaEntity])],
+  imports: [TypeOrmModule.forFeature([ExperienciaEntity, Tutor])],
   controllers: [ExperienciasController],
   providers: [
     // Adapter concreto para el port IExperienciaRepository

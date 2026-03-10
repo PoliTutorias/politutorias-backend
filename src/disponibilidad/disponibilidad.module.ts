@@ -1,14 +1,15 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Tutor } from '../tutors/entities/tutor.entity';
+import { AVAILABILITY_REPOSITORY_TOKEN } from './application/ports/availability.repository.interface';
+import { CreateAvailabilityUseCase } from './application/use-cases/create-availability.use-case';
 import { DisponibilidadController } from './disponibilidad.controller';
 import { DisponibilidadService } from './disponibilidad.service';
 import { AvailabilityEntity } from './entities/availability.entity';
 import { TypeORMAvailabilityRepository } from './infrastructure/persistence/typeorm-availability.repository';
-import { CreateAvailabilityUseCase } from './application/use-cases/create-availability.use-case';
-import { AVAILABILITY_REPOSITORY_TOKEN } from './application/ports/availability.repository.interface';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([AvailabilityEntity])],
+  imports: [TypeOrmModule.forFeature([AvailabilityEntity, Tutor])],
   controllers: [DisponibilidadController],
   providers: [
     DisponibilidadService,

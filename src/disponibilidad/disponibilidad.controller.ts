@@ -1,26 +1,29 @@
 import {
-  Controller,
-  Post,
-  Get,
   Body,
+  Controller,
+  Get,
   HttpCode,
   HttpStatus,
-  UseGuards,
-  Req,
   InternalServerErrorException,
+  Post,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import {
-  ApiTags,
-  ApiResponse,
-  ApiBody,
   ApiBearerAuth,
+  ApiBody,
   ApiOperation,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Request } from 'express';
-import { CreateAvailabilityUseCase } from './application/use-cases/create-availability.use-case';
-import { CreateAvailabilityDto } from './dto/create-availability.dto';
+import { Repository } from 'typeorm';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Tutor } from '../tutors/entities/tutor.entity';
+import { CreateAvailabilityUseCase } from './application/use-cases/create-availability.use-case';
 import { DisponibilidadService } from './disponibilidad.service';
+import { CreateAvailabilityDto } from './dto/create-availability.dto';
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -35,6 +38,8 @@ export class DisponibilidadController {
   constructor(
     private readonly createAvailabilityUseCase: CreateAvailabilityUseCase,
     private readonly disponibilidadService: DisponibilidadService,
+    @InjectRepository(Tutor)
+    private readonly tutorRepository: Repository<Tutor>,
   ) {}
 
   @Get()
@@ -63,9 +68,13 @@ export class DisponibilidadController {
     description: 'No autorizado, se requiere token JWT válido.',
   })
   async findByTutor(@Req() req: AuthenticatedRequest) {
-    const tutorId = req.user.id;
+    const userId = req.user.id;
 
     try {
+      // Resolver userId (JWT sub) → tutor UUID
+      const tutor = await this.tutorRepository.findOne({ where: { userId } });
+      const tutorId = tutor?.id ?? userId;
+
       const blocks = await this.disponibilidadService.findByTutorId(tutorId);
       return {
         blocks: blocks.map((block) => ({
@@ -128,11 +137,15 @@ export class DisponibilidadController {
     @Body() createAvailabilityDto: CreateAvailabilityDto,
     @Req() req: AuthenticatedRequest,
   ) {
-    const tutorIdFromToken = req.user.id;
+    const userId = req.user.id;
 
     try {
+      // Resolver userId (JWT sub) → tutor UUID
+      const tutor = await this.tutorRepository.findOne({ where: { userId } });
+      const tutorId = tutor?.id ?? userId;
+
       const result = await this.createAvailabilityUseCase.execute(
-        tutorIdFromToken,
+        tutorId,
         createAvailabilityDto.blocks,
       );
       return result;

@@ -1,28 +1,31 @@
 import {
-  Controller,
-  Post,
   Body,
-  Req,
-  UseGuards,
+  Controller,
   HttpCode,
   HttpStatus,
   InternalServerErrorException,
+  Post,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import {
-  ApiTags,
   ApiBearerAuth,
-  ApiOperation,
   ApiBody,
+  ApiOperation,
   ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Request } from 'express';
-import { ExperienciasService } from './experiencias.service';
-import { ExperienciaDto } from '../common/dtos/experiencia.dto';
+import { Repository } from 'typeorm';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ExperienciaDto } from '../common/dtos/experiencia.dto';
+import { Tutor } from '../tutors/entities/tutor.entity';
 import {
   ExperienciaMapper,
   ExperienciaResponseDto,
 } from './application/mappers/experiencia.mapper';
+import { ExperienciasService } from './experiencias.service';
 
 interface AuthenticatedRequest extends Request {
   user: { id: string };
@@ -38,7 +41,11 @@ interface AuthenticatedRequest extends Request {
 @ApiBearerAuth('JWT')
 @Controller('api/experiencias')
 export class ExperienciasController {
-  constructor(private readonly experienciasService: ExperienciasService) {}
+  constructor(
+    private readonly experienciasService: ExperienciasService,
+    @InjectRepository(Tutor)
+    private readonly tutorRepository: Repository<Tutor>,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Post()
@@ -57,10 +64,14 @@ export class ExperienciasController {
     @Body() experienciaDto: ExperienciaDto,
     @Req() req: AuthenticatedRequest,
   ) {
-    const tutorIdFromToken = req.user.id;
+    const userId = req.user.id;
     try {
+      // Resolver userId (JWT sub) → tutor UUID
+      const tutor = await this.tutorRepository.findOne({ where: { userId } });
+      const tutorId = tutor?.id ?? userId;
+
       const entity = await this.experienciasService.add(
-        tutorIdFromToken,
+        tutorId,
         experienciaDto,
       );
       return {

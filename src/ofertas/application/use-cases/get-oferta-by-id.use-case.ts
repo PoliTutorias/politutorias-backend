@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { AvailabilityEntity } from '../../../disponibilidad/entities/availability.entity';
 import { ExperienciaEntity } from '../../../experiencias/entities/experiencia.entity';
 import { MateriaEntity } from '../../../materias/entities/materia.entity';
+import { PerfilProfesionalEntity } from '../../../perfil/entities/perfil-profesional.entity';
 import { Tutor } from '../../../tutors/entities/tutor.entity';
 import { Oferta } from '../../domain/entities/oferta.entity';
 import {
@@ -44,6 +45,9 @@ export class GetOfertaByIdUseCase {
 
     @InjectRepository(MateriaEntity)
     private readonly materiaRepository: Repository<MateriaEntity>,
+
+    @InjectRepository(PerfilProfesionalEntity)
+    private readonly perfilRepository: Repository<PerfilProfesionalEntity>,
   ) {}
 
   /**
@@ -63,27 +67,55 @@ export class GetOfertaByIdUseCase {
 
     const tutorId = oferta.tutorId;
 
-    // 2. Cargar datos relacionados en paralelo (RN-04: datos del tutor siempre incluidos)
-    const [tutor, availability, experiencias, materias] = await Promise.all([
-      tutorId
-        ? this.tutorRepository.findOne({ where: { id: tutorId } })
-        : Promise.resolve(null),
-      tutorId
-        ? this.availabilityRepository.find({
-            where: { tutorId },
-            order: { day: 'ASC', hour: 'ASC' },
-          })
-        : Promise.resolve([]),
-      tutorId
-        ? this.experienciaRepository.find({ where: { tutorId } })
-        : Promise.resolve([]),
-      tutorId
-        ? this.materiaRepository.find({ where: { tutorId } })
-        : Promise.resolve([]),
-    ]);
+    // 2. Buscar el tutor primero para obtener userId
+    const tutor = tutorId
+      ? await this.tutorRepository.findOne({ where: { id: tutorId } })
+      : null;
 
-    // 3. Mapear a DTO de respuesta
-    return this.mapToDto(oferta, tutor, availability, experiencias, materias);
+    // Construir lista de IDs de búsqueda: UUID del tutor + userId (JWT sub)
+    // Esto cubre tanto datos de seed (guardados con UUID) como datos de
+    // registro (guardados con userId del JWT por los controladores protegidos)
+    const lookupIds: string[] = [];
+    if (tutorId) lookupIds.push(tutorId);
+    if (tutor?.userId && tutor.userId !== tutorId) {
+      lookupIds.push(tutor.userId);
+    }
+
+    // 3. Cargar datos relacionados en paralelo usando ambos IDs
+    const [availability, experiencias, materiasFromTable, perfilProfesional] =
+      lookupIds.length > 0
+        ? await Promise.all([
+            this.availabilityRepository.find({
+              where: { tutorId: In(lookupIds) },
+              order: { day: 'ASC', hour: 'ASC' },
+            }),
+            this.experienciaRepository.find({
+              where: { tutorId: In(lookupIds) },
+            }),
+            this.materiaRepository.find({
+              where: { tutorId: In(lookupIds) },
+            }),
+            this.perfilRepository.findOne({
+              where: { tutorId: In(lookupIds) },
+            }),
+          ])
+        : [[], [], [], null];
+
+    // 4. Deduplicar disponibilidad por (day, hour) — evita duplicados
+    //    cuando existen registros bajo tutorId UUID y userId
+    const uniqueAvailability = this.deduplicateAvailability(availability);
+
+    // 5. Combinar materias de ambas fuentes (tabla tutor_materias + perfil profesional)
+    const materias = this.combineMaterias(materiasFromTable, perfilProfesional);
+
+    // 6. Mapear a DTO de respuesta
+    return this.mapToDto(
+      oferta,
+      tutor,
+      uniqueAvailability,
+      experiencias,
+      materias,
+    );
   }
 
   /**
@@ -145,5 +177,49 @@ export class GetOfertaByIdUseCase {
       availability: mappedAvailability,
       tutor: mappedTutor,
     };
+  }
+
+  /**
+   * Elimina bloques de disponibilidad duplicados por (day, hour).
+   */
+  private deduplicateAvailability(
+    availability: AvailabilityEntity[],
+  ): AvailabilityEntity[] {
+    const seen = new Set<string>();
+    return availability.filter((a) => {
+      const key = `${a.day}|${a.hour}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  /**
+   * Combina materias de la tabla tutor_materias (seed) con las del
+   * perfil profesional (registro HU42). Elimina duplicados por nombre.
+   */
+  private combineMaterias(
+    materiasFromTable: MateriaEntity[],
+    perfilProfesional: PerfilProfesionalEntity | null,
+  ): MateriaEntity[] {
+    if (!perfilProfesional?.materias?.length) {
+      return materiasFromTable;
+    }
+
+    const existingNames = new Set(
+      materiasFromTable.map((m) => m.nombre.toLowerCase()),
+    );
+
+    const fromPerfil: MateriaEntity[] = perfilProfesional.materias
+      .filter((nombre) => !existingNames.has(nombre.toLowerCase()))
+      .map((nombre) => {
+        const m = new MateriaEntity();
+        m.id = `perfil-${nombre}`;
+        m.tutorId = perfilProfesional.tutorId;
+        m.nombre = nombre;
+        return m;
+      });
+
+    return [...materiasFromTable, ...fromPerfil];
   }
 }

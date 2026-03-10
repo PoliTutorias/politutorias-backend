@@ -2,17 +2,17 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import {
-  Between,
-  In,
-  IsNull,
-  LessThanOrEqual,
-  MoreThanOrEqual,
-  Not,
+    Between,
+    In,
+    IsNull,
+    LessThanOrEqual,
+    MoreThanOrEqual,
+    Not,
 } from 'typeorm';
 import { AvailabilityEntity } from '../disponibilidad/entities/availability.entity';
 import { Tutor } from '../tutors/entities/tutor.entity';
-import { Oferta } from './domain/entities/oferta.entity';
 import { GetOfertaByIdUseCase } from './application/use-cases/get-oferta-by-id.use-case';
+import { Oferta } from './domain/entities/oferta.entity';
 import { OffersQueryParams } from './dto/offers-query.dto';
 import { PaginatedOffersResponse } from './dto/paginated-offers-response.dto';
 import { OfertasService } from './ofertas.service';
@@ -46,6 +46,10 @@ describe('OfertasService - findAllByTutorId (Unit Tests) - HU02', () => {
         {
           provide: getRepositoryToken(AvailabilityEntity),
           useValue: { find: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(Tutor),
+          useValue: { findOne: jest.fn() },
         },
         {
           provide: GetOfertaByIdUseCase,
@@ -439,6 +443,10 @@ describe('OfertasService - searchOffers (Unit Tests) - HU17', () => {
           useValue: { find: jest.fn().mockResolvedValue([]) },
         },
         {
+          provide: getRepositoryToken(Tutor),
+          useValue: { findOne: jest.fn() },
+        },
+        {
           provide: GetOfertaByIdUseCase,
           useValue: { execute: jest.fn() },
         },
@@ -755,6 +763,10 @@ describe('OfertasService - findFilteredOfertas (Unit Tests) - HU27', () => {
           useValue: { find: jest.fn() },
         },
         {
+          provide: getRepositoryToken(Tutor),
+          useValue: { findOne: jest.fn() },
+        },
+        {
           provide: GetOfertaByIdUseCase,
           useValue: { execute: jest.fn() },
         },
@@ -1061,6 +1073,10 @@ describe('OfertasService - getFilteredOfertas (Unit Tests) - HU26', () => {
         {
           provide: getRepositoryToken(AvailabilityEntity),
           useValue: { find: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(Tutor),
+          useValue: { findOne: jest.fn() },
         },
         {
           provide: GetOfertaByIdUseCase,

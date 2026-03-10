@@ -1,16 +1,21 @@
 // src/perfil/perfil.service.spec.ts
 /* eslint-disable @typescript-eslint/unbound-method */
+import { InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { PerfilService } from './perfil.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PerfilProfesionalEntity } from './entities/perfil-profesional.entity';
+import { PerfilProfesionalDto } from '../common/dtos/perfil-profesional.dto';
 import { ExperienciaEntity } from '../experiencias/entities/experiencia.entity';
 import { MateriaEntity } from '../materias/entities/materia.entity';
-import { PerfilProfesionalDto } from '../common/dtos/perfil-profesional.dto';
-import { InternalServerErrorException } from '@nestjs/common';
+import { Tutor } from '../tutors/entities/tutor.entity';
+import { PerfilProfesionalEntity } from './entities/perfil-profesional.entity';
+import { PerfilService } from './perfil.service';
 
 // Mocks para los repositorios
+const mockTutorRepository = {
+  findOne: jest.fn(),
+};
+
 const mockPerfilProfesionalRepository = {
   findOne: jest.fn(),
   create: jest.fn(),
@@ -23,7 +28,9 @@ const mockExperienciaRepository = {
 };
 
 const mockMateriaRepository = {
-  // Solo se necesita si Materias se guardan como entidades separadas
+  findOne: jest.fn(),
+  create: jest.fn(),
+  save: jest.fn(),
 };
 
 describe('PerfilService', () => {
@@ -47,6 +54,10 @@ describe('PerfilService', () => {
           provide: getRepositoryToken(MateriaEntity),
           useValue: mockMateriaRepository, // Proveer aunque no se use activamente
         },
+        {
+          provide: getRepositoryToken(Tutor),
+          useValue: mockTutorRepository,
+        },
       ],
     }).compile();
 
@@ -60,6 +71,10 @@ describe('PerfilService', () => {
     mockPerfilProfesionalRepository.findOne.mockReset();
     mockPerfilProfesionalRepository.create.mockReset();
     mockPerfilProfesionalRepository.save.mockReset();
+    mockMateriaRepository.findOne.mockReset();
+    mockMateriaRepository.create.mockReset();
+    mockMateriaRepository.save.mockReset();
+    mockTutorRepository.findOne.mockReset();
     // mockExperienciaRepository.find.mockReset(); // Descomentar si se usa
   });
 

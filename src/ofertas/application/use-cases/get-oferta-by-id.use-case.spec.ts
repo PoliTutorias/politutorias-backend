@@ -4,6 +4,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { AvailabilityEntity } from '../../../disponibilidad/entities/availability.entity';
 import { ExperienciaEntity } from '../../../experiencias/entities/experiencia.entity';
 import { MateriaEntity } from '../../../materias/entities/materia.entity';
+import { PerfilProfesionalEntity } from '../../../perfil/entities/perfil-profesional.entity';
 import { Tutor } from '../../../tutors/entities/tutor.entity';
 import { Oferta } from '../../domain/entities/oferta.entity';
 import { GetOfertaByIdUseCase } from './get-oferta-by-id.use-case';
@@ -99,6 +100,7 @@ describe('GetOfertaByIdUseCase', () => {
   const mockAvailabilityRepo = { find: jest.fn() };
   const mockExperienciaRepo = { find: jest.fn() };
   const mockMateriaRepo = { find: jest.fn() };
+  const mockPerfilRepo = { findOne: jest.fn() };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -117,6 +119,10 @@ describe('GetOfertaByIdUseCase', () => {
         {
           provide: getRepositoryToken(MateriaEntity),
           useValue: mockMateriaRepo,
+        },
+        {
+          provide: getRepositoryToken(PerfilProfesionalEntity),
+          useValue: mockPerfilRepo,
         },
       ],
     }).compile();

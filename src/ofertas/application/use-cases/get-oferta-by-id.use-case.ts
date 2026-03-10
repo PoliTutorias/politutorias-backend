@@ -101,11 +101,15 @@ export class GetOfertaByIdUseCase {
           ])
         : [[], [], [], null];
 
-    // 4. Combinar materias de ambas fuentes (tabla tutor_materias + perfil profesional)
+    // 4. Deduplicar disponibilidad por (day, hour) — evita duplicados
+    //    cuando existen registros bajo tutorId UUID y userId
+    const uniqueAvailability = this.deduplicateAvailability(availability);
+
+    // 5. Combinar materias de ambas fuentes (tabla tutor_materias + perfil profesional)
     const materias = this.combineMaterias(materiasFromTable, perfilProfesional);
 
-    // 5. Mapear a DTO de respuesta
-    return this.mapToDto(oferta, tutor, availability, experiencias, materias);
+    // 6. Mapear a DTO de respuesta
+    return this.mapToDto(oferta, tutor, uniqueAvailability, experiencias, materias);
   }
 
   /**
@@ -167,6 +171,21 @@ export class GetOfertaByIdUseCase {
       availability: mappedAvailability,
       tutor: mappedTutor,
     };
+  }
+
+  /**
+   * Elimina bloques de disponibilidad duplicados por (day, hour).
+   */
+  private deduplicateAvailability(
+    availability: AvailabilityEntity[],
+  ): AvailabilityEntity[] {
+    const seen = new Set<string>();
+    return availability.filter((a) => {
+      const key = `${a.day}|${a.hour}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   /**

@@ -14,6 +14,8 @@ import { OfertasModule } from './ofertas/ofertas.module';
 import { OffersModule } from './offers/offers.module';
 import { PerfilProfesionalEntity } from './perfil/entities/perfil-profesional.entity';
 import { PerfilModule } from './perfil/perfil.module';
+import { SolicitudEntity } from './solicitudes/entities/solicitud.entity';
+import { SolicitudesModule } from './solicitudes/solicitudes.module';
 import { Tutor } from './tutors/entities/tutor.entity';
 import { TutorsModule } from './tutors/tutors.module';
 
@@ -40,6 +42,7 @@ import { TutorsModule } from './tutors/tutors.module';
           ExperienciaEntity,
           PerfilProfesionalEntity,
           MateriaEntity,
+          SolicitudEntity,
         ],
         synchronize: configService.get<string>('NODE_ENV') !== 'production',
         logging: false,
@@ -55,6 +58,7 @@ import { TutorsModule } from './tutors/tutors.module';
     DisponibilidadModule,
     ExperienciasModule,
     PerfilModule,
+    SolicitudesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

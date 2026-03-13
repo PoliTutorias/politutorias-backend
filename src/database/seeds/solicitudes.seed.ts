@@ -3,18 +3,13 @@ import {
   SolicitudEntity,
   SolicitudEstado,
 } from '../../solicitudes/entities/solicitud.entity';
+import { HU32_OFERTA_DETALLE_ID } from './ofertas.seed';
 
 /**
  * UUID del tutor "en cero" — sincronizado con tutors.seed.ts
  * Corresponde al tutor con userId 'test-user-123' (TEST_USER_ID).
  */
 const ZERO_TUTOR_ID = '550e8400-e29b-41d4-a716-446655440000';
-
-/**
- * UUID de la oferta con UUID fijo creada por seedOfertaDetalleHU32
- * (oferta de "Cálculo Diferencial" del tutor ZERO_TUTOR_ID).
- */
-const OFERTA_HU32_ID = '550e8400-e29b-41d4-a716-446655440099';
 
 /**
  * Seed de Solicitudes para HU-06: Enviar solicitud de tutoría.
@@ -29,7 +24,7 @@ export async function seedSolicitudHU06(dataSource: DataSource): Promise<void> {
     // 1 ─ Solicitud PENDIENTE del estudiante de prueba para la oferta HU32
     {
       estudianteId: 'test-user-123',
-      ofertaId: OFERTA_HU32_ID,
+      ofertaId: HU32_OFERTA_DETALLE_ID,
       tutorId: ZERO_TUTOR_ID,
       mensaje:
         'Necesito apoyo con los temas de límites y derivadas. Tengo examen la próxima semana.',
@@ -43,7 +38,7 @@ export async function seedSolicitudHU06(dataSource: DataSource): Promise<void> {
     // 2 ─ Solicitud ACEPTADA — otro estudiante
     {
       estudianteId: 'estudiante-uuid-0002-0000-0000-000000000002',
-      ofertaId: OFERTA_HU32_ID,
+      ofertaId: HU32_OFERTA_DETALLE_ID,
       tutorId: ZERO_TUTOR_ID,
       mensaje:
         'Quiero repasar álgebra lineal antes del parcial. Tengo dificultades con transformaciones lineales.',
@@ -54,7 +49,7 @@ export async function seedSolicitudHU06(dataSource: DataSource): Promise<void> {
     // 3 ─ Solicitud RECHAZADA — otro estudiante
     {
       estudianteId: 'estudiante-uuid-0003-0000-0000-000000000003',
-      ofertaId: OFERTA_HU32_ID,
+      ofertaId: HU32_OFERTA_DETALLE_ID,
       tutorId: ZERO_TUTOR_ID,
       mensaje: 'Necesito clases de estadística descriptiva e inferencial.',
       modalidad: 'Virtual',

@@ -4,6 +4,7 @@ import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { JwtAuthGuard } from '../../src/auth/guards/jwt-auth.guard';
+import { TutorAuthGuard } from '../../src/auth/guards/tutor-auth.guard';
 import { SolicitudesController } from '../../src/solicitudes/solicitudes.controller';
 import { SolicitudesService } from '../../src/solicitudes/solicitudes.service';
 import { SolicitudEstado } from '../../src/solicitudes/entities/solicitud.entity';
@@ -53,6 +54,8 @@ describe('SolicitudesController (E2E) - HU-06', () => {
           return true;
         },
       }) // Guard mockeado que inyecta req.user para tests que no prueban 401
+      .overrideGuard(TutorAuthGuard)
+      .useValue({ canActivate: () => true })
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -303,7 +306,10 @@ describe('SolicitudesController (E2E) - HU-06', () => {
             },
           ],
         },
-      ).compile();
+      )
+        .overrideGuard(TutorAuthGuard)
+        .useValue({ canActivate: () => true })
+        .compile();
 
       const appWithRealGuard = moduleWithRealGuard.createNestApplication();
       appWithRealGuard.useGlobalPipes(

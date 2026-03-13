@@ -6,6 +6,7 @@ import { MateriaEntity } from '../materias/entities/materia.entity';
 import { Oferta } from '../ofertas/domain/entities/oferta.entity';
 import { OfertaEntity } from '../ofertas/entities/oferta.entity';
 import { PerfilProfesionalEntity } from '../perfil/entities/perfil-profesional.entity';
+import { SolicitudEntity } from '../solicitudes/entities/solicitud.entity';
 import { Tutor } from '../tutors/entities/tutor.entity';
 import { seedDisponibilidad } from './seeds/disponibilidad.seed';
 import { seedExperiencias } from './seeds/experiencias.seed';
@@ -16,6 +17,7 @@ import {
   seedOfertasHU26,
 } from './seeds/ofertas.seed';
 import { seedPerfilesProfesionales } from './seeds/perfil-profesional.seed';
+import { seedSolicitudHU06 } from './seeds/solicitudes.seed';
 import { seedTutors } from './seeds/tutors.seed';
 
 // Cargar variables de entorno
@@ -36,6 +38,7 @@ const ALL_ENTITIES = [
   ExperienciaEntity,
   PerfilProfesionalEntity,
   MateriaEntity,
+  SolicitudEntity,
 ];
 
 /** Conexión sin synchronize: solo para limpiar el esquema viejo */
@@ -79,6 +82,7 @@ async function runSeed() {
       DROP TABLE IF EXISTS tutor_perfiles_profesionales CASCADE;
       DROP TABLE IF EXISTS tutor_experiencias         CASCADE;
       DROP TABLE IF EXISTS availability               CASCADE;
+      DROP TABLE IF EXISTS solicitudes                CASCADE;
       DROP TABLE IF EXISTS ofertas                    CASCADE;
       DROP TABLE IF EXISTS tutors                     CASCADE;
 
@@ -86,6 +90,7 @@ async function runSeed() {
       DROP TYPE IF EXISTS tutors_facultad_enum         CASCADE;
       DROP TYPE IF EXISTS tutors_semestreactual_enum   CASCADE;
       DROP TYPE IF EXISTS ofertas_modalidad_enum       CASCADE;
+      DROP TYPE IF EXISTS solicitudes_estado_enum      CASCADE;
     `);
     await PreDataSource.destroy();
     console.log('✅ Tablas eliminadas');
@@ -120,6 +125,10 @@ async function runSeed() {
     // HU-32: Oferta con UUID fijo para probar GET /api/ofertas/:id
     // (debe ir DESPUÉS de seedTutors por FK tutorId)
     await seedOfertaDetalleHU32(AppDataSource);
+
+    // HU-06: Solicitudes de tutoría
+    // (debe ir DESPUÉS de seedOfertaDetalleHU32 por FK ofertaId)
+    await seedSolicitudHU06(AppDataSource);
 
     console.log('🎉 Seed completado exitosamente');
   } catch (error) {

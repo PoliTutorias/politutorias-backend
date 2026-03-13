@@ -2,12 +2,12 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import {
-    Between,
-    In,
-    IsNull,
-    LessThanOrEqual,
-    MoreThanOrEqual,
-    Not,
+  Between,
+  In,
+  IsNull,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+  Not,
 } from 'typeorm';
 import { AvailabilityEntity } from '../disponibilidad/entities/availability.entity';
 import { Tutor } from '../tutors/entities/tutor.entity';

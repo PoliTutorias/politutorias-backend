@@ -1,0 +1,150 @@
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { SolicitudEntity, SolicitudEstado } from './entities/solicitud.entity';
+import { Oferta } from '../ofertas/domain/entities/oferta.entity';
+import { CreateSolicitudDto } from './dto/create-solicitud.dto';
+import { VerificarPreviaDto } from './dto/verificar-previa.dto';
+import { SolicitudResponseDto } from './dto/solicitud-response.dto';
+import { VerificarPreviaResponseDto } from './dto/verificar-previa-response.dto';
+
+/** Valor de la columna `modality` que indica oferta dual */
+const MODALITY_DUAL = 'VIRTUAL/PRESENCIAL';
+
+@Injectable()
+export class SolicitudesService {
+  constructor(
+    @InjectRepository(SolicitudEntity)
+    private readonly solicitudRepository: Repository<SolicitudEntity>,
+    @InjectRepository(Oferta)
+    private readonly ofertaRepository: Repository<Oferta>,
+  ) {}
+
+  /**
+   * Verifica si el estudiante ya tiene una solicitud PENDIENTE que solape
+   * alguno de los horarios enviados para la misma oferta.
+   */
+  async verificarSolicitudPrevia(
+    estudianteId: string,
+    dto: VerificarPreviaDto,
+  ): Promise<VerificarPreviaResponseDto> {
+    const solicitudExistente = await this.solicitudRepository.findOne({
+      where: {
+        estudianteId,
+        ofertaId: dto.ofertaId,
+        estado: SolicitudEstado.PENDIENTE,
+      },
+    });
+
+    if (solicitudExistente) {
+      // Verificar solapamiento: algún horario del DTO está en la solicitud existente
+      const hayColision = dto.horarios.some((h) =>
+        solicitudExistente.horarios.some(
+          (he) => he.fecha === h.fecha && he.hora === h.hora,
+        ),
+      );
+
+      if (hayColision) {
+        return {
+          existe: true,
+          mensaje:
+            'Horario ya solicitado. Ya tienes una solicitud activa para este bloque.',
+        };
+      }
+    }
+
+    return { existe: false, mensaje: null };
+  }
+
+  /**
+   * Crea una nueva solicitud de tutoría.
+   *
+   * Reglas de negocio:
+   * 1. La oferta debe existir.
+   * 2. Si la oferta es dual (VIRTUAL/PRESENCIAL), el DTO debe incluir modalidad.
+   * 3. Si la oferta es única, la modalidad se asigna automáticamente desde la oferta.
+   * 4. No puede haber ya una solicitud PENDIENTE del mismo estudiante para la misma oferta con el mismo horario.
+   */
+  async create(
+    estudianteId: string,
+    dto: CreateSolicitudDto,
+  ): Promise<SolicitudResponseDto> {
+    // 1. Verificar que la oferta existe
+    const oferta = await this.ofertaRepository.findOne({
+      where: { id: dto.ofertaId },
+    });
+
+    if (!oferta) {
+      throw new NotFoundException(
+        `Oferta con id '${dto.ofertaId}' no encontrada`,
+      );
+    }
+
+    // 2. Resolver modalidad
+    const isDual = oferta.modality === MODALITY_DUAL;
+    let modalidadFinal: string;
+
+    if (isDual) {
+      if (!dto.modalidad) {
+        throw new BadRequestException(
+          'La oferta tiene modalidad dual. Debes seleccionar una modalidad (Virtual o Presencial).',
+        );
+      }
+      modalidadFinal = dto.modalidad;
+    } else {
+      // Modalidad única: asignar automáticamente desde la oferta
+      modalidadFinal = oferta.modality;
+    }
+
+    // 3. Verificar duplicados PENDIENTES con horario solapado
+    const solicitudDuplicada = await this.solicitudRepository.findOne({
+      where: {
+        estudianteId,
+        ofertaId: dto.ofertaId,
+        estado: SolicitudEstado.PENDIENTE,
+      },
+    });
+
+    if (solicitudDuplicada) {
+      const hayColision = dto.horarios.some((h) =>
+        solicitudDuplicada.horarios.some(
+          (he) => he.fecha === h.fecha && he.hora === h.hora,
+        ),
+      );
+      if (hayColision) {
+        throw new BadRequestException(
+          'Ya tienes una solicitud pendiente con ese horario para esta oferta.',
+        );
+      }
+    }
+
+    // 4. Crear y persistir la solicitud
+    const nuevaSolicitud = this.solicitudRepository.create({
+      estudianteId,
+      ofertaId: dto.ofertaId,
+      tutorId: oferta.tutorId,
+      mensaje: dto.mensaje,
+      modalidad: modalidadFinal,
+      horarios: dto.horarios,
+      estado: SolicitudEstado.PENDIENTE,
+    });
+
+    const saved = await this.solicitudRepository.save(nuevaSolicitud);
+
+    return {
+      id: saved.id,
+      estudianteId: saved.estudianteId,
+      ofertaId: saved.ofertaId,
+      tutorId: saved.tutorId,
+      mensaje: saved.mensaje,
+      modalidad: saved.modalidad,
+      horarios: saved.horarios,
+      estado: saved.estado,
+      createdAt: saved.createdAt?.toISOString?.() ?? new Date().toISOString(),
+    };
+  }
+}

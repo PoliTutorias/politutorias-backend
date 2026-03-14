@@ -3,14 +3,18 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Oferta } from '../../ofertas/domain/entities/oferta.entity';
 
 export enum SolicitudEstado {
   PENDIENTE = 'PENDIENTE',
   ACEPTADA = 'ACEPTADA',
   RECHAZADA = 'RECHAZADA',
+  EXPIRADA = 'EXPIRADA',
 }
 
 @Entity('solicitudes')
@@ -25,8 +29,15 @@ export class SolicitudEntity {
   @Column({ type: 'uuid' })
   ofertaId: string;
 
+  @ManyToOne(() => Oferta, { eager: false, nullable: true })
+  @JoinColumn({ name: 'ofertaId' })
+  oferta: Oferta | null;
+
   @Column({ type: 'uuid' })
   tutorId: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  nombreEstudiante: string | null;
 
   @Column({ type: 'text' })
   mensaje: string;

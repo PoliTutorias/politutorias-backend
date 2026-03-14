@@ -6,6 +6,9 @@ import { SolicitudEntity, SolicitudEstado } from './entities/solicitud.entity';
 import { CreateSolicitudDto } from './dto/create-solicitud.dto';
 import { VerificarPreviaDto } from './dto/verificar-previa.dto';
 import { SolicitudesService } from './solicitudes.service';
+import { GlobalCountsDto } from './dto/global-counts.dto';
+import { FilterParamsDto } from './dto/filter-params.dto';
+import { PaginatedSolicitudesDto } from './dto/paginated-solicitudes.dto';
 
 /**
  * Unit Tests — SolicitudesService — HU-06: Enviar solicitud de tutoría
@@ -308,6 +311,350 @@ describe('SolicitudesService (Unit Tests) - HU-06', () => {
       ][];
       const savedArg = savedCalls2[0][0];
       expect(savedArg.estado).toBe(SolicitudEstado.PENDIENTE);
+    });
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HU09 — Ver solicitudes recibidas
+// FASE ROJA: estos tests FALLARÁN porque getCountsByStatus() y getFiltered()
+// no existen en SolicitudesService todavía.
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('SolicitudesService (Unit Tests) - HU09: Ver solicitudes recibidas', () => {
+  let service: SolicitudesService;
+
+  const mockSolicitudRepo = {
+    count: jest.fn(),
+    createQueryBuilder: jest.fn(),
+    findAndCount: jest.fn(),
+  };
+
+  const mockOfertaRepo = {
+    findOne: jest.fn(),
+  };
+
+  const TUTOR_ID = 'tutor-uuid-0001-0000-0000-000000000001';
+
+  const makeSolicitud = (
+    overrides = {},
+  ): Partial<SolicitudEntity> & { nombreEstudiante?: string } => ({
+    id: 'solicitud-uuid-001',
+    tutorId: TUTOR_ID,
+    estudianteId: 'estudiante-uuid-001',
+    nombreEstudiante: 'Ana García',
+    mensaje: 'Necesito ayuda con límites y derivadas para el examen.',
+    modalidad: 'Virtual',
+    estado: SolicitudEstado.PENDIENTE,
+    ofertaId: 'oferta-uuid-001',
+    createdAt: new Date('2024-05-25T10:30:00Z'),
+    ...overrides,
+  });
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        SolicitudesService,
+        {
+          provide: getRepositoryToken(SolicitudEntity),
+          useValue: mockSolicitudRepo,
+        },
+        { provide: getRepositoryToken(Oferta), useValue: mockOfertaRepo },
+      ],
+    }).compile();
+
+    service = module.get<SolicitudesService>(SolicitudesService);
+  });
+
+  afterEach(() => jest.clearAllMocks());
+
+  // ─── getCountsByStatus ────────────────────────────────────────────────────
+
+  describe('getCountsByStatus(tutorId)', () => {
+    it('debe retornar conteos correctos cuando hay solicitudes en todos los estados', async () => {
+      mockSolicitudRepo.count
+        .mockResolvedValueOnce(5) // PENDIENTE
+        .mockResolvedValueOnce(2) // EXPIRADA
+        .mockResolvedValueOnce(3) // ACEPTADA
+        .mockResolvedValueOnce(1); // RECHAZADA
+
+      const result: GlobalCountsDto = await service.getCountsByStatus(TUTOR_ID);
+
+      expect(result.pending).toBe(5);
+      expect(result.expired).toBe(2);
+      expect(result.responded).toBe(4); // 3 + 1
+    });
+
+    it('debe retornar ceros cuando el tutor no tiene solicitudes', async () => {
+      mockSolicitudRepo.count.mockResolvedValue(0);
+
+      const result = await service.getCountsByStatus(TUTOR_ID);
+
+      expect(result).toEqual({ pending: 0, expired: 0, responded: 0 });
+    });
+
+    it('debe llamar al repositorio con el tutorId correcto para cada estado', async () => {
+      mockSolicitudRepo.count.mockResolvedValue(0);
+
+      await service.getCountsByStatus(TUTOR_ID);
+
+      expect(mockSolicitudRepo.count).toHaveBeenCalledTimes(4);
+      expect(mockSolicitudRepo.count).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ tutorId: TUTOR_ID }) as Record<
+            string,
+            unknown
+          >,
+        }) as Record<string, unknown>,
+      );
+    });
+
+    it('responded debe ser la suma de ACEPTADA y RECHAZADA (nunca un estado propio)', async () => {
+      mockSolicitudRepo.count
+        .mockResolvedValueOnce(0) // PENDIENTE
+        .mockResolvedValueOnce(0) // EXPIRADA
+        .mockResolvedValueOnce(7) // ACEPTADA
+        .mockResolvedValueOnce(3); // RECHAZADA
+
+      const result = await service.getCountsByStatus(TUTOR_ID);
+
+      expect(result.responded).toBe(10);
+      expect(result.pending).toBe(0);
+      expect(result.expired).toBe(0);
+    });
+
+    it('debe propagar excepciones del repositorio', async () => {
+      mockSolicitudRepo.count.mockRejectedValueOnce(
+        new Error('DB connection lost'),
+      );
+
+      await expect(service.getCountsByStatus(TUTOR_ID)).rejects.toThrow(
+        'DB connection lost',
+      );
+    });
+  });
+
+  // ─── getFiltered ──────────────────────────────────────────────────────────
+
+  describe('getFiltered(tutorId, params)', () => {
+    // Helper para construir el mock del QueryBuilder encadenado
+    const buildQBMock = (
+      entities: (Partial<SolicitudEntity> & { nombreEstudiante?: string })[],
+      total: number,
+    ) => {
+      const qb: Record<string, jest.Mock> = {
+        leftJoinAndSelect: jest.fn(),
+        where: jest.fn(),
+        andWhere: jest.fn(),
+        orderBy: jest.fn(),
+        skip: jest.fn(),
+        take: jest.fn(),
+        getManyAndCount: jest.fn().mockResolvedValue([entities, total]),
+      };
+      // Encadenar todos los métodos para que retornen el mismo qb
+      Object.keys(qb).forEach((key) => {
+        if (key !== 'getManyAndCount') {
+          qb[key].mockReturnValue(qb);
+        }
+      });
+      mockSolicitudRepo.createQueryBuilder.mockReturnValue(qb);
+      return qb;
+    };
+
+    it('debe retornar lista paginada con estructura PaginatedSolicitudesDto', async () => {
+      const solicitudes = [makeSolicitud()];
+      buildQBMock(solicitudes, 1);
+
+      const params: FilterParamsDto = { page: 1, limit: 10 };
+      const result: PaginatedSolicitudesDto = await service.getFiltered(
+        TUTOR_ID,
+        params,
+      );
+
+      expect(result).toHaveProperty('data');
+      expect(result).toHaveProperty('total');
+      expect(result).toHaveProperty('currentPage');
+      expect(result).toHaveProperty('itemsPerPage');
+      expect(result).toHaveProperty('totalPages');
+      expect(Array.isArray(result.data)).toBe(true);
+    });
+
+    it('debe aplicar paginación correcta: page=2, limit=5 → skip=5, take=5', async () => {
+      const qb = buildQBMock([], 0);
+
+      const params: FilterParamsDto = { page: 2, limit: 5 };
+      await service.getFiltered(TUTOR_ID, params);
+
+      expect(qb.skip).toHaveBeenCalledWith(5);
+      expect(qb.take).toHaveBeenCalledWith(5);
+    });
+
+    it('debe aplicar paginación: page=1, limit=10 → skip=0, take=10', async () => {
+      const qb = buildQBMock([], 0);
+
+      const params: FilterParamsDto = { page: 1, limit: 10 };
+      await service.getFiltered(TUTOR_ID, params);
+
+      expect(qb.skip).toHaveBeenCalledWith(0);
+      expect(qb.take).toHaveBeenCalledWith(10);
+    });
+
+    it('debe truncar mensajeResumen a 50 chars + "..." si el mensaje es mayor a 50 caracteres', async () => {
+      const mensajeLargo = 'A'.repeat(80);
+      const solicitudes = [makeSolicitud({ mensaje: mensajeLargo })];
+      buildQBMock(solicitudes, 1);
+
+      const result = await service.getFiltered(TUTOR_ID, {
+        page: 1,
+        limit: 10,
+      });
+
+      expect(result.data[0].mensajeResumen).toHaveLength(53); // 50 + "..."
+      expect(result.data[0].mensajeResumen.endsWith('...')).toBe(true);
+    });
+
+    it('NO debe truncar mensajeResumen si el mensaje tiene 50 caracteres o menos', async () => {
+      const mensajeCorto = 'Hola, necesito ayuda.'; // < 50 chars
+      const solicitudes = [makeSolicitud({ mensaje: mensajeCorto })];
+      buildQBMock(solicitudes, 1);
+
+      const result = await service.getFiltered(TUTOR_ID, {
+        page: 1,
+        limit: 10,
+      });
+
+      expect(result.data[0].mensajeResumen).toBe(mensajeCorto);
+      expect(result.data[0].mensajeResumen.endsWith('...')).toBe(false);
+    });
+
+    it('mensajeResumen con exactamente 50 caracteres no debe truncarse', async () => {
+      const mensaje50 = 'A'.repeat(50);
+      const solicitudes = [makeSolicitud({ mensaje: mensaje50 })];
+      buildQBMock(solicitudes, 1);
+
+      const result = await service.getFiltered(TUTOR_ID, {
+        page: 1,
+        limit: 10,
+      });
+
+      expect(result.data[0].mensajeResumen).toBe(mensaje50);
+      expect(result.data[0].mensajeResumen.endsWith('...')).toBe(false);
+    });
+
+    it('debe retornar fechaHora como string formateado (no como Date)', async () => {
+      const solicitudes = [
+        makeSolicitud({ createdAt: new Date('2024-05-25T10:30:00Z') }),
+      ];
+      buildQBMock(solicitudes, 1);
+
+      const result = await service.getFiltered(TUTOR_ID, {
+        page: 1,
+        limit: 10,
+      });
+
+      expect(typeof result.data[0].fechaHora).toBe('string');
+      expect(result.data[0].fechaHora).not.toBe('');
+    });
+
+    it('debe retornar mensajeCompleto con el mensaje íntegro', async () => {
+      const mensajeCompleto =
+        'Este es el mensaje completo del estudiante sin truncar.';
+      const solicitudes = [makeSolicitud({ mensaje: mensajeCompleto })];
+      buildQBMock(solicitudes, 1);
+
+      const result = await service.getFiltered(TUTOR_ID, {
+        page: 1,
+        limit: 10,
+      });
+
+      expect(result.data[0].mensajeCompleto).toBe(mensajeCompleto);
+    });
+
+    it('debe calcular totalPages correctamente: ceil(total / limit)', async () => {
+      buildQBMock([makeSolicitud(), makeSolicitud(), makeSolicitud()], 25);
+
+      const result = await service.getFiltered(TUTOR_ID, {
+        page: 1,
+        limit: 10,
+      });
+
+      expect(result.total).toBe(25);
+      expect(result.totalPages).toBe(3); // ceil(25/10) = 3
+    });
+
+    it('totalPages debe ser 0 cuando total es 0', async () => {
+      buildQBMock([], 0);
+
+      const result = await service.getFiltered(TUTOR_ID, {
+        page: 1,
+        limit: 10,
+      });
+
+      expect(result.total).toBe(0);
+      expect(result.totalPages).toBe(0);
+      expect(result.data).toEqual([]);
+    });
+
+    it('debe filtrar por status=PENDIENTE aplicando andWhere con estado PENDIENTE', async () => {
+      const qb = buildQBMock([], 0);
+
+      const params: FilterParamsDto = {
+        status: 'PENDIENTE',
+        page: 1,
+        limit: 10,
+      };
+      await service.getFiltered(TUTOR_ID, params);
+
+      expect(qb.andWhere).toHaveBeenCalled();
+    });
+
+    it('debe filtrar RESPONDIDA aplicando andWhere con estados ACEPTADA y RECHAZADA', async () => {
+      const qb = buildQBMock([], 0);
+
+      const params: FilterParamsDto = {
+        status: 'RESPONDIDA',
+        page: 1,
+        limit: 10,
+      };
+      await service.getFiltered(TUTOR_ID, params);
+
+      // RESPONDIDA = ACEPTADA | RECHAZADA → debe llamar andWhere
+      expect(qb.andWhere).toHaveBeenCalled();
+    });
+
+    it('sin status debe retornar todas las solicitudes del tutor (sin filtro de estado)', async () => {
+      const qb = buildQBMock([makeSolicitud()], 1);
+
+      const params: FilterParamsDto = { page: 1, limit: 10 };
+      await service.getFiltered(TUTOR_ID, params);
+
+      // where debe llamarse con tutorId pero andWhere NO debe llamarse con estado
+      expect(qb.where).toHaveBeenCalled();
+    });
+
+    it('debe retornar currentPage igual al page solicitado', async () => {
+      buildQBMock([], 0);
+
+      const result = await service.getFiltered(TUTOR_ID, { page: 3, limit: 5 });
+
+      expect(result.currentPage).toBe(3);
+      expect(result.itemsPerPage).toBe(5);
+    });
+
+    it('debe propagar excepciones del repositorio', async () => {
+      mockSolicitudRepo.createQueryBuilder.mockReturnValue({
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockRejectedValue(new Error('DB error')),
+      });
+
+      await expect(
+        service.getFiltered(TUTOR_ID, { page: 1, limit: 10 }),
+      ).rejects.toThrow('DB error');
     });
   });
 });

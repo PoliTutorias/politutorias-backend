@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
+  Query,
   Request,
   UseGuards,
   UsePipes,
@@ -13,18 +15,25 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { TutorAuthGuard } from '../auth/guards/tutor-auth.guard';
 import { SolicitudesService } from './solicitudes.service';
 import { CreateSolicitudDto } from './dto/create-solicitud.dto';
 import { VerificarPreviaDto } from './dto/verificar-previa.dto';
 import { SolicitudResponseDto } from './dto/solicitud-response.dto';
 import { VerificarPreviaResponseDto } from './dto/verificar-previa-response.dto';
+import { GlobalCountsDto } from './dto/global-counts.dto';
+import { FilterParamsDto } from './dto/filter-params.dto';
+import { PaginatedSolicitudesDto } from './dto/paginated-solicitudes.dto';
+import { Tutor } from '../tutors/entities/tutor.entity';
 
 interface AuthenticatedRequest extends Request {
   user: { id: string };
+  tutor?: Tutor;
 }
 
 @ApiTags('solicitudes')
@@ -121,6 +130,93 @@ export class SolicitudesController {
     @Body() dto: VerificarPreviaDto,
   ): Promise<VerificarPreviaResponseDto> {
     return this.solicitudesService.verificarSolicitudPrevia(req.user.id, dto);
+  }
+
+  /**
+   * HU09 — GET /api/solicitudes/counts
+   * Retorna conteos de solicitudes por estado para el tutor autenticado.
+   * IMPORTANTE: debe estar ANTES de @Get() para evitar conflictos de ruta.
+   */
+  @Get('counts')
+  @UseGuards(JwtAuthGuard, TutorAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Obtener conteos de solicitudes por estado',
+    description:
+      'Retorna el conteo de solicitudes PENDIENTE, EXPIRADA y RESPONDIDA (ACEPTADA+RECHAZADA) del tutor autenticado.',
+  })
+  @ApiResponse({
+    status: 200,
+    type: GlobalCountsDto,
+    description: 'Conteos por estado',
+  })
+  @ApiResponse({ status: 401, description: 'Token JWT ausente o inválido' })
+  @ApiResponse({
+    status: 403,
+    description: 'Solo los tutores pueden acceder a este recurso',
+  })
+  async getCounts(
+    @Request() req: AuthenticatedRequest,
+  ): Promise<GlobalCountsDto> {
+    // req.tutor es inyectado por TutorAuthGuard (evita doble query)
+    const tutorId = req.tutor?.id ?? '';
+    return this.solicitudesService.getCountsByStatus(tutorId);
+  }
+
+  /**
+   * HU09 — GET /api/solicitudes
+   * Lista paginada de solicitudes recibidas por el tutor.
+   */
+  @Get()
+  @UseGuards(JwtAuthGuard, TutorAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  @ApiOperation({
+    summary: 'Listar solicitudes recibidas',
+    description:
+      'Lista paginada de solicitudes recibidas por el tutor, con filtros opcionales por estado.',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['PENDIENTE', 'EXPIRADA', 'RESPONDIDA'],
+    description: 'Filtrar por estado',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    example: 1,
+    description: 'Número de página (mínimo 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    example: 10,
+    description: 'Registros por página (máximo 100)',
+  })
+  @ApiResponse({
+    status: 200,
+    type: PaginatedSolicitudesDto,
+    description: 'Lista paginada de solicitudes',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Parámetros inválidos (status, page o limit fuera de rango)',
+  })
+  @ApiResponse({ status: 401, description: 'Token JWT ausente o inválido' })
+  @ApiResponse({
+    status: 403,
+    description: 'Solo los tutores pueden acceder a este recurso',
+  })
+  async getFiltered(
+    @Request() req: AuthenticatedRequest,
+    @Query() params: FilterParamsDto,
+  ): Promise<PaginatedSolicitudesDto> {
+    // req.tutor es inyectado por TutorAuthGuard (evita doble query)
+    const tutorId = req.tutor?.id ?? '';
+    return this.solicitudesService.getFiltered(tutorId, params);
   }
 
   /**

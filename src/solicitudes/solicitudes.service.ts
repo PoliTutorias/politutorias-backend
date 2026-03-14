@@ -11,6 +11,10 @@ import { CreateSolicitudDto } from './dto/create-solicitud.dto';
 import { VerificarPreviaDto } from './dto/verificar-previa.dto';
 import { SolicitudResponseDto } from './dto/solicitud-response.dto';
 import { VerificarPreviaResponseDto } from './dto/verificar-previa-response.dto';
+import { GlobalCountsDto } from './dto/global-counts.dto';
+import { FilterParamsDto } from './dto/filter-params.dto';
+import { SolicitudDetailsResponseDto } from './dto/solicitud-details-response.dto';
+import { PaginatedSolicitudesDto } from './dto/paginated-solicitudes.dto';
 
 /** Valor de la columna `modality` que indica oferta dual */
 const MODALITY_DUAL = 'VIRTUAL/PRESENCIAL';
@@ -145,6 +149,96 @@ export class SolicitudesService {
       horarios: saved.horarios,
       estado: saved.estado,
       createdAt: saved.createdAt?.toISOString?.() ?? new Date().toISOString(),
+    };
+  }
+
+  /**
+   * HU09 — Retorna los conteos de solicitudes por estado para un tutor.
+   */
+  async getCountsByStatus(tutorId: string): Promise<GlobalCountsDto> {
+    const [pending, expired, aceptada, rechazada] = await Promise.all([
+      this.solicitudRepository.count({
+        where: { tutorId, estado: SolicitudEstado.PENDIENTE },
+      }),
+      this.solicitudRepository.count({
+        where: { tutorId, estado: SolicitudEstado.EXPIRADA },
+      }),
+      this.solicitudRepository.count({
+        where: { tutorId, estado: SolicitudEstado.ACEPTADA },
+      }),
+      this.solicitudRepository.count({
+        where: { tutorId, estado: SolicitudEstado.RECHAZADA },
+      }),
+    ]);
+    return { pending, expired, responded: aceptada + rechazada };
+  }
+
+  /**
+   * HU09 — Retorna la lista paginada de solicitudes recibidas por un tutor,
+   * con filtros opcionales por estado.
+   */
+  async getFiltered(
+    tutorId: string,
+    params: FilterParamsDto,
+  ): Promise<PaginatedSolicitudesDto> {
+    const page = params.page ?? 1;
+    const limit = params.limit ?? 10;
+    const skip = (page - 1) * limit;
+
+    const qb = this.solicitudRepository
+      .createQueryBuilder('solicitud')
+      .leftJoinAndSelect('solicitud.oferta', 'oferta')
+      .where('solicitud.tutorId = :tutorId', { tutorId })
+      .orderBy('solicitud.createdAt', 'DESC')
+      .skip(skip)
+      .take(limit);
+
+    if (params.status) {
+      if (params.status === 'RESPONDIDA') {
+        qb.andWhere('solicitud.estado IN (:...estados)', {
+          estados: [SolicitudEstado.ACEPTADA, SolicitudEstado.RECHAZADA],
+        });
+      } else {
+        qb.andWhere('solicitud.estado = :estado', { estado: params.status });
+      }
+    }
+
+    const [entities, total] = await qb.getManyAndCount();
+
+    const data: SolicitudDetailsResponseDto[] = entities.map((s) => {
+      const oferta = (s as SolicitudEntity & { oferta?: Oferta }).oferta;
+      const precio = Number(oferta?.price ?? oferta?.precioHora ?? 0);
+      const materia = oferta?.categories?.[0] ?? oferta?.areaConocimiento ?? '';
+      return {
+        id: s.id,
+        nombreEstudiante: s.nombreEstudiante ?? '',
+        materia,
+        fechaHora: s.createdAt
+          ? s.createdAt.toLocaleDateString('es-ES', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })
+          : '',
+        mensajeResumen:
+          s.mensaje.length > 50
+            ? s.mensaje.substring(0, 50) + '...'
+            : s.mensaje,
+        estado: s.estado,
+        modalidad: s.modalidad ?? '',
+        precioHora: precio,
+        mensajeCompleto: s.mensaje,
+      };
+    });
+
+    return {
+      data,
+      total,
+      currentPage: page,
+      itemsPerPage: limit,
+      totalPages: total === 0 ? 0 : Math.ceil(total / limit),
     };
   }
 }

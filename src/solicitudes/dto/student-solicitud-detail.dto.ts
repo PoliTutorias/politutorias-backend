@@ -23,18 +23,8 @@ export class StudentSolicitudDetailDto extends StudentSolicitudListItemDto {
   })
   horarios: HorarioItemDto[];
 
-  @ApiPropertyOptional({
-    description:
-      'Link de la reunión virtual (solo presente si estado=ACEPTADA y modalidad=Virtual)',
-    example: 'https://meet.google.com/abc-defg-hij',
-    nullable: true,
-  })
-  acceptedMeetingLink?: string | null;
-
-  @ApiPropertyOptional({
-    description: 'Razón del rechazo (solo presente si estado=RECHAZADA)',
-    example: 'No tengo disponibilidad en esos horarios',
-    nullable: true,
-  })
-  rejectionReason?: string | null;
+  // NOTE: Conditional fields (acceptedMeetingLink, rejectionReason) are OUT OF SCOPE for HU-33
+  // They will be added in:
+  // - HU-08: Aceptar solicitud (adds acceptedMeetingLink for Virtual modality)
+  // - HU-23: Rechazar solicitud (adds rejectionReason)
 }

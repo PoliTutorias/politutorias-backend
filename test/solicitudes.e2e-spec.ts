@@ -8,6 +8,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import request from 'supertest';
 import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
 import { TutorAuthGuard } from '../src/auth/guards/tutor-auth.guard';
@@ -15,6 +16,7 @@ import { SolicitudesController } from '../src/solicitudes/solicitudes.controller
 import { SolicitudesService } from '../src/solicitudes/solicitudes.service';
 import { SolicitudEstado } from '../src/solicitudes/entities/solicitud.entity';
 import { DEV_JWT_TOKEN } from '../src/auth/jwt.constants';
+import { Tutor } from '../src/tutors/entities/tutor.entity';
 
 /**
  * E2E Tests — SolicitudesController — HU09: Ver solicitudes recibidas
@@ -34,6 +36,11 @@ const mockSolicitudesService = {
 
 // Mock tutor que se resuelve del userId
 const MOCK_TUTOR = { id: 'tutor-uuid-001', userId: 'test-user-123' };
+
+// Mock Tutor repository for HU-09 (returns tutor for test user)
+const mockTutorRepositoryHU09 = {
+  findOne: jest.fn().mockResolvedValue(MOCK_TUTOR), // Returns tutor for tutors
+};
 
 // ─── Mock de datos ────────────────────────────────────────────────────────────
 
@@ -82,6 +89,10 @@ async function buildApp(
       {
         provide: SolicitudesService,
         useValue: mockSolicitudesService,
+      },
+      {
+        provide: getRepositoryToken(Tutor),
+        useValue: mockTutorRepositoryHU09,
       },
     ],
   });
@@ -545,19 +556,12 @@ describe('/api/solicitudes (Student Perspective - HU-33)', () => {
       { fecha: '2024-05-15', hora: '10:00' },
       { fecha: '2024-05-16', hora: '14:00' },
     ],
+    // NOTE: Conditional fields (acceptedMeetingLink, rejectionReason) removed - out of scope for HU-33
   };
 
-  const mockStudentDetailAceptadaVirtual = {
-    ...mockStudentDetailResponse,
-    status: 'ACEPTADA',
-    modality: 'Virtual',
-    acceptedMeetingLink: 'https://meet.google.com/abc-defg-hij',
-  };
-
-  const mockStudentDetailRechazada = {
-    ...mockStudentDetailResponse,
-    status: 'RECHAZADA',
-    rejectionReason: 'No tengo disponibilidad en esos horarios',
+  // Mock Tutor repository - returns null for students
+  const mockTutorRepository = {
+    findOne: jest.fn().mockResolvedValue(null), // Student user - not a tutor
   };
 
   beforeAll(async () => {
@@ -568,12 +572,20 @@ describe('/api/solicitudes (Student Perspective - HU-33)', () => {
           provide: SolicitudesService,
           useValue: mockSolicitudesServiceStudent,
         },
+        {
+          provide: getRepositoryToken(Tutor),
+          useValue: mockTutorRepository,
+        },
       ],
     })
       .overrideGuard(JwtAuthGuard)
-      .useValue({ canActivate: () => true })
-      .overrideGuard(TutorAuthGuard)
-      .useValue({ canActivate: () => false }) // Student tests - not a tutor
+      .useValue({
+        canActivate: (context) => {
+          const request = context.switchToHttp().getRequest();
+          request.user = { id: 'test-student-123' }; // Mock student user
+          return true;
+        },
+      })
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -686,24 +698,26 @@ describe('/api/solicitudes (Student Perspective - HU-33)', () => {
     });
 
     /**
-     * Test: Filter by status=RESPONDIDA (aggregates ACEPTADA + RECHAZADA)
+     * Test: Filter by status=RESPONDIDA (should work but return empty - no ACEPTADA/RECHAZADA yet)
+     * NOTE: ACEPTADA/RECHAZADA states are out of scope for HU-33
      */
-    it('should filter by status=RESPONDIDA', async () => {
+    it('should filter by status=RESPONDIDA and return empty', async () => {
       mockSolicitudesServiceStudent.findAllForStudent.mockResolvedValueOnce({
-        data: [
-          { ...mockStudentSolicitudItem, status: 'ACEPTADA' },
-          { ...mockStudentSolicitudItem, status: 'RECHAZADA' },
-        ],
-        total: 2,
+        data: [], // Empty - states don't exist yet in HU-33
+        total: 0,
         currentPage: 1,
         itemsPerPage: 5,
-        totalPages: 1,
+        totalPages: 0,
       });
 
       await request(app.getHttpServer())
         .get('/api/solicitudes?status=RESPONDIDA')
         .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
-        .expect(HttpStatus.OK);
+        .expect(HttpStatus.OK)
+        .expect((res) => {
+          expect(res.body.total).toBe(0);
+          expect(res.body.data).toEqual([]);
+        });
 
       expect(
         mockSolicitudesServiceStudent.findAllForStudent,
@@ -920,84 +934,10 @@ describe('/api/solicitudes (Student Perspective - HU-33)', () => {
     });
 
     /**
-     * Test: Conditional field - acceptedMeetingLink present when ACEPTADA + Virtual
+     * NOTE: Conditional field tests removed - out of scope for HU-33
+     * - acceptedMeetingLink (will be added in HU-08: Aceptar solicitud)
+     * - rejectionReason (will be added in HU-23: Rechazar solicitud)
      */
-    it('should include acceptedMeetingLink when estado=ACEPTADA and modalidad=Virtual', async () => {
-      mockSolicitudesServiceStudent.findByIdForStudent.mockResolvedValueOnce(
-        mockStudentDetailAceptadaVirtual,
-      );
-
-      await request(app.getHttpServer())
-        .get(`/api/solicitudes/${validSolicitudId}`)
-        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
-        .expect(HttpStatus.OK)
-        .expect((res) => {
-          expect(res.body).toHaveProperty('acceptedMeetingLink');
-          expect(res.body.acceptedMeetingLink).toBe(
-            'https://meet.google.com/abc-defg-hij',
-          );
-        });
-    });
-
-    /**
-     * Test: Conditional field - acceptedMeetingLink absent when ACEPTADA + Presencial
-     */
-    it('should NOT include acceptedMeetingLink when estado=ACEPTADA and modalidad=Presencial', async () => {
-      const mockDetailPresencial = {
-        ...mockStudentDetailResponse,
-        status: 'ACEPTADA',
-        modality: 'Presencial',
-      };
-
-      mockSolicitudesServiceStudent.findByIdForStudent.mockResolvedValueOnce(
-        mockDetailPresencial,
-      );
-
-      await request(app.getHttpServer())
-        .get(`/api/solicitudes/${validSolicitudId}`)
-        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
-        .expect(HttpStatus.OK)
-        .expect((res) => {
-          expect(res.body).not.toHaveProperty('acceptedMeetingLink');
-        });
-    });
-
-    /**
-     * Test: Conditional field - rejectionReason present when RECHAZADA
-     */
-    it('should include rejectionReason when estado=RECHAZADA', async () => {
-      mockSolicitudesServiceStudent.findByIdForStudent.mockResolvedValueOnce(
-        mockStudentDetailRechazada,
-      );
-
-      await request(app.getHttpServer())
-        .get(`/api/solicitudes/${validSolicitudId}`)
-        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
-        .expect(HttpStatus.OK)
-        .expect((res) => {
-          expect(res.body).toHaveProperty('rejectionReason');
-          expect(res.body.rejectionReason).toBe(
-            'No tengo disponibilidad en esos horarios',
-          );
-        });
-    });
-
-    /**
-     * Test: Conditional field - rejectionReason absent when PENDIENTE
-     */
-    it('should NOT include rejectionReason when estado=PENDIENTE', async () => {
-      mockSolicitudesServiceStudent.findByIdForStudent.mockResolvedValueOnce(
-        mockStudentDetailResponse,
-      );
-
-      await request(app.getHttpServer())
-        .get(`/api/solicitudes/${validSolicitudId}`)
-        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
-        .expect(HttpStatus.OK)
-        .expect((res) => {
-          expect(res.body).not.toHaveProperty('rejectionReason');
-        });
-    });
 
     /**
      * Test: All fields are correctly populated

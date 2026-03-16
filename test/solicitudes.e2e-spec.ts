@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   HttpStatus,
   INestApplication,
+  NotFoundException,
   ValidationPipe,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -492,6 +493,541 @@ describe('SolicitudesController (E2E) - HU09: Ver solicitudes recibidas', () => 
           expect(res.body.data).toEqual([]);
           expect(res.body.total).toBe(0);
           expect(res.body.totalPages).toBe(0);
+        });
+    });
+  });
+});
+
+/**
+ * E2E Tests — SolicitudesController — HU-33: Ver solicitudes enviadas (Student Perspective)
+ *
+ * Patrón: SolicitudesService se mockea completamente.
+ * JwtAuthGuard se sobreescribe con .overrideGuard().
+ * NO se usa TutorAuthGuard para endpoints de estudiantes.
+ */
+describe('/api/solicitudes (Student Perspective - HU-33)', () => {
+  let app: INestApplication;
+
+  // Mock service con métodos de estudiante
+  const mockSolicitudesServiceStudent = {
+    verificarSolicitudPrevia: jest.fn(),
+    create: jest.fn(),
+    getCountsByStatus: jest.fn(),
+    getFiltered: jest.fn(),
+    findAllForStudent: jest.fn(),
+    findByIdForStudent: jest.fn(),
+  };
+
+  // Mock data para estudiante
+  const mockStudentSolicitudItem = {
+    id: '550e8400-e29b-41d4-a716-446655440000',
+    tutorAvatarUrl: 'https://example.com/avatars/tutor.jpg',
+    tutorName: 'Juan Pérez',
+    subject: 'Cálculo Diferencial',
+    date: '2024-05-25T10:30:00.000Z',
+    modality: 'Virtual',
+    pricePerHour: 20,
+    status: 'PENDIENTE',
+  };
+
+  const mockStudentPaginatedResponse = {
+    data: [mockStudentSolicitudItem],
+    total: 1,
+    currentPage: 1,
+    itemsPerPage: 5,
+    totalPages: 1,
+  };
+
+  const mockStudentDetailResponse = {
+    ...mockStudentSolicitudItem,
+    mensaje: 'Necesito ayuda con los temas de límites y derivadas.',
+    horarios: [
+      { fecha: '2024-05-15', hora: '10:00' },
+      { fecha: '2024-05-16', hora: '14:00' },
+    ],
+  };
+
+  const mockStudentDetailAceptadaVirtual = {
+    ...mockStudentDetailResponse,
+    status: 'ACEPTADA',
+    modality: 'Virtual',
+    acceptedMeetingLink: 'https://meet.google.com/abc-defg-hij',
+  };
+
+  const mockStudentDetailRechazada = {
+    ...mockStudentDetailResponse,
+    status: 'RECHAZADA',
+    rejectionReason: 'No tengo disponibilidad en esos horarios',
+  };
+
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      controllers: [SolicitudesController],
+      providers: [
+        {
+          provide: SolicitudesService,
+          useValue: mockSolicitudesServiceStudent,
+        },
+      ],
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(TutorAuthGuard)
+      .useValue({ canActivate: () => false }) // Student tests - not a tutor
+      .compile();
+
+    app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GET /api/solicitudes (Student List)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('GET /api/solicitudes (student list)', () => {
+    /**
+     * Test: 200 OK with paginated list when authenticated as student
+     */
+    it('should return 200 OK with paginated list for student', async () => {
+      mockSolicitudesServiceStudent.findAllForStudent.mockResolvedValueOnce(
+        mockStudentPaginatedResponse,
+      );
+
+      await request(app.getHttpServer())
+        .get('/api/solicitudes')
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
+        .expect(HttpStatus.OK)
+        .expect((res) => {
+          expect(res.body).toHaveProperty('data');
+          expect(res.body).toHaveProperty('total', 1);
+          expect(res.body).toHaveProperty('currentPage', 1);
+          expect(res.body).toHaveProperty('itemsPerPage', 5);
+          expect(res.body).toHaveProperty('totalPages', 1);
+        });
+    });
+
+    /**
+     * Test: Default pagination (5 items per page for students)
+     */
+    it('should use default pagination of 5 items per page', async () => {
+      mockSolicitudesServiceStudent.findAllForStudent.mockResolvedValueOnce({
+        data: [],
+        total: 0,
+        currentPage: 1,
+        itemsPerPage: 5,
+        totalPages: 0,
+      });
+
+      await request(app.getHttpServer())
+        .get('/api/solicitudes')
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
+        .expect(HttpStatus.OK)
+        .expect((res) => {
+          expect(res.body.itemsPerPage).toBe(5);
+        });
+    });
+
+    /**
+     * Test: Custom pagination with query params
+     */
+    it('should accept custom pagination via query params', async () => {
+      mockSolicitudesServiceStudent.findAllForStudent.mockResolvedValueOnce({
+        data: [],
+        total: 0,
+        currentPage: 2,
+        itemsPerPage: 10,
+        totalPages: 0,
+      });
+
+      await request(app.getHttpServer())
+        .get('/api/solicitudes?page=2&limit=10')
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
+        .expect(HttpStatus.OK)
+        .expect((res) => {
+          expect(res.body.currentPage).toBe(2);
+          expect(res.body.itemsPerPage).toBe(10);
+        });
+    });
+
+    /**
+     * Test: Filter by status=PENDIENTE
+     */
+    it('should filter by status=PENDIENTE', async () => {
+      mockSolicitudesServiceStudent.findAllForStudent.mockResolvedValueOnce(
+        mockStudentPaginatedResponse,
+      );
+
+      await request(app.getHttpServer())
+        .get('/api/solicitudes?status=PENDIENTE')
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
+        .expect(HttpStatus.OK);
+
+      expect(
+        mockSolicitudesServiceStudent.findAllForStudent,
+      ).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ status: 'PENDIENTE' }),
+      );
+    });
+
+    /**
+     * Test: Filter by status=RESPONDIDA (aggregates ACEPTADA + RECHAZADA)
+     */
+    it('should filter by status=RESPONDIDA', async () => {
+      mockSolicitudesServiceStudent.findAllForStudent.mockResolvedValueOnce({
+        data: [
+          { ...mockStudentSolicitudItem, status: 'ACEPTADA' },
+          { ...mockStudentSolicitudItem, status: 'RECHAZADA' },
+        ],
+        total: 2,
+        currentPage: 1,
+        itemsPerPage: 5,
+        totalPages: 1,
+      });
+
+      await request(app.getHttpServer())
+        .get('/api/solicitudes?status=RESPONDIDA')
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
+        .expect(HttpStatus.OK);
+
+      expect(
+        mockSolicitudesServiceStudent.findAllForStudent,
+      ).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ status: 'RESPONDIDA' }),
+      );
+    });
+
+    /**
+     * Test: Filter by status=EXPIRADA
+     */
+    it('should filter by status=EXPIRADA', async () => {
+      mockSolicitudesServiceStudent.findAllForStudent.mockResolvedValueOnce({
+        data: [{ ...mockStudentSolicitudItem, status: 'EXPIRADA' }],
+        total: 1,
+        currentPage: 1,
+        itemsPerPage: 5,
+        totalPages: 1,
+      });
+
+      await request(app.getHttpServer())
+        .get('/api/solicitudes?status=EXPIRADA')
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
+        .expect(HttpStatus.OK);
+
+      expect(
+        mockSolicitudesServiceStudent.findAllForStudent,
+      ).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ status: 'EXPIRADA' }),
+      );
+    });
+
+    /**
+     * Test: Filter by status=TODAS (no filter)
+     */
+    it('should filter by status=TODAS (returns all)', async () => {
+      mockSolicitudesServiceStudent.findAllForStudent.mockResolvedValueOnce({
+        data: [
+          { ...mockStudentSolicitudItem, status: 'PENDIENTE' },
+          { ...mockStudentSolicitudItem, status: 'ACEPTADA' },
+          { ...mockStudentSolicitudItem, status: 'RECHAZADA' },
+          { ...mockStudentSolicitudItem, status: 'EXPIRADA' },
+        ],
+        total: 4,
+        currentPage: 1,
+        itemsPerPage: 5,
+        totalPages: 1,
+      });
+
+      await request(app.getHttpServer())
+        .get('/api/solicitudes?status=TODAS')
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
+        .expect(HttpStatus.OK);
+
+      expect(
+        mockSolicitudesServiceStudent.findAllForStudent,
+      ).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ status: 'TODAS' }),
+      );
+    });
+
+    /**
+     * Test: 400 Bad Request when status is invalid
+     */
+    it('should return 400 Bad Request when status is invalid', async () => {
+      await request(app.getHttpServer())
+        .get('/api/solicitudes?status=INVALID')
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
+        .expect(HttpStatus.BAD_REQUEST);
+    });
+
+    /**
+     * Test: 400 Bad Request when page < 1
+     */
+    it('should return 400 Bad Request when page < 1', async () => {
+      await request(app.getHttpServer())
+        .get('/api/solicitudes?page=0')
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
+        .expect(HttpStatus.BAD_REQUEST);
+    });
+
+    /**
+     * Test: 400 Bad Request when limit < 1
+     */
+    it('should return 400 Bad Request when limit < 1', async () => {
+      await request(app.getHttpServer())
+        .get('/api/solicitudes?limit=0')
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
+        .expect(HttpStatus.BAD_REQUEST);
+    });
+
+    /**
+     * Test: 400 Bad Request when limit > 100
+     */
+    it('should return 400 Bad Request when limit > 100', async () => {
+      await request(app.getHttpServer())
+        .get('/api/solicitudes?limit=101')
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
+        .expect(HttpStatus.BAD_REQUEST);
+    });
+
+    /**
+     * Test: Response body matches StudentSolicitudListItemDto schema
+     */
+    it('should return items with correct StudentSolicitudListItemDto fields', async () => {
+      mockSolicitudesServiceStudent.findAllForStudent.mockResolvedValueOnce(
+        mockStudentPaginatedResponse,
+      );
+
+      await request(app.getHttpServer())
+        .get('/api/solicitudes')
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
+        .expect(HttpStatus.OK)
+        .expect((res) => {
+          const item = res.body.data[0];
+          expect(item).toHaveProperty('id');
+          expect(item).toHaveProperty('tutorAvatarUrl');
+          expect(item).toHaveProperty('tutorName');
+          expect(item).toHaveProperty('subject');
+          expect(item).toHaveProperty('date');
+          expect(item).toHaveProperty('modality');
+          expect(item).toHaveProperty('pricePerHour');
+          expect(item).toHaveProperty('status');
+        });
+    });
+
+    /**
+     * Test: Empty result set
+     */
+    it('should return empty data array when no solicitudes found', async () => {
+      mockSolicitudesServiceStudent.findAllForStudent.mockResolvedValueOnce({
+        data: [],
+        total: 0,
+        currentPage: 1,
+        itemsPerPage: 5,
+        totalPages: 0,
+      });
+
+      await request(app.getHttpServer())
+        .get('/api/solicitudes')
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
+        .expect(HttpStatus.OK)
+        .expect((res) => {
+          expect(res.body.data).toEqual([]);
+          expect(res.body.total).toBe(0);
+          expect(res.body.totalPages).toBe(0);
+        });
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GET /api/solicitudes/:id (Student Detail)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('GET /api/solicitudes/:id (student detail)', () => {
+    const validSolicitudId = '550e8400-e29b-41d4-a716-446655440000';
+    const nonExistentId = '550e8400-e29b-41d4-a716-446655440099';
+
+    /**
+     * Test: 200 OK with StudentSolicitudDetailDto
+     */
+    it('should return 200 OK with detail DTO when solicitud exists', async () => {
+      mockSolicitudesServiceStudent.findByIdForStudent.mockResolvedValueOnce(
+        mockStudentDetailResponse,
+      );
+
+      await request(app.getHttpServer())
+        .get(`/api/solicitudes/${validSolicitudId}`)
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
+        .expect(HttpStatus.OK)
+        .expect((res) => {
+          expect(res.body).toHaveProperty('id');
+          expect(res.body).toHaveProperty('tutorName');
+          expect(res.body).toHaveProperty('tutorAvatarUrl');
+          expect(res.body).toHaveProperty('subject');
+          expect(res.body).toHaveProperty('date');
+          expect(res.body).toHaveProperty('modality');
+          expect(res.body).toHaveProperty('pricePerHour');
+          expect(res.body).toHaveProperty('status');
+          expect(res.body).toHaveProperty('mensaje');
+          expect(res.body).toHaveProperty('horarios');
+        });
+    });
+
+    /**
+     * Test: 404 Not Found when solicitud does not exist
+     */
+    it('should return 404 Not Found when solicitud does not exist', async () => {
+      mockSolicitudesServiceStudent.findByIdForStudent.mockRejectedValueOnce(
+        new NotFoundException('Solicitud no encontrada'),
+      );
+
+      await request(app.getHttpServer())
+        .get(`/api/solicitudes/${nonExistentId}`)
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
+        .expect(HttpStatus.NOT_FOUND);
+    });
+
+    /**
+     * Test: 404 Not Found when solicitud belongs to another student (authorization)
+     */
+    it('should return 404 Not Found when solicitud belongs to another student', async () => {
+      mockSolicitudesServiceStudent.findByIdForStudent.mockRejectedValueOnce(
+        new NotFoundException('Solicitud no encontrada'),
+      );
+
+      await request(app.getHttpServer())
+        .get(`/api/solicitudes/${validSolicitudId}`)
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
+        .expect(HttpStatus.NOT_FOUND);
+    });
+
+    /**
+     * Test: Conditional field - acceptedMeetingLink present when ACEPTADA + Virtual
+     */
+    it('should include acceptedMeetingLink when estado=ACEPTADA and modalidad=Virtual', async () => {
+      mockSolicitudesServiceStudent.findByIdForStudent.mockResolvedValueOnce(
+        mockStudentDetailAceptadaVirtual,
+      );
+
+      await request(app.getHttpServer())
+        .get(`/api/solicitudes/${validSolicitudId}`)
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
+        .expect(HttpStatus.OK)
+        .expect((res) => {
+          expect(res.body).toHaveProperty('acceptedMeetingLink');
+          expect(res.body.acceptedMeetingLink).toBe(
+            'https://meet.google.com/abc-defg-hij',
+          );
+        });
+    });
+
+    /**
+     * Test: Conditional field - acceptedMeetingLink absent when ACEPTADA + Presencial
+     */
+    it('should NOT include acceptedMeetingLink when estado=ACEPTADA and modalidad=Presencial', async () => {
+      const mockDetailPresencial = {
+        ...mockStudentDetailResponse,
+        status: 'ACEPTADA',
+        modality: 'Presencial',
+      };
+
+      mockSolicitudesServiceStudent.findByIdForStudent.mockResolvedValueOnce(
+        mockDetailPresencial,
+      );
+
+      await request(app.getHttpServer())
+        .get(`/api/solicitudes/${validSolicitudId}`)
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
+        .expect(HttpStatus.OK)
+        .expect((res) => {
+          expect(res.body).not.toHaveProperty('acceptedMeetingLink');
+        });
+    });
+
+    /**
+     * Test: Conditional field - rejectionReason present when RECHAZADA
+     */
+    it('should include rejectionReason when estado=RECHAZADA', async () => {
+      mockSolicitudesServiceStudent.findByIdForStudent.mockResolvedValueOnce(
+        mockStudentDetailRechazada,
+      );
+
+      await request(app.getHttpServer())
+        .get(`/api/solicitudes/${validSolicitudId}`)
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
+        .expect(HttpStatus.OK)
+        .expect((res) => {
+          expect(res.body).toHaveProperty('rejectionReason');
+          expect(res.body.rejectionReason).toBe(
+            'No tengo disponibilidad en esos horarios',
+          );
+        });
+    });
+
+    /**
+     * Test: Conditional field - rejectionReason absent when PENDIENTE
+     */
+    it('should NOT include rejectionReason when estado=PENDIENTE', async () => {
+      mockSolicitudesServiceStudent.findByIdForStudent.mockResolvedValueOnce(
+        mockStudentDetailResponse,
+      );
+
+      await request(app.getHttpServer())
+        .get(`/api/solicitudes/${validSolicitudId}`)
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
+        .expect(HttpStatus.OK)
+        .expect((res) => {
+          expect(res.body).not.toHaveProperty('rejectionReason');
+        });
+    });
+
+    /**
+     * Test: All fields are correctly populated
+     */
+    it('should populate all fields correctly in StudentSolicitudDetailDto', async () => {
+      mockSolicitudesServiceStudent.findByIdForStudent.mockResolvedValueOnce(
+        mockStudentDetailResponse,
+      );
+
+      await request(app.getHttpServer())
+        .get(`/api/solicitudes/${validSolicitudId}`)
+        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
+        .expect(HttpStatus.OK)
+        .expect((res) => {
+          expect(res.body.id).toBe(validSolicitudId);
+          expect(res.body.tutorName).toBe('Juan Pérez');
+          expect(res.body.tutorAvatarUrl).toBe(
+            'https://example.com/avatars/tutor.jpg',
+          );
+          expect(res.body.subject).toBe('Cálculo Diferencial');
+          expect(res.body.modality).toBe('Virtual');
+          expect(res.body.pricePerHour).toBe(20);
+          expect(res.body.status).toBe('PENDIENTE');
+          expect(res.body.mensaje).toBe(
+            'Necesito ayuda con los temas de límites y derivadas.',
+          );
+          expect(res.body.horarios).toEqual([
+            { fecha: '2024-05-15', hora: '10:00' },
+            { fecha: '2024-05-16', hora: '14:00' },
+          ]);
         });
     });
   });

@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
   Query,
   Request,
@@ -15,10 +16,13 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TutorAuthGuard } from '../auth/guards/tutor-auth.guard';
 import { SolicitudesService } from './solicitudes.service';
@@ -30,6 +34,9 @@ import { GlobalCountsDto } from './dto/global-counts.dto';
 import { FilterParamsDto } from './dto/filter-params.dto';
 import { PaginatedSolicitudesDto } from './dto/paginated-solicitudes.dto';
 import { Tutor } from '../tutors/entities/tutor.entity';
+import { StudentFilterParamsDto } from './dto/student-filter-params.dto';
+import { PaginatedStudentSolicitudesDto } from './dto/paginated-student-solicitudes.dto';
+import { StudentSolicitudDetailDto } from './dto/student-solicitud-detail.dto';
 
 interface AuthenticatedRequest extends Request {
   user: { id: string };
@@ -40,7 +47,11 @@ interface AuthenticatedRequest extends Request {
 @ApiBearerAuth('JWT')
 @Controller('api/solicitudes')
 export class SolicitudesController {
-  constructor(private readonly solicitudesService: SolicitudesService) {}
+  constructor(
+    private readonly solicitudesService: SolicitudesService,
+    @InjectRepository(Tutor)
+    private readonly tutorRepository: Repository<Tutor>,
+  ) {}
 
   /**
    * HU-06: Verifica si el estudiante autenticado ya tiene una solicitud
@@ -164,23 +175,28 @@ export class SolicitudesController {
   }
 
   /**
-   * HU09 — GET /api/solicitudes
-   * Lista paginada de solicitudes recibidas por el tutor.
+   * HU09 + HU33 — GET /api/solicitudes
+   * UNIFIED HANDLER: Detects if user is tutor or student and returns appropriate perspective
+   * - Tutor: Returns solicitudes RECEIVED (HU-09)
+   * - Student: Returns solicitudes SENT (HU-33)
    */
   @Get()
-  @UseGuards(JwtAuthGuard, TutorAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   @ApiOperation({
-    summary: 'Listar solicitudes recibidas',
+    summary: 'Listar solicitudes (tutor o estudiante)',
     description:
-      'Lista paginada de solicitudes recibidas por el tutor, con filtros opcionales por estado.',
+      'Lista paginada de solicitudes. El sistema detecta automáticamente si el usuario es tutor o estudiante:\n\n' +
+      '- **Tutor**: Retorna solicitudes recibidas (HU-09)\n' +
+      '- **Estudiante**: Retorna solicitudes enviadas (HU-33)\n\n' +
+      'Los filtros y formatos de respuesta varían según la perspectiva.',
   })
   @ApiQuery({
     name: 'status',
     required: false,
-    enum: ['PENDIENTE', 'EXPIRADA', 'RESPONDIDA'],
-    description: 'Filtrar por estado',
+    description:
+      'Filtrar por estado. Tutor: PENDIENTE, EXPIRADA, RESPONDIDA. Estudiante: PENDIENTE, EXPIRADA, RESPONDIDA, TODAS',
   })
   @ApiQuery({
     name: 'page',
@@ -193,30 +209,81 @@ export class SolicitudesController {
     name: 'limit',
     required: false,
     type: Number,
-    example: 10,
-    description: 'Registros por página (máximo 100)',
+    description:
+      'Registros por página (máximo 100). Default: 10 para tutores, 5 para estudiantes',
   })
   @ApiResponse({
     status: 200,
-    type: PaginatedSolicitudesDto,
-    description: 'Lista paginada de solicitudes',
+    description:
+      'Lista paginada de solicitudes. La estructura varía según si es tutor o estudiante',
   })
   @ApiResponse({
     status: 400,
     description: 'Parámetros inválidos (status, page o limit fuera de rango)',
   })
   @ApiResponse({ status: 401, description: 'Token JWT ausente o inválido' })
-  @ApiResponse({
-    status: 403,
-    description: 'Solo los tutores pueden acceder a este recurso',
-  })
   async getFiltered(
     @Request() req: AuthenticatedRequest,
-    @Query() params: FilterParamsDto,
-  ): Promise<PaginatedSolicitudesDto> {
-    // req.tutor es inyectado por TutorAuthGuard (evita doble query)
-    const tutorId = req.tutor?.id ?? '';
-    return this.solicitudesService.getFiltered(tutorId, params);
+    @Query() params: StudentFilterParamsDto,
+  ): Promise<PaginatedSolicitudesDto | PaginatedStudentSolicitudesDto> {
+    const userId = req.user.id;
+
+    // Check if user is a tutor
+    const tutor = await this.tutorRepository.findOne({
+      where: { userId },
+    });
+
+    if (tutor) {
+      // Tutor perspective (HU-09)
+      return this.solicitudesService.getFiltered(
+        tutor.id,
+        params as FilterParamsDto,
+      );
+    } else {
+      // Student perspective (HU-33)
+      return this.solicitudesService.findAllForStudent(userId, params);
+    }
+  }
+
+  /**
+   * HU33 — GET /api/solicitudes/:id
+   * Get detail of a single solicitud from student perspective
+   */
+  @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Obtener detalle de solicitud enviada (estudiante)',
+    description:
+      'Retorna el detalle completo de una solicitud enviada por el estudiante autenticado.\n\n' +
+      '**Autenticación**: Solo el estudiante que envió la solicitud puede verla.',
+  })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'ID de la solicitud (UUID)',
+    example: '550e8400-e29b-41d4-a716-446655440001',
+  })
+  @ApiResponse({
+    status: 200,
+    type: StudentSolicitudDetailDto,
+    description: 'Detalle de la solicitud',
+  })
+  @ApiResponse({
+    status: 404,
+    description:
+      'Solicitud no encontrada o no pertenece al estudiante autenticado',
+  })
+  @ApiResponse({ status: 401, description: 'Token JWT ausente o inválido' })
+  async getDetailForStudent(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ): Promise<StudentSolicitudDetailDto> {
+    const userId = req.user.id;
+
+    // For now, this endpoint is student-only
+    // In the future, we could add tutor detail view here too with role detection
+    return this.solicitudesService.findByIdForStudent(userId, id);
   }
 
   /**

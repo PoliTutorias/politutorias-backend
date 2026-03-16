@@ -2,12 +2,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import request from 'supertest';
 import { JwtAuthGuard } from '../../src/auth/guards/jwt-auth.guard';
 import { TutorAuthGuard } from '../../src/auth/guards/tutor-auth.guard';
 import { SolicitudesController } from '../../src/solicitudes/solicitudes.controller';
 import { SolicitudesService } from '../../src/solicitudes/solicitudes.service';
 import { SolicitudEstado } from '../../src/solicitudes/entities/solicitud.entity';
+import { Tutor } from '../../src/tutors/entities/tutor.entity';
 
 /**
  * E2E Tests — SolicitudesController — HU-06: Enviar solicitud de tutoría
@@ -29,6 +31,15 @@ const DEV_JWT_TOKEN =
 const mockSolicitudesService = {
   verificarSolicitudPrevia: jest.fn(),
   create: jest.fn(),
+  getCountsByStatus: jest.fn(),
+  getFiltered: jest.fn(),
+  findAllForStudent: jest.fn(),
+  findByIdForStudent: jest.fn(),
+};
+
+// Mock Tutor repository - returns null (user is a student, not a tutor)
+const mockTutorRepository = {
+  findOne: jest.fn().mockResolvedValue(null),
 };
 
 describe('SolicitudesController (E2E) - HU-06', () => {
@@ -41,6 +52,10 @@ describe('SolicitudesController (E2E) - HU-06', () => {
         {
           provide: SolicitudesService,
           useValue: mockSolicitudesService,
+        },
+        {
+          provide: getRepositoryToken(Tutor),
+          useValue: mockTutorRepository,
         },
       ],
     })
@@ -303,6 +318,10 @@ describe('SolicitudesController (E2E) - HU-06', () => {
             {
               provide: SolicitudesService,
               useValue: mockSolicitudesService,
+            },
+            {
+              provide: getRepositoryToken(Tutor),
+              useValue: mockTutorRepository,
             },
           ],
         },

@@ -15,6 +15,10 @@ import { GlobalCountsDto } from './dto/global-counts.dto';
 import { FilterParamsDto } from './dto/filter-params.dto';
 import { SolicitudDetailsResponseDto } from './dto/solicitud-details-response.dto';
 import { PaginatedSolicitudesDto } from './dto/paginated-solicitudes.dto';
+import { StudentFilterParamsDto } from './dto/student-filter-params.dto';
+import { StudentSolicitudListItemDto } from './dto/student-solicitud-list-item.dto';
+import { StudentSolicitudDetailDto } from './dto/student-solicitud-detail.dto';
+import { PaginatedStudentSolicitudesDto } from './dto/paginated-student-solicitudes.dto';
 
 /** Valor de la columna `modality` que indica oferta dual */
 const MODALITY_DUAL = 'VIRTUAL/PRESENCIAL';
@@ -239,6 +243,117 @@ export class SolicitudesService {
       currentPage: page,
       itemsPerPage: limit,
       totalPages: total === 0 ? 0 : Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * HU-33: Lista solicitudes enviadas por el estudiante (Student Perspective)
+   * Retorna solicitudes filtradas por estudianteId con información del tutor
+   */
+  async findAllForStudent(
+    estudianteId: string,
+    params: StudentFilterParamsDto,
+  ): Promise<PaginatedStudentSolicitudesDto> {
+    const page = params.page ?? 1;
+    const limit = params.limit ?? 5; // Default 5 para estudiantes (PRD)
+    const skip = (page - 1) * limit;
+
+    const qb = this.solicitudRepository
+      .createQueryBuilder('solicitud')
+      .leftJoinAndSelect('solicitud.oferta', 'oferta')
+      .leftJoinAndSelect('oferta.tutor', 'tutor')
+      .where('solicitud.estudianteId = :estudianteId', { estudianteId })
+      .orderBy('solicitud.createdAt', 'DESC')
+      .skip(skip)
+      .take(limit);
+
+    // Filtro de estado
+    if (params.status === 'RESPONDIDA') {
+      // RESPONDIDA = ACEPTADA + RECHAZADA (out of scope for HU-33, will return empty)
+      qb.andWhere('solicitud.estado IN (:...estados)', {
+        estados: [SolicitudEstado.ACEPTADA, SolicitudEstado.RECHAZADA],
+      });
+    } else if (params.status && params.status !== 'TODAS') {
+      // PENDIENTE, EXPIRADA, etc.
+      qb.andWhere('solicitud.estado = :estado', { estado: params.status });
+    }
+    // If status=TODAS, no filter applied
+
+    const [entities, total] = await qb.getManyAndCount();
+
+    const data: StudentSolicitudListItemDto[] = entities.map((s) => {
+      const oferta = (s as SolicitudEntity & { oferta?: Oferta }).oferta;
+      const tutor = oferta?.tutor;
+      const precio = Number(oferta?.price ?? oferta?.precioHora ?? 0);
+      const materia = oferta?.categories?.[0] ?? oferta?.areaConocimiento ?? '';
+
+      return {
+        id: s.id,
+        tutorName: tutor?.nombreCompleto ?? 'N/A',
+        tutorAvatarUrl: tutor?.fotoPerfil ?? null,
+        subject: materia,
+        date: s.createdAt
+          ? s.createdAt.toISOString()
+          : new Date().toISOString(),
+        modality: s.modalidad ?? '',
+        pricePerHour: precio,
+        status: s.estado,
+      };
+    });
+
+    return {
+      data,
+      total,
+      currentPage: page,
+      itemsPerPage: limit,
+      totalPages: total === 0 ? 0 : Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * HU-33: Obtiene detalle de una solicitud para el estudiante
+   * Valida que la solicitud pertenezca al estudiante autenticado
+   */
+  async findByIdForStudent(
+    estudianteId: string,
+    solicitudId: string,
+  ): Promise<StudentSolicitudDetailDto> {
+    const qb = this.solicitudRepository
+      .createQueryBuilder('solicitud')
+      .leftJoinAndSelect('solicitud.oferta', 'oferta')
+      .leftJoinAndSelect('oferta.tutor', 'tutor')
+      .where('solicitud.id = :solicitudId', { solicitudId });
+
+    const solicitud = await qb.getOne();
+
+    if (!solicitud) {
+      throw new NotFoundException('Solicitud no encontrada');
+    }
+
+    // Authorization check
+    if (solicitud.estudianteId !== estudianteId) {
+      throw new NotFoundException('Solicitud no encontrada');
+    }
+
+    const oferta = (solicitud as SolicitudEntity & { oferta?: Oferta }).oferta;
+    const tutor = oferta?.tutor;
+    const precio = Number(oferta?.price ?? oferta?.precioHora ?? 0);
+    const materia = oferta?.categories?.[0] ?? oferta?.areaConocimiento ?? '';
+
+    return {
+      id: solicitud.id,
+      tutorName: tutor?.nombreCompleto ?? 'N/A',
+      tutorAvatarUrl: tutor?.fotoPerfil ?? null,
+      subject: materia,
+      date: solicitud.createdAt
+        ? solicitud.createdAt.toISOString()
+        : new Date().toISOString(),
+      modality: solicitud.modalidad ?? '',
+      pricePerHour: precio,
+      status: solicitud.estado,
+      mensaje: solicitud.mensaje,
+      horarios: solicitud.horarios,
+      // NOTE: Conditional fields (acceptedMeetingLink, rejectionReason) removed - out of scope for HU-33
     };
   }
 }

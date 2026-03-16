@@ -573,8 +573,11 @@ describe('/api/solicitudes (Student Perspective - HU-33)', () => {
       .overrideGuard(JwtAuthGuard)
       .useValue({
         canActivate: (context) => {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
           const request = context.switchToHttp().getRequest();
-          request.user = { id: 'test-student-123' }; // Mock student user
+          if (request && typeof request === 'object') {
+            request.user = { id: 'test-student-123' };
+          }
           return true;
         },
       })
@@ -673,7 +676,7 @@ describe('/api/solicitudes (Student Perspective - HU-33)', () => {
      */
     it('should filter by status=PENDIENTE', async () => {
       mockSolicitudesServiceStudent.findAllForStudent.mockResolvedValueOnce(
-        mockStudentPaginatedResponse,
+        mockStudentPaginatedResponse as PaginatedResponse<StudentSolicitudListItemDto>,
       );
 
       await request(app.getHttpServer())
@@ -827,7 +830,10 @@ describe('/api/solicitudes (Student Perspective - HU-33)', () => {
         .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
         .expect(HttpStatus.OK)
         .expect((res) => {
-          const item = res.body.data[0];
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          const data = Array.isArray(res.body.data) ? res.body.data : [];
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          const item = data[0] as StudentSolicitudListItemDto;
           expect(item).toHaveProperty('id');
           expect(item).toHaveProperty('tutorAvatarUrl');
           expect(item).toHaveProperty('tutorName');

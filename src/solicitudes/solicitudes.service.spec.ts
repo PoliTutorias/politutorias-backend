@@ -718,7 +718,8 @@ describe('SolicitudesService (Unit Tests) - HU-33 Student Perspective', () => {
     ],
     estado: SolicitudEstado.PENDIENTE,
     createdAt: new Date('2024-05-25T10:30:00.000Z'),
-    oferta: mockOferta as unknown as OfertaEntity,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    oferta: Object.assign({}, mockOferta) as OfertaEntity,
   };
 
   const mockSolicitudExpirada: Partial<SolicitudEntity> = {
@@ -732,7 +733,8 @@ describe('SolicitudesService (Unit Tests) - HU-33 Student Perspective', () => {
     horarios: [{ fecha: '2024-05-10', hora: '11:00' }],
     estado: SolicitudEstado.EXPIRADA,
     createdAt: new Date('2024-05-10T10:00:00.000Z'),
-    oferta: mockOferta as unknown as OfertaEntity,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    oferta: Object.assign({}, mockOferta) as OfertaEntity,
   };
 
   beforeEach(async () => {

@@ -224,7 +224,7 @@ export class SolicitudesController {
   @ApiResponse({ status: 401, description: 'Token JWT ausente o inválido' })
   async getFiltered(
     @Request() req: AuthenticatedRequest,
-    @Query() params: FilterParamsDto | StudentFilterParamsDto,
+    @Query() params: StudentFilterParamsDto,
   ): Promise<PaginatedSolicitudesDto | PaginatedStudentSolicitudesDto> {
     const userId = req.user.id;
 

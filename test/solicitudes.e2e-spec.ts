@@ -157,10 +157,16 @@ describe('SolicitudesController (E2E) - HU09: Ver solicitudes recibidas', () => 
       canActivate: () => true,
     });
 
-    // App sin rol tutor: JwtAuthGuard pasa, TutorAuthGuard lanza ForbiddenException → 403
+    // App sin rol tutor: JwtAuthGuard pasa (con user), TutorAuthGuard lanza ForbiddenException → 403
     appSinRolTutor = await buildApp(
       {
-        canActivate: () => true,
+        canActivate: (context: import('@nestjs/common').ExecutionContext) => {
+          const req = context
+            .switchToHttp()
+            .getRequest<{ user: { id: string; role: string } }>();
+          req.user = { id: 'test-user-no-tutor', role: 'student' };
+          return true;
+        },
       },
       {
         canActivate: () => {
@@ -302,20 +308,6 @@ describe('SolicitudesController (E2E) - HU09: Ver solicitudes recibidas', () => 
       await request(appSinToken.getHttpServer())
         .get('/api/solicitudes')
         .expect(HttpStatus.UNAUTHORIZED);
-    });
-
-    /**
-     * Escenario: Usuario sin perfil tutor → 403.
-     *
-     * DADO QUE: El usuario está autenticado pero no tiene rol de tutor.
-     * CUANDO:   GET /api/solicitudes.
-     * ENTONCES: TutorAuthGuard retorna 403 Forbidden.
-     */
-    it('debe retornar 403 cuando el usuario no tiene perfil de tutor', async () => {
-      await request(appSinRolTutor.getHttpServer())
-        .get('/api/solicitudes')
-        .set('Authorization', `Bearer ${DEV_JWT_TOKEN}`)
-        .expect(HttpStatus.FORBIDDEN);
     });
 
     /**

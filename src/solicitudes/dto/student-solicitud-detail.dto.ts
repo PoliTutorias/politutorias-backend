@@ -1,6 +1,6 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { StudentSolicitudListItemDto } from './student-solicitud-list-item.dto';
+import { ApiProperty } from '@nestjs/swagger';
 import { HorarioItemDto } from './horario-item.dto';
+import { StudentSolicitudListItemDto } from './student-solicitud-list-item.dto';
 
 /**
  * DTO para detalle de solicitud (perspectiva estudiante - HU-33)

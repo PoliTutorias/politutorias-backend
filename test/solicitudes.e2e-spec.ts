@@ -12,10 +12,10 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import request from 'supertest';
 import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
 import { TutorAuthGuard } from '../src/auth/guards/tutor-auth.guard';
+import { DEV_JWT_TOKEN } from '../src/auth/jwt.constants';
+import { SolicitudEstado } from '../src/solicitudes/entities/solicitud.entity';
 import { SolicitudesController } from '../src/solicitudes/solicitudes.controller';
 import { SolicitudesService } from '../src/solicitudes/solicitudes.service';
-import { SolicitudEstado } from '../src/solicitudes/entities/solicitud.entity';
-import { DEV_JWT_TOKEN } from '../src/auth/jwt.constants';
 import { Tutor } from '../src/tutors/entities/tutor.entity';
 
 /**
@@ -609,7 +609,7 @@ describe('/api/solicitudes (Student Perspective - HU-33)', () => {
      */
     it('should return 200 OK with paginated list for student', async () => {
       mockSolicitudesServiceStudent.findAllForStudent.mockResolvedValueOnce(
-        mockStudentPaginatedResponse,
+        mockStudentPaginatedResponse as unknown as PaginatedResponse<StudentSolicitudListItemDto>,
       );
 
       await request(app.getHttpServer())

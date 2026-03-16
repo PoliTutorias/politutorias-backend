@@ -241,10 +241,7 @@ export class SolicitudesController {
       );
     } else {
       // Student perspective (HU-33)
-      return this.solicitudesService.findAllForStudent(
-        userId,
-        params as StudentFilterParamsDto,
-      );
+      return this.solicitudesService.findAllForStudent(userId, params);
     }
   }
 

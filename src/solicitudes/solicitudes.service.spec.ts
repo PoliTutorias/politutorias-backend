@@ -2,13 +2,13 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Oferta } from '../ofertas/domain/entities/oferta.entity';
-import { SolicitudEntity, SolicitudEstado } from './entities/solicitud.entity';
 import { CreateSolicitudDto } from './dto/create-solicitud.dto';
-import { VerificarPreviaDto } from './dto/verificar-previa.dto';
-import { SolicitudesService } from './solicitudes.service';
-import { GlobalCountsDto } from './dto/global-counts.dto';
 import { FilterParamsDto } from './dto/filter-params.dto';
+import { GlobalCountsDto } from './dto/global-counts.dto';
 import { PaginatedSolicitudesDto } from './dto/paginated-solicitudes.dto';
+import { VerificarPreviaDto } from './dto/verificar-previa.dto';
+import { SolicitudEntity, SolicitudEstado } from './entities/solicitud.entity';
+import { SolicitudesService } from './solicitudes.service';
 
 /**
  * Unit Tests — SolicitudesService — HU-06: Enviar solicitud de tutoría
@@ -718,7 +718,7 @@ describe('SolicitudesService (Unit Tests) - HU-33 Student Perspective', () => {
     ],
     estado: SolicitudEstado.PENDIENTE,
     createdAt: new Date('2024-05-25T10:30:00.000Z'),
-    oferta: mockOferta as any,
+    oferta: mockOferta as unknown as OfertaEntity,
   };
 
   const mockSolicitudExpirada: Partial<SolicitudEntity> = {
@@ -732,7 +732,7 @@ describe('SolicitudesService (Unit Tests) - HU-33 Student Perspective', () => {
     horarios: [{ fecha: '2024-05-10', hora: '11:00' }],
     estado: SolicitudEstado.EXPIRADA,
     createdAt: new Date('2024-05-10T10:00:00.000Z'),
-    oferta: mockOferta as any,
+    oferta: mockOferta as unknown as OfertaEntity,
   };
 
   beforeEach(async () => {

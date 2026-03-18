@@ -216,7 +216,7 @@ export class SolicitudesService {
     const data: SolicitudDetailsResponseDto[] = entities.map((s) => {
       const oferta = (s as SolicitudEntity & { oferta?: Oferta }).oferta;
       const precio = Number(oferta?.price ?? oferta?.precioHora ?? 0);
-      const materia = oferta?.categories?.[0] ?? oferta?.areaConocimiento ?? '';
+      const materia = oferta?.titulo ?? oferta?.title ?? '';
       return {
         id: s.id,
         nombreEstudiante: s.nombreEstudiante ?? '',
@@ -289,13 +289,12 @@ export class SolicitudesService {
       const oferta = (s as SolicitudEntity & { oferta?: Oferta }).oferta;
       const tutor = oferta?.tutor;
       const precio = Number(oferta?.price ?? oferta?.precioHora ?? 0);
-      const materia = oferta?.categories?.[0] ?? oferta?.areaConocimiento ?? '';
 
       return {
         id: s.id,
         tutorName: tutor?.nombreCompleto ?? 'N/A',
         tutorAvatarUrl: tutor?.fotoPerfil ?? null,
-        subject: materia,
+        subject: oferta?.titulo ?? oferta?.title ?? '',
         date: s.createdAt
           ? s.createdAt.toISOString()
           : new Date().toISOString(),
@@ -342,13 +341,12 @@ export class SolicitudesService {
     const oferta = (solicitud as SolicitudEntity & { oferta?: Oferta }).oferta;
     const tutor = oferta?.tutor;
     const precio = Number(oferta?.price ?? oferta?.precioHora ?? 0);
-    const materia = oferta?.categories?.[0] ?? oferta?.areaConocimiento ?? '';
 
     return {
       id: solicitud.id,
       tutorName: tutor?.nombreCompleto ?? 'N/A',
       tutorAvatarUrl: tutor?.fotoPerfil ?? null,
-      subject: materia,
+      subject: oferta?.titulo ?? oferta?.title ?? '',
       date: solicitud.createdAt
         ? solicitud.createdAt.toISOString()
         : new Date().toISOString(),

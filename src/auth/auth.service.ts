@@ -143,4 +143,30 @@ export class AuthService {
       { expiresIn: '7d' },
     );
   }
+
+  /**
+   * Genera un nuevo JWT para un usuario existente, con el rol actualizado.
+   * Se usa después de que un estudiante completa su registro como tutor.
+   */
+  async refreshTokenForUser(userId: string): Promise<{ token: string; user: AuthResponseDto['user'] }> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException('Usuario no encontrado.');
+    }
+
+    const tutor = await this.tutorRepository.findOne({ where: { userId: user.id } });
+    const role = tutor ? 'tutor' : 'student';
+    const token = this.generateToken(user, role);
+
+    return {
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        isTutor: !!tutor,
+        tutorId: tutor?.id,
+      },
+    };
+  }
 }

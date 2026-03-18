@@ -106,4 +106,22 @@ export class AuthController {
   ): Promise<AuthResponseDto['user']> {
     return this.authService.getMe(req.user.id);
   }
+
+  @Post('refresh')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Refrescar token JWT',
+    description:
+      'Genera un nuevo JWT con el rol actualizado. Útil después de completar el registro de tutor.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Token actualizado exitosamente',
+    type: AuthResponseDto,
+  })
+  async refresh(@Request() req: AuthenticatedRequest): Promise<AuthResponseDto> {
+    return this.authService.refreshTokenForUser(req.user.id);
+  }
 }

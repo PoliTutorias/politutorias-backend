@@ -16,8 +16,6 @@ const ZERO_TUTOR_ID = '550e8400-e29b-41d4-a716-446655440000';
 const TUTOR_001 = '550e8400-e29b-41d4-a716-446655440001'; // Juan Carlos Pérez
 const TUTOR_002 = '550e8400-e29b-41d4-a716-446655440002'; // María Fernanda González
 const TUTOR_003 = '550e8400-e29b-41d4-a716-446655440003'; // Carlos Alberto Rodríguez
-const TUTOR_004 = '550e8400-e29b-41d4-a716-446655440004'; // Ana Lucía Torres
-const TUTOR_005 = '550e8400-e29b-41d4-a716-446655440005'; // Roberto Alejandro Mora
 
 /**
  * Seed de Solicitudes para HU-06: Enviar solicitud de tutoría.

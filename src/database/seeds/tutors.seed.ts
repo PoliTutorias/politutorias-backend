@@ -4,6 +4,7 @@ import {
   Semestres,
 } from '../../tutors/dto/registrar-datos-basicos.dto';
 import { Tutor } from '../../tutors/entities/tutor.entity';
+import { SEED_USER_TUTOR_ID } from './users.seed';
 
 /**
  * UUID del tutor "en cero" — usado para crear nuevas ofertas desde la API.
@@ -14,22 +15,22 @@ export const ZERO_TUTOR_ID = '550e8400-e29b-41d4-a716-446655440000';
 /**
  * Seed de tutores para HU02, HU17 y HU34.
  * Crea los tutores necesarios ANTES de insertar las ofertas (FK constraint).
- * Los campos reflejan la nueva entidad Tutor (HU34).
+ * Los userId ahora referencian a los User de users.seed.ts.
  */
 export async function seedTutors(dataSource: DataSource): Promise<void> {
   const tutorRepository = dataSource.getRepository(Tutor);
 
   const tutors: Partial<Tutor>[] = [
-    // ── Tutor "en cero" — sólo para asociar ofertas creadas desde la API ──
+    // ── Tutor principal — vinculado al usuario Daniel Valdiviezo ──
     {
       id: ZERO_TUTOR_ID,
-      userId: 'test-user-123',
-      nombreCompleto: 'Tutor de Pruebas',
+      userId: SEED_USER_TUTOR_ID,
+      nombreCompleto: 'Daniel Valdiviezo',
       numeroWhatsapp: '0000000000',
       facultad: Facultades.FIS_SISTEMAS,
       semestreActual: Semestres.DECIMO,
       biografiaCorta:
-        'Tutor de pruebas para desarrollo. Las ofertas creadas desde la API se asocian a este perfil.',
+        'Tutor con experiencia en desarrollo de software y tutorías de matemáticas y programación.',
       calificacionPromedio: 0,
       numResenas: 0,
     },

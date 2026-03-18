@@ -42,7 +42,12 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     try {
-      const decoded = verify(token, JWT_SECRET) as { sub?: string; name?: string; email?: string; role?: 'tutor' | 'student' };
+      const decoded = verify(token, JWT_SECRET) as {
+        sub?: string;
+        name?: string;
+        email?: string;
+        role?: 'tutor' | 'student';
+      };
 
       const userId = decoded.sub;
       if (!userId) {
@@ -51,7 +56,12 @@ export class JwtAuthGuard implements CanActivate {
         );
       }
 
-      request.user = { id: userId, name: decoded.name, email: decoded.email, role: decoded.role };
+      request.user = {
+        id: userId,
+        name: decoded.name,
+        email: decoded.email,
+        role: decoded.role,
+      };
       return true;
     } catch {
       throw new UnauthorizedException('Token JWT inválido.');

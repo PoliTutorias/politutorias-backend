@@ -18,11 +18,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import {
-  RegisterDto,
-  LoginDto,
-  AuthResponseDto,
-} from './dto/auth.dto';
+import { RegisterDto, LoginDto, AuthResponseDto } from './dto/auth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 interface AuthenticatedRequest extends Request {
@@ -121,7 +117,9 @@ export class AuthController {
     description: 'Token actualizado exitosamente',
     type: AuthResponseDto,
   })
-  async refresh(@Request() req: AuthenticatedRequest): Promise<AuthResponseDto> {
+  async refresh(
+    @Request() req: AuthenticatedRequest,
+  ): Promise<AuthResponseDto> {
     return this.authService.refreshTokenForUser(req.user.id);
   }
 }

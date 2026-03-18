@@ -40,6 +40,10 @@ import { Tutor } from '../tutors/entities/tutor.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+interface AuthenticatedRequest {
+  user?: { id: string; name?: string; email?: string; role?: string };
+}
+
 const SUCCESS_MESSAGE = 'Oferta creada exitosamente';
 
 interface CreateOfertaResponse {
@@ -80,9 +84,15 @@ export class OfertasController {
     summary: 'Obtener mis ofertas (tutor autenticado)',
     description: 'Retorna las ofertas del tutor autenticado via JWT.',
   })
-  @ApiResponse({ status: 200, description: 'Lista de ofertas del tutor', type: [OfertaDto] })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de ofertas del tutor',
+    type: [OfertaDto],
+  })
   @ApiResponse({ status: 401, description: 'Token JWT ausente o inválido' })
-  async getMisOfertas(@Request() req: any): Promise<OfertaDto[]> {
+  async getMisOfertas(
+    @Request() req: AuthenticatedRequest,
+  ): Promise<OfertaDto[]> {
     const userId = req.user?.id;
     if (!userId) {
       return [];
@@ -422,7 +432,7 @@ export class OfertasController {
   @UseGuards(JwtAuthGuard)
   async create(
     @Body() createOfertaDto: CreateOfertaDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Headers('x-tutor-id') tutorIdHeader?: string,
   ): Promise<CreateOfertaResponse> {
     // Prioridad: 1) Buscar tutor por userId del JWT, 2) X-Tutor-Id header, 3) fallback

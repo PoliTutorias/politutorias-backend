@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ConflictException,
   Injectable,
   UnauthorizedException,
@@ -31,7 +30,8 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {
     this.jwtSecret =
-      this.configService.get<string>('JWT_SECRET') || 'poli-tutorias-dev-secret';
+      this.configService.get<string>('JWT_SECRET') ||
+      'poli-tutorias-dev-secret';
   }
 
   /**
@@ -43,7 +43,9 @@ export class AuthService {
     });
 
     if (existing) {
-      throw new ConflictException('Ya existe una cuenta con este correo electrónico.');
+      throw new ConflictException(
+        'Ya existe una cuenta con este correo electrónico.',
+      );
     }
 
     const passwordHash = await hash(dto.password, 10);
@@ -131,7 +133,10 @@ export class AuthService {
     };
   }
 
-  private generateToken(user: UserEntity, role: 'tutor' | 'student' = 'student'): string {
+  private generateToken(
+    user: UserEntity,
+    role: 'tutor' | 'student' = 'student',
+  ): string {
     return sign(
       {
         sub: user.id,
@@ -148,13 +153,17 @@ export class AuthService {
    * Genera un nuevo JWT para un usuario existente, con el rol actualizado.
    * Se usa después de que un estudiante completa su registro como tutor.
    */
-  async refreshTokenForUser(userId: string): Promise<{ token: string; user: AuthResponseDto['user'] }> {
+  async refreshTokenForUser(
+    userId: string,
+  ): Promise<{ token: string; user: AuthResponseDto['user'] }> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new UnauthorizedException('Usuario no encontrado.');
     }
 
-    const tutor = await this.tutorRepository.findOne({ where: { userId: user.id } });
+    const tutor = await this.tutorRepository.findOne({
+      where: { userId: user.id },
+    });
     const role = tutor ? 'tutor' : 'student';
     const token = this.generateToken(user, role);
 

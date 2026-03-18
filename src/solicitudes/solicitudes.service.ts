@@ -95,7 +95,7 @@ export class SolicitudesService {
     }
 
     // 2. Resolver modalidad
-    const ofertaModality = oferta.modalidad || oferta.modality || '';
+    const ofertaModality = String(oferta.modalidad || oferta.modality || '');
     const isDual = ofertaModality === MODALITY_DUAL;
     let modalidadFinal: string;
 

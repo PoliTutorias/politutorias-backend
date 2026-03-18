@@ -1,5 +1,8 @@
 import { DataSource } from 'typeorm';
-import { Oferta, OfferModality } from '../../ofertas/domain/entities/oferta.entity';
+import {
+  Oferta,
+  OfferModality,
+} from '../../ofertas/domain/entities/oferta.entity';
 
 /**
  * Seed de Ofertas para HU03, HU17 y HU27.

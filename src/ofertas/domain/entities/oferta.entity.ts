@@ -100,7 +100,11 @@ export class Oferta {
 
   // ─── Timestamps ─────────────────────────────────────────────────────────
 
-  @Column({ type: 'timestamp', nullable: true, default: () => 'CURRENT_TIMESTAMP' })
+  @Column({
+    type: 'timestamp',
+    nullable: true,
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   fechaCreacion: Date;
 
   @CreateDateColumn()

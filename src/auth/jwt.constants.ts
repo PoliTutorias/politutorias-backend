@@ -6,8 +6,7 @@
  */
 
 /** Secret usado para firmar tokens JWT */
-export const JWT_SECRET =
-  process.env.JWT_SECRET || 'poli-tutorias-dev-secret';
+export const JWT_SECRET = process.env.JWT_SECRET || 'poli-tutorias-dev-secret';
 
 /** ID del usuario de prueba (legacy, para backward compatibility con tests) */
 export const TEST_USER_ID = 'test-user-123';

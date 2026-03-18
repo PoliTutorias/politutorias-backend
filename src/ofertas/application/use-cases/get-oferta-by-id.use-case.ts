@@ -171,7 +171,9 @@ export class GetOfertaByIdUseCase {
       description: oferta.descripcion || oferta.description || '',
       categories: oferta.categories ?? [],
       // RN-05: TypeORM retorna DECIMAL como string en PostgreSQL
-      price: parseFloat(Number(oferta.precioHora ?? oferta.price ?? 0).toFixed(2)),
+      price: parseFloat(
+        Number(oferta.precioHora ?? oferta.price ?? 0).toFixed(2),
+      ),
       rating: parseFloat(Number(oferta.rating).toFixed(2)),
       reviewsCount: oferta.reviewsCount,
       availability: mappedAvailability,

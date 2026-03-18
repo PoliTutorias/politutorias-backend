@@ -91,7 +91,8 @@ export class AuthService {
       where: { userId: user.id },
     });
 
-    const token = this.generateToken(user);
+    const role = tutor ? 'tutor' : 'student';
+    const token = this.generateToken(user, role);
 
     return {
       token,
@@ -130,12 +131,13 @@ export class AuthService {
     };
   }
 
-  private generateToken(user: UserEntity): string {
+  private generateToken(user: UserEntity, role: 'tutor' | 'student' = 'student'): string {
     return sign(
       {
         sub: user.id,
         name: user.name,
         email: user.email,
+        role,
       },
       this.jwtSecret,
       { expiresIn: '7d' },

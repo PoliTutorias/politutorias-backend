@@ -68,6 +68,38 @@ export class OfertasController {
     private readonly tutorRepository: Repository<Tutor>,
   ) {}
 
+  /**
+   * GET /api/ofertas/mis-ofertas — Obtiene las ofertas del tutor autenticado.
+   * Resuelve el tutorId a partir del userId en el JWT.
+   * IMPORTANTE: debe ir ANTES de cualquier @Get(':id') para evitar conflictos de ruta.
+   */
+  @Get('mis-ofertas')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Obtener mis ofertas (tutor autenticado)',
+    description: 'Retorna las ofertas del tutor autenticado via JWT.',
+  })
+  @ApiResponse({ status: 200, description: 'Lista de ofertas del tutor', type: [OfertaDto] })
+  @ApiResponse({ status: 401, description: 'Token JWT ausente o inválido' })
+  async getMisOfertas(@Request() req: any): Promise<OfertaDto[]> {
+    const userId = req.user?.id;
+    if (!userId) {
+      return [];
+    }
+
+    // Buscar tutor por userId
+    const tutor = await this.tutorRepository.findOne({
+      where: { userId },
+    });
+
+    if (!tutor) {
+      return [];
+    }
+
+    return this.ofertasService.findAllByTutorId(tutor.id);
+  }
+
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiExtraModels(OfertaItemDto, TutorBasicDto)

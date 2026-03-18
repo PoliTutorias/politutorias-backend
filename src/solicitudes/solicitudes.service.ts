@@ -40,7 +40,8 @@ export class SolicitudesService {
     estudianteId: string,
     dto: VerificarPreviaDto,
   ): Promise<VerificarPreviaResponseDto> {
-    const solicitudExistente = await this.solicitudRepository.findOne({
+    // Buscar TODAS las solicitudes pendientes del estudiante para esta oferta
+    const solicitudesExistentes = await this.solicitudRepository.find({
       where: {
         estudianteId,
         ofertaId: dto.ofertaId,
@@ -48,10 +49,10 @@ export class SolicitudesService {
       },
     });
 
-    if (solicitudExistente) {
-      // Verificar solapamiento: algún horario del DTO está en la solicitud existente
+    // Verificar solapamiento contra TODAS las solicitudes existentes
+    for (const solicitud of solicitudesExistentes) {
       const hayColision = dto.horarios.some((h) =>
-        solicitudExistente.horarios.some(
+        solicitud.horarios.some(
           (he) => he.fecha === h.fecha && he.hora === h.hora,
         ),
       );
@@ -110,8 +111,8 @@ export class SolicitudesService {
       modalidadFinal = ofertaModality;
     }
 
-    // 3. Verificar duplicados PENDIENTES con horario solapado
-    const solicitudDuplicada = await this.solicitudRepository.findOne({
+    // 3. Verificar duplicados PENDIENTES con horario solapado — buscar TODAS
+    const solicitudesDuplicadas = await this.solicitudRepository.find({
       where: {
         estudianteId,
         ofertaId: dto.ofertaId,
@@ -119,9 +120,9 @@ export class SolicitudesService {
       },
     });
 
-    if (solicitudDuplicada) {
+    for (const solicitud of solicitudesDuplicadas) {
       const hayColision = dto.horarios.some((h) =>
-        solicitudDuplicada.horarios.some(
+        solicitud.horarios.some(
           (he) => he.fecha === h.fecha && he.hora === h.hora,
         ),
       );

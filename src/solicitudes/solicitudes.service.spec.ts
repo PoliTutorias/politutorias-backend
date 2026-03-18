@@ -115,7 +115,7 @@ describe('SolicitudesService (Unit Tests) - HU-06', () => {
         horarios: mockHorarios,
       };
 
-      mockSolicitudRepository.findOne.mockResolvedValueOnce(solicitudExistente);
+      mockSolicitudRepository.find.mockResolvedValueOnce([solicitudExistente]);
 
       const result = await service.verificarSolicitudPrevia(ESTUDIANTE_ID, dto);
 
@@ -136,7 +136,7 @@ describe('SolicitudesService (Unit Tests) - HU-06', () => {
         horarios: mockHorarios,
       };
 
-      mockSolicitudRepository.findOne.mockResolvedValueOnce(null);
+      mockSolicitudRepository.find.mockResolvedValueOnce([]);
 
       const result = await service.verificarSolicitudPrevia(ESTUDIANTE_ID, dto);
 
@@ -201,7 +201,7 @@ describe('SolicitudesService (Unit Tests) - HU-06', () => {
       };
 
       mockOfertaRepository.findOne.mockResolvedValueOnce(mockOfertaVirtual);
-      mockSolicitudRepository.findOne.mockResolvedValueOnce(null); // no hay duplicados
+      mockSolicitudRepository.find.mockResolvedValueOnce([]); // no hay duplicados
       mockSolicitudRepository.create.mockReturnValueOnce(solicitudGuardada);
       mockSolicitudRepository.save.mockResolvedValueOnce(solicitudGuardada);
 
@@ -263,7 +263,7 @@ describe('SolicitudesService (Unit Tests) - HU-06', () => {
       };
 
       mockOfertaRepository.findOne.mockResolvedValueOnce(mockOfertaVirtual);
-      mockSolicitudRepository.findOne.mockResolvedValueOnce(solicitudDuplicada);
+      mockSolicitudRepository.find.mockResolvedValueOnce([solicitudDuplicada]);
 
       await expect(service.create(ESTUDIANTE_ID, dto)).rejects.toThrow(
         BadRequestException,
@@ -296,7 +296,7 @@ describe('SolicitudesService (Unit Tests) - HU-06', () => {
       };
 
       mockOfertaRepository.findOne.mockResolvedValueOnce(mockOfertaPresencial);
-      mockSolicitudRepository.findOne.mockResolvedValueOnce(null);
+      mockSolicitudRepository.find.mockResolvedValueOnce([]); // no hay duplicados
       mockSolicitudRepository.create.mockReturnValueOnce(solicitudCreada);
       mockSolicitudRepository.save.mockResolvedValueOnce(solicitudCreada);
 
@@ -1063,7 +1063,7 @@ describe('SolicitudesService (Unit Tests) - HU-33 Student Perspective', () => {
           id: mockSolicitudPendiente.id,
           tutorName: mockTutor.nombreCompleto,
           tutorAvatarUrl: mockTutor.fotoPerfil,
-          subject: mockOferta.categories[0],
+          subject: mockOferta.title,
           date: mockSolicitudPendiente.createdAt.toISOString(),
           modality: mockSolicitudPendiente.modalidad,
           pricePerHour: Number(mockOferta.price),
@@ -1230,7 +1230,7 @@ describe('SolicitudesService (Unit Tests) - HU-33 Student Perspective', () => {
           id: mockSolicitudPendiente.id,
           tutorName: mockTutor.nombreCompleto,
           tutorAvatarUrl: mockTutor.fotoPerfil,
-          subject: mockOferta.categories[0],
+          subject: mockOferta.title,
           date: mockSolicitudPendiente.createdAt.toISOString(),
           modality: mockSolicitudPendiente.modalidad,
           pricePerHour: Number(mockOferta.price),

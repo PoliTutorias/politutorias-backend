@@ -17,6 +17,12 @@ export class SolicitudDetailsResponseDto {
   materia: string;
 
   @ApiProperty({
+    description: 'Título de la oferta',
+    example: 'Cálculo Diferencial — Presencial',
+  })
+  titulo: string;
+
+  @ApiProperty({
     description: 'Fecha y hora formateada (DD Mmm YYYY HH:mm)',
     example: '25 may 2024 10:30',
   })

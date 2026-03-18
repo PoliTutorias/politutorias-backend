@@ -30,6 +30,12 @@ export class StudentSolicitudListItemDto {
   subject: string;
 
   @ApiProperty({
+    description: 'Título de la oferta',
+    example: 'Cálculo Diferencial — Presencial',
+  })
+  titulo: string;
+
+  @ApiProperty({
     description: 'Fecha de creación de la solicitud (ISO 8601)',
     example: '2024-05-25T10:30:00.000Z',
   })

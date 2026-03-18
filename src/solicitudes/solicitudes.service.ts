@@ -1,24 +1,24 @@
 import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
+    BadRequestException,
+    Injectable,
+    NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { SolicitudEntity, SolicitudEstado } from './entities/solicitud.entity';
 import { Oferta } from '../ofertas/domain/entities/oferta.entity';
 import { CreateSolicitudDto } from './dto/create-solicitud.dto';
-import { VerificarPreviaDto } from './dto/verificar-previa.dto';
-import { SolicitudResponseDto } from './dto/solicitud-response.dto';
-import { VerificarPreviaResponseDto } from './dto/verificar-previa-response.dto';
-import { GlobalCountsDto } from './dto/global-counts.dto';
 import { FilterParamsDto } from './dto/filter-params.dto';
-import { SolicitudDetailsResponseDto } from './dto/solicitud-details-response.dto';
+import { GlobalCountsDto } from './dto/global-counts.dto';
 import { PaginatedSolicitudesDto } from './dto/paginated-solicitudes.dto';
-import { StudentFilterParamsDto } from './dto/student-filter-params.dto';
-import { StudentSolicitudListItemDto } from './dto/student-solicitud-list-item.dto';
-import { StudentSolicitudDetailDto } from './dto/student-solicitud-detail.dto';
 import { PaginatedStudentSolicitudesDto } from './dto/paginated-student-solicitudes.dto';
+import { SolicitudDetailsResponseDto } from './dto/solicitud-details-response.dto';
+import { SolicitudResponseDto } from './dto/solicitud-response.dto';
+import { StudentFilterParamsDto } from './dto/student-filter-params.dto';
+import { StudentSolicitudDetailDto } from './dto/student-solicitud-detail.dto';
+import { StudentSolicitudListItemDto } from './dto/student-solicitud-list-item.dto';
+import { VerificarPreviaResponseDto } from './dto/verificar-previa-response.dto';
+import { VerificarPreviaDto } from './dto/verificar-previa.dto';
+import { SolicitudEntity, SolicitudEstado } from './entities/solicitud.entity';
 
 /** Valor de la columna `modality` que indica oferta dual */
 const MODALITY_DUAL = 'VIRTUAL/PRESENCIAL';
@@ -213,10 +213,12 @@ export class SolicitudesService {
       const oferta = (s as SolicitudEntity & { oferta?: Oferta }).oferta;
       const precio = Number(oferta?.price ?? oferta?.precioHora ?? 0);
       const materia = oferta?.categories?.[0] ?? oferta?.areaConocimiento ?? '';
+      const titulo = oferta?.titulo ?? oferta?.title ?? '';
       return {
         id: s.id,
         nombreEstudiante: s.nombreEstudiante ?? '',
         materia,
+        titulo,
         fechaHora: s.createdAt
           ? s.createdAt.toLocaleDateString('es-ES', {
               day: '2-digit',
@@ -286,12 +288,14 @@ export class SolicitudesService {
       const tutor = oferta?.tutor;
       const precio = Number(oferta?.price ?? oferta?.precioHora ?? 0);
       const materia = oferta?.categories?.[0] ?? oferta?.areaConocimiento ?? '';
+      const titulo = oferta?.titulo ?? oferta?.title ?? '';
 
       return {
         id: s.id,
         tutorName: tutor?.nombreCompleto ?? 'N/A',
         tutorAvatarUrl: tutor?.fotoPerfil ?? null,
         subject: materia,
+        titulo,
         date: s.createdAt
           ? s.createdAt.toISOString()
           : new Date().toISOString(),
@@ -339,12 +343,14 @@ export class SolicitudesService {
     const tutor = oferta?.tutor;
     const precio = Number(oferta?.price ?? oferta?.precioHora ?? 0);
     const materia = oferta?.categories?.[0] ?? oferta?.areaConocimiento ?? '';
+    const titulo = oferta?.titulo ?? oferta?.title ?? '';
 
     return {
       id: solicitud.id,
       tutorName: tutor?.nombreCompleto ?? 'N/A',
       tutorAvatarUrl: tutor?.fotoPerfil ?? null,
       subject: materia,
+      titulo,
       date: solicitud.createdAt
         ? solicitud.createdAt.toISOString()
         : new Date().toISOString(),

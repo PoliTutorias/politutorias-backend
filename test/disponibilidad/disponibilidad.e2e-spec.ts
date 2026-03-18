@@ -1,22 +1,27 @@
 /* eslint-disable @typescript-eslint/unbound-method, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument */
-import { Test, TestingModule } from '@nestjs/testing';
 import {
-  INestApplication,
-  HttpStatus,
-  ValidationPipe,
-  UnauthorizedException,
+    HttpStatus,
+    INestApplication,
+    UnauthorizedException,
+    ValidationPipe,
 } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import request from 'supertest';
-import { DisponibilidadController } from '../../src/disponibilidad/disponibilidad.controller';
-import { CreateAvailabilityUseCase } from '../../src/disponibilidad/application/use-cases/create-availability.use-case';
 import { JwtAuthGuard } from '../../src/auth/guards/jwt-auth.guard';
-import { CreateAvailabilityDto } from '../../src/disponibilidad/dto/create-availability.dto';
 import { DEV_JWT_TOKEN, TEST_USER_ID } from '../../src/auth/jwt.constants';
+import { CreateAvailabilityUseCase } from '../../src/disponibilidad/application/use-cases/create-availability.use-case';
+import { DisponibilidadController } from '../../src/disponibilidad/disponibilidad.controller';
+import { DisponibilidadService } from '../../src/disponibilidad/disponibilidad.service';
+import { CreateAvailabilityDto } from '../../src/disponibilidad/dto/create-availability.dto';
+import { Tutor } from '../../src/tutors/entities/tutor.entity';
 
 describe('DisponibilidadController (E2E)', () => {
   let app: INestApplication;
   let createAvailabilityUseCase: jest.Mocked<CreateAvailabilityUseCase>;
   let jwtAuthGuard: jest.Mocked<JwtAuthGuard>;
+  let disponibilidadService: jest.Mocked<DisponibilidadService>;
+  let tutorRepository: { findOne: jest.Mock };
 
   beforeEach(async () => {
     // Mock del UseCase
@@ -43,12 +48,28 @@ describe('DisponibilidadController (E2E)', () => {
       }),
     } as any;
 
+    disponibilidadService = {
+      findByTutorId: jest.fn(),
+    } as any;
+
+    tutorRepository = {
+      findOne: jest.fn().mockResolvedValue({ id: TEST_USER_ID }),
+    };
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [DisponibilidadController],
       providers: [
         {
           provide: CreateAvailabilityUseCase,
           useValue: createAvailabilityUseCase,
+        },
+        {
+          provide: DisponibilidadService,
+          useValue: disponibilidadService,
+        },
+        {
+          provide: getRepositoryToken(Tutor),
+          useValue: tutorRepository,
         },
       ],
     })
@@ -72,7 +93,9 @@ describe('DisponibilidadController (E2E)', () => {
   });
 
   afterEach(async () => {
-    await app.close();
+    if (app) {
+      await app.close();
+    }
   });
 
   describe('POST /api/disponibilidad', () => {

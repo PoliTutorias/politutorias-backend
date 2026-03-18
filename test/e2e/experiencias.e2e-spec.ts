@@ -1,26 +1,32 @@
 // test/e2e/experiencias.e2e-spec.ts
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { Test, TestingModule } from '@nestjs/testing';
 import {
-  INestApplication,
-  HttpStatus,
-  CanActivate,
-  ValidationPipe,
-  UnauthorizedException,
+    CanActivate,
+    HttpStatus,
+    INestApplication,
+    UnauthorizedException,
+    ValidationPipe,
 } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import request from 'supertest';
+import { DEV_JWT_TOKEN, TEST_USER_ID } from '../../src/auth/jwt.constants';
+import { ExperienciaEntity } from '../../src/experiencias/entities/experiencia.entity';
+import { Tutor } from '../../src/tutors/entities/tutor.entity';
+import { JwtAuthGuard } from './../../src/auth/guards/jwt-auth.guard';
 import { ExperienciasController } from './../../src/experiencias/experiencias.controller';
 import { ExperienciasService } from './../../src/experiencias/experiencias.service';
-import { JwtAuthGuard } from './../../src/auth/guards/jwt-auth.guard';
-import { ExperienciaEntity } from '../../src/experiencias/entities/experiencia.entity';
-import { DEV_JWT_TOKEN, TEST_USER_ID } from '../../src/auth/jwt.constants';
 
 describe('ExperienciasController (e2e)', () => {
   let app: INestApplication;
   // Mock del servicio
   const mockExperienciasService = {
     add: jest.fn(),
+  };
+
+  const mockTutorRepository = {
+    findOne: jest.fn().mockResolvedValue({ id: TEST_USER_ID }),
   };
 
   // Mock del guard para simular autenticación
@@ -37,6 +43,10 @@ describe('ExperienciasController (e2e)', () => {
       controllers: [ExperienciasController],
       providers: [
         { provide: ExperienciasService, useValue: mockExperienciasService },
+        {
+          provide: getRepositoryToken(Tutor),
+          useValue: mockTutorRepository,
+        },
       ],
     })
       .overrideGuard(JwtAuthGuard)

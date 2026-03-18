@@ -802,6 +802,7 @@ describe('SolicitudesService (Unit Tests) - HU-33 Student Perspective', () => {
       expect(result.data[0]).toHaveProperty('tutorName');
       expect(result.data[0]).toHaveProperty('tutorAvatarUrl');
       expect(result.data[0]).toHaveProperty('subject');
+      expect(result.data[0]).toHaveProperty('titulo');
       expect(result.data[0]).toHaveProperty('date');
       expect(result.data[0]).toHaveProperty('modality');
       expect(result.data[0]).toHaveProperty('pricePerHour');
@@ -1064,6 +1065,7 @@ describe('SolicitudesService (Unit Tests) - HU-33 Student Perspective', () => {
           tutorName: mockTutor.nombreCompleto,
           tutorAvatarUrl: mockTutor.fotoPerfil,
           subject: mockOferta.categories[0],
+          titulo: mockOferta.title,
           date: mockSolicitudPendiente.createdAt.toISOString(),
           modality: mockSolicitudPendiente.modalidad,
           pricePerHour: Number(mockOferta.price),
@@ -1231,6 +1233,7 @@ describe('SolicitudesService (Unit Tests) - HU-33 Student Perspective', () => {
           tutorName: mockTutor.nombreCompleto,
           tutorAvatarUrl: mockTutor.fotoPerfil,
           subject: mockOferta.categories[0],
+          titulo: mockOferta.title,
           date: mockSolicitudPendiente.createdAt.toISOString(),
           modality: mockSolicitudPendiente.modalidad,
           pricePerHour: Number(mockOferta.price),

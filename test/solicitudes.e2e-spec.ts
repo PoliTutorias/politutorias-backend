@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
-  ForbiddenException,
-  HttpStatus,
-  INestApplication,
-  NotFoundException,
-  ValidationPipe,
+    ForbiddenException,
+    HttpStatus,
+    INestApplication,
+    NotFoundException,
+    ValidationPipe,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -50,6 +50,7 @@ const mockSolicitudItem = {
   id: 'solicitud-uuid-001',
   nombreEstudiante: 'Ana García',
   materia: 'Cálculo Diferencial',
+  titulo: 'Cálculo Diferencial — Presencial',
   fechaHora: '25 may 2024 10:30',
   mensajeResumen: 'Necesito ayuda con los temas de límites...',
   estado: SolicitudEstado.PENDIENTE,
@@ -467,6 +468,7 @@ describe('SolicitudesController (E2E) - HU09: Ver solicitudes recibidas', () => 
           expect(item).toHaveProperty('id');
           expect(item).toHaveProperty('nombreEstudiante');
           expect(item).toHaveProperty('materia');
+          expect(item).toHaveProperty('titulo');
           expect(item).toHaveProperty('fechaHora');
           expect(item).toHaveProperty('mensajeResumen');
           expect(item).toHaveProperty('estado');
@@ -527,6 +529,7 @@ describe('/api/solicitudes (Student Perspective - HU-33)', () => {
     tutorAvatarUrl: 'https://example.com/avatars/tutor.jpg',
     tutorName: 'Juan Pérez',
     subject: 'Cálculo Diferencial',
+    titulo: 'Cálculo Diferencial — Presencial',
     date: '2024-05-25T10:30:00.000Z',
     modality: 'Virtual',
     pricePerHour: 20,
@@ -838,6 +841,7 @@ describe('/api/solicitudes (Student Perspective - HU-33)', () => {
           expect(item).toHaveProperty('tutorAvatarUrl');
           expect(item).toHaveProperty('tutorName');
           expect(item).toHaveProperty('subject');
+          expect(item).toHaveProperty('titulo');
           expect(item).toHaveProperty('date');
           expect(item).toHaveProperty('modality');
           expect(item).toHaveProperty('pricePerHour');
@@ -894,6 +898,7 @@ describe('/api/solicitudes (Student Perspective - HU-33)', () => {
           expect(res.body).toHaveProperty('tutorName');
           expect(res.body).toHaveProperty('tutorAvatarUrl');
           expect(res.body).toHaveProperty('subject');
+          expect(res.body).toHaveProperty('titulo');
           expect(res.body).toHaveProperty('date');
           expect(res.body).toHaveProperty('modality');
           expect(res.body).toHaveProperty('pricePerHour');

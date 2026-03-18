@@ -367,6 +367,17 @@ export async function seedOfertaDetalleHU32(
       'Límites, derivadas e integrales aplicados a ingeniería. ' +
       'Incluye resolución de exámenes anteriores y material de apoyo. ' +
       'Modalidad virtual o presencial según preferencia del estudiante.',
+    // Backfill HU26 para que también aparezca en GET /api/ofertas (lista)
+    // y mantenga consistencia de `titulo` entre solicitudes y ofertas.
+    titulo: 'Cálculo Diferencial — Detalle Completo',
+    descripcion:
+      'Límites, derivadas e integrales aplicados a ingeniería. ' +
+      'Incluye resolución de exámenes anteriores y material de apoyo. ' +
+      'Modalidad virtual o presencial según preferencia del estudiante.',
+    modalidad: 'VIRTUAL/PRESENCIAL',
+    precioHora: 14.5,
+    areaConocimiento: 'Matemáticas',
+    nivel: 'Universitario',
     rating: 4.9,
     reviewsCount: 31,
     tutorId: '550e8400-e29b-41d4-a716-446655440001', // Juan Carlos Pérez

@@ -1,23 +1,20 @@
 /**
- * Constantes JWT compartidas para desarrollo.
+ * Constantes JWT compartidas.
  *
- * Como no existe HU de login, se utiliza un token quemado (hardcoded)
- * que todas las HU y pruebas consumen de manera uniforme.
- *
- * Payload del token:
- *   { "sub": "test-user-123", "name": "Tutor de prueba", "iat": 1751000000 }
+ * El secret se lee de la variable de entorno JWT_SECRET.
+ * Si no está definida, usa un valor por defecto para desarrollo.
  */
 
-/** Secret usado para firmar el token de desarrollo */
-export const JWT_SECRET = 'poli-tutorias-dev-secret';
+/** Secret usado para firmar tokens JWT */
+export const JWT_SECRET =
+  process.env.JWT_SECRET || 'poli-tutorias-dev-secret';
 
-/** ID del usuario de prueba (claim `sub` del JWT) */
+/** ID del usuario de prueba (legacy, para backward compatibility con tests) */
 export const TEST_USER_ID = 'test-user-123';
 
 /**
- * Token JWT firmado con HS256 y el secret de desarrollo.
- * Úsalo en Swagger, Postman o cualquier cliente HTTP:
- *   Authorization: Bearer <DEV_JWT_TOKEN>
+ * Token JWT legacy — solo para backward compatibility con tests.
+ * En producción, los tokens se generan dinámicamente en /api/auth/login.
  */
 export const DEV_JWT_TOKEN =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +

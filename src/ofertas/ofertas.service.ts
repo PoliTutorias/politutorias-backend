@@ -82,11 +82,11 @@ export class OfertasService {
 
     return offers.map((offer) => ({
       id: offer.id,
-      title: offer.title,
-      description: offer.description,
-      modality: offer.modality,
-      pricePerHour: offer.price,
-      tags: offer.categories,
+      title: offer.titulo || offer.title || '',
+      description: offer.descripcion || offer.description || '',
+      modality: offer.modalidad || offer.modality || '',
+      pricePerHour: offer.precioHora ?? offer.price ?? 0,
+      tags: offer.categories ?? [],
       createdAt: offer.createdAt.toISOString(),
     }));
   }
@@ -100,11 +100,11 @@ export class OfertasService {
   ): OfferResponseDto {
     return {
       id: offer.id,
-      title: offer.title,
-      price: parseFloat(offer.price.toString()),
-      modality: offer.modality,
-      description: offer.description,
-      tags: offer.categories,
+      title: offer.titulo || offer.title || '',
+      price: parseFloat((offer.precioHora ?? offer.price ?? 0).toString()),
+      modality: offer.modalidad || offer.modality || '',
+      description: offer.descripcion || offer.description || '',
+      tags: offer.categories ?? [],
       rating: offer.rating,
       reviewsCount: offer.reviewsCount,
       availability: availability ?? [],

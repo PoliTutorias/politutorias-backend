@@ -9,7 +9,7 @@ import {
   IsString,
   Min,
 } from 'class-validator';
-import { OfferModality } from '../entities/oferta.entity';
+import { OfferModality } from '../domain/entities/oferta.entity';
 
 const VALID_MODALITIES = Object.values(OfferModality);
 

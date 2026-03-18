@@ -220,8 +220,10 @@ export class OfertasService {
       // HU16: Si se filtra por disponibilidad, primero obtener los tutorIds relevantes
       let availTutorIds: string[] | undefined;
       if (filterDto.disponibilidad) {
+        // Soportar múltiples días separados por coma: "Lun,Mar,Vie"
+        const days = filterDto.disponibilidad.split(',').map((d) => d.trim());
         const availabilities = await this.availabilityRepository.find({
-          where: { day: filterDto.disponibilidad },
+          where: days.map((day) => ({ day })),
           select: ['tutorId'],
         });
 

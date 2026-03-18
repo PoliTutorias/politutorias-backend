@@ -78,15 +78,11 @@ export class GetOfertasFilterDto {
   @ApiPropertyOptional({
     type: String,
     description:
-      'Día de la semana para filtrar por disponibilidad del tutor. Valores: Lun, Mar, Mié, Jue, Vie, Sáb, Dom',
-    example: 'Lun',
+      'Día(s) de la semana para filtrar por disponibilidad del tutor. Valores: Lun, Mar, Mié, Jue, Vie, Sáb, Dom. Para múltiples días, separar con coma: Lun,Mar,Vie',
+    example: 'Lun,Mar',
   })
   @IsOptional()
   @IsString({ message: 'disponibilidad debe ser un texto válido.' })
-  @IsIn(['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'], {
-    message:
-      'disponibilidad debe ser uno de: Lun, Mar, Mié, Jue, Vie, Sáb, Dom',
-  })
   disponibilidad?: string;
 
   @ApiPropertyOptional({

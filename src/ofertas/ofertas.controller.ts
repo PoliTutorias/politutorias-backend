@@ -9,6 +9,8 @@ import {
   ParseUUIDPipe,
   Post,
   Query,
+  Request,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -33,6 +35,10 @@ import { OfertaDto } from './dto/oferta.dto';
 import { OffersQueryParams } from './dto/offers-query.dto';
 import { PaginatedOffersResponse } from './dto/paginated-offers-response.dto';
 import { OfertasService } from './ofertas.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Tutor } from '../tutors/entities/tutor.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 const SUCCESS_MESSAGE = 'Oferta creada exitosamente';
 
@@ -58,6 +64,8 @@ export class OfertasController {
     private readonly createOfertaUseCase: CreateOfertaUseCase,
     private readonly getAllOfertasUseCase: GetAllOfertasUseCase,
     private readonly ofertasService: OfertasService,
+    @InjectRepository(Tutor)
+    private readonly tutorRepository: Repository<Tutor>,
   ) {}
 
   @Get()
@@ -379,11 +387,24 @@ export class OfertasController {
       },
     },
   })
+  @UseGuards(JwtAuthGuard)
   async create(
     @Body() createOfertaDto: CreateOfertaDto,
+    @Request() req: any,
     @Headers('x-tutor-id') tutorIdHeader?: string,
   ): Promise<CreateOfertaResponse> {
-    const tutorId = tutorIdHeader || this.tutorId;
+    // Prioridad: 1) Buscar tutor por userId del JWT, 2) X-Tutor-Id header, 3) fallback
+    let tutorId = tutorIdHeader || this.tutorId;
+
+    if (req?.user?.id) {
+      const tutor = await this.tutorRepository.findOne({
+        where: { userId: req.user.id },
+      });
+      if (tutor) {
+        tutorId = tutor.id;
+      }
+    }
+
     const oferta = await this.createOfertaUseCase.execute(
       createOfertaDto,
       tutorId,

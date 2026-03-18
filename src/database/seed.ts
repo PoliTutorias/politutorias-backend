@@ -4,10 +4,10 @@ import { AvailabilityEntity } from '../disponibilidad/entities/availability.enti
 import { ExperienciaEntity } from '../experiencias/entities/experiencia.entity';
 import { MateriaEntity } from '../materias/entities/materia.entity';
 import { Oferta } from '../ofertas/domain/entities/oferta.entity';
-import { OfertaEntity } from '../ofertas/entities/oferta.entity';
 import { PerfilProfesionalEntity } from '../perfil/entities/perfil-profesional.entity';
 import { SolicitudEntity } from '../solicitudes/entities/solicitud.entity';
 import { Tutor } from '../tutors/entities/tutor.entity';
+import { UserEntity } from '../users/entities/user.entity';
 import { seedDisponibilidad } from './seeds/disponibilidad.seed';
 import { seedExperiencias } from './seeds/experiencias.seed';
 import { seedMaterias } from './seeds/materias.seed';
@@ -19,6 +19,7 @@ import {
 import { seedPerfilesProfesionales } from './seeds/perfil-profesional.seed';
 import { seedSolicitudHU06 } from './seeds/solicitudes.seed';
 import { seedTutors } from './seeds/tutors.seed';
+import { seedUsers } from './seeds/users.seed';
 
 // Cargar variables de entorno
 config();
@@ -31,9 +32,9 @@ const sslConfig = dbHost.includes('rds.amazonaws.com')
 
 /** Todas las entidades del proyecto */
 const ALL_ENTITIES = [
+  UserEntity,
   Tutor,
   Oferta,
-  OfertaEntity,
   AvailabilityEntity,
   ExperienciaEntity,
   PerfilProfesionalEntity,
@@ -85,6 +86,7 @@ async function runSeed() {
       DROP TABLE IF EXISTS solicitudes                CASCADE;
       DROP TABLE IF EXISTS ofertas                    CASCADE;
       DROP TABLE IF EXISTS tutors                     CASCADE;
+      DROP TABLE IF EXISTS users                      CASCADE;
 
       -- Eliminar tipos ENUM huérfanos para que synchronize los recree con los valores actuales
       DROP TYPE IF EXISTS tutors_facultad_enum         CASCADE;
@@ -101,7 +103,8 @@ async function runSeed() {
       '✅ Conexión a base de datos establecida y esquema sincronizado',
     );
 
-    // IMPORTANTE: Ejecutar seed de tutores ANTES de ofertas (FK constraint)
+    // IMPORTANTE: Ejecutar seed en orden de dependencias FK
+    await seedUsers(AppDataSource);
     await seedTutors(AppDataSource);
 
     // Ejecutar seed de ofertas

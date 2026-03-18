@@ -25,11 +25,11 @@ export class OfferMapper {
 
     return {
       id: entity.id,
-      title: entity.title,
-      price: parseFloat(entity.price.toString()),
-      modality: entity.modality,
-      description: entity.description,
-      tags: entity.categories,
+      title: entity.titulo || entity.title || '',
+      price: parseFloat((entity.precioHora ?? entity.price ?? 0).toString()),
+      modality: entity.modalidad || entity.modality || '',
+      description: entity.descripcion || entity.description || '',
+      tags: entity.categories ?? [],
       rating: entity.rating,
       reviewsCount: entity.reviewsCount,
       tutor,

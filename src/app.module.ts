@@ -3,13 +3,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
+import { UserEntity } from './users/entities/user.entity';
 import { DisponibilidadModule } from './disponibilidad/disponibilidad.module';
 import { AvailabilityEntity } from './disponibilidad/entities/availability.entity';
 import { ExperienciaEntity } from './experiencias/entities/experiencia.entity';
 import { ExperienciasModule } from './experiencias/experiencias.module';
 import { MateriaEntity } from './materias/entities/materia.entity';
 import { Oferta } from './ofertas/domain/entities/oferta.entity';
-import { OfertaEntity } from './ofertas/entities/oferta.entity';
 import { OfertasModule } from './ofertas/ofertas.module';
 import { OffersModule } from './offers/offers.module';
 import { PerfilProfesionalEntity } from './perfil/entities/perfil-profesional.entity';
@@ -35,8 +36,8 @@ import { TutorsModule } from './tutors/tutors.module';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
         entities: [
+          UserEntity,
           Oferta,
-          OfertaEntity,
           Tutor,
           AvailabilityEntity,
           ExperienciaEntity,
@@ -52,6 +53,7 @@ import { TutorsModule } from './tutors/tutors.module';
       }),
       inject: [ConfigService],
     }),
+    AuthModule,
     OfertasModule,
     OffersModule,
     TutorsModule,

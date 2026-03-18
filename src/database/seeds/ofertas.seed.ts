@@ -1,6 +1,8 @@
 import { DataSource } from 'typeorm';
-import { Oferta } from '../../ofertas/domain/entities/oferta.entity';
-import { OfferModality } from '../../ofertas/entities/oferta.entity';
+import {
+  Oferta,
+  OfferModality,
+} from '../../ofertas/domain/entities/oferta.entity';
 
 /**
  * Seed de Ofertas para HU03, HU17 y HU27.
@@ -41,7 +43,7 @@ export async function seedOfertas(dataSource: DataSource): Promise<void> {
     // 1 ─ Virtual / Matemáticas + Cálculo / precio medio
     {
       title: 'Cálculo Diferencial e Integral',
-      price: 12.5,
+      price: 13,
       modality: 'Virtual',
       categories: ['Matemáticas', 'Cálculo'],
       description:
@@ -137,7 +139,7 @@ export async function seedOfertas(dataSource: DataSource): Promise<void> {
     // 9 ─ Presencial / Física + Ingeniería
     {
       title: 'Circuitos Eléctricos - Análisis AC/DC',
-      price: 17.5,
+      price: 18,
       modality: 'Presencial',
       categories: ['Ingeniería', 'Eléctrica', 'Física'],
       description:
@@ -228,7 +230,7 @@ export async function seedOfertas(dataSource: DataSource): Promise<void> {
     // 16 ─ HU17: paginación — lleva el total a 16 para verificar totalPages=2 con limit=10
     {
       title: 'Termodinámica e Ingeniería Química',
-      price: 18.5,
+      price: 19,
       modality: 'Presencial',
       categories: ['Química', 'Ingeniería', 'Física'],
       description:
@@ -319,13 +321,50 @@ export async function seedOfertas(dataSource: DataSource): Promise<void> {
   console.log('📚 Insertando ofertas (HU03 + HU17 + HU27)...');
 
   for (const ofertaData of ofertas) {
-    const oferta = ofertaRepository.create(ofertaData);
+    // Poblar AMBAS familias de columnas (español + inglés legacy)
+    const modalidadEnum = toModalidadEnum(ofertaData.modality);
+    const oferta = ofertaRepository.create({
+      // Columnas principales (español)
+      titulo: ofertaData.title,
+      descripcion: ofertaData.description,
+      modalidad: modalidadEnum,
+      precioHora: ofertaData.price,
+      areaConocimiento: ofertaData.categories?.[0] ?? null,
+      // Columnas legacy (inglés)
+      title: ofertaData.title,
+      price: ofertaData.price,
+      modality: ofertaData.modality,
+      categories: ofertaData.categories,
+      description: ofertaData.description,
+      // Comunes
+      rating: ofertaData.rating,
+      reviewsCount: ofertaData.reviewsCount,
+      tutorId: ofertaData.tutorId,
+    });
     await ofertaRepository.save(oferta);
   }
 
   console.log(
     `✅ ${ofertas.length} ofertas insertadas exitosamente (13 HU03 + 3 HU17 + 6 HU27)`,
   );
+}
+
+/**
+ * Convierte un string de modalidad (inclusive variantes legacy como "Híbrida")
+ * al enum OfferModality que la BD espera.
+ */
+function toModalidadEnum(modality: string): OfferModality {
+  const lower = (modality ?? '').toLowerCase();
+  if (lower === 'presencial') return OfferModality.PRESENCIAL;
+  if (lower === 'virtual') return OfferModality.VIRTUAL;
+  if (
+    lower === 'virtual/presencial' ||
+    lower === 'híbrida' ||
+    lower === 'hibrida' ||
+    lower === 'ambos'
+  )
+    return OfferModality.AMBOS;
+  return OfferModality.VIRTUAL; // fallback
 }
 
 /**
@@ -359,14 +398,25 @@ export async function seedOfertaDetalleHU32(
 
   const ofertaDetalle: Partial<Oferta> & { id: string } = {
     id: HU32_OFERTA_DETALLE_ID,
+    // Columnas principales (español)
+    titulo: 'Cálculo Diferencial — Detalle Completo',
+    descripcion:
+      'Límites, derivadas e integrales aplicados a ingeniería. ' +
+      'Incluye resolución de exámenes anteriores y material de apoyo. ' +
+      'Modalidad virtual o presencial según preferencia del estudiante.',
+    modalidad: OfferModality.AMBOS,
+    precioHora: 15,
+    areaConocimiento: 'Matemáticas',
+    // Columnas legacy (inglés)
     title: 'Cálculo Diferencial — Detalle Completo',
-    price: 14.5,
+    price: 15,
     modality: 'VIRTUAL/PRESENCIAL',
     categories: ['Matemáticas', 'Cálculo', 'Ingeniería'],
     description:
       'Límites, derivadas e integrales aplicados a ingeniería. ' +
       'Incluye resolución de exámenes anteriores y material de apoyo. ' +
       'Modalidad virtual o presencial según preferencia del estudiante.',
+    // Comunes
     rating: 4.9,
     reviewsCount: 31,
     tutorId: '550e8400-e29b-41d4-a716-446655440001', // Juan Carlos Pérez
@@ -426,7 +476,7 @@ export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
       descripcion:
         'Tutorías presenciales de límites, derivadas e integrales con resolución guiada de ejercicios de examen.',
       modalidad: OfferModality.PRESENCIAL,
-      precioHora: 18.5,
+      precioHora: 19,
       areaConocimiento: 'Matemáticas',
       nivel: 'Universitario',
       tutorId: T1,

@@ -22,6 +22,7 @@ export class CreateOfertaUseCase {
       const oferta = Oferta.createFromDto(createOfertaDto, tutorId);
       return await this.ofertaRepository.save(oferta);
     } catch (error) {
+      console.error('[CreateOfertaUseCase] Error creating oferta:', error);
       return this.handleError(error);
     }
   }

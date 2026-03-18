@@ -40,7 +40,8 @@ export class SolicitudesService {
     estudianteId: string,
     dto: VerificarPreviaDto,
   ): Promise<VerificarPreviaResponseDto> {
-    const solicitudExistente = await this.solicitudRepository.findOne({
+    // Buscar TODAS las solicitudes pendientes del estudiante para esta oferta
+    const solicitudesExistentes = await this.solicitudRepository.find({
       where: {
         estudianteId,
         ofertaId: dto.ofertaId,
@@ -48,10 +49,10 @@ export class SolicitudesService {
       },
     });
 
-    if (solicitudExistente) {
-      // Verificar solapamiento: algún horario del DTO está en la solicitud existente
+    // Verificar solapamiento contra TODAS las solicitudes existentes
+    for (const solicitud of solicitudesExistentes) {
       const hayColision = dto.horarios.some((h) =>
-        solicitudExistente.horarios.some(
+        solicitud.horarios.some(
           (he) => he.fecha === h.fecha && he.hora === h.hora,
         ),
       );
@@ -80,6 +81,7 @@ export class SolicitudesService {
   async create(
     estudianteId: string,
     dto: CreateSolicitudDto,
+    nombreEstudiante?: string,
   ): Promise<SolicitudResponseDto> {
     // 1. Verificar que la oferta existe
     const oferta = await this.ofertaRepository.findOne({
@@ -93,7 +95,8 @@ export class SolicitudesService {
     }
 
     // 2. Resolver modalidad
-    const isDual = oferta.modality === MODALITY_DUAL;
+    const ofertaModality = String(oferta.modalidad || oferta.modality || '');
+    const isDual = ofertaModality === MODALITY_DUAL;
     let modalidadFinal: string;
 
     if (isDual) {
@@ -105,11 +108,11 @@ export class SolicitudesService {
       modalidadFinal = dto.modalidad;
     } else {
       // Modalidad única: asignar automáticamente desde la oferta
-      modalidadFinal = oferta.modality;
+      modalidadFinal = ofertaModality;
     }
 
-    // 3. Verificar duplicados PENDIENTES con horario solapado
-    const solicitudDuplicada = await this.solicitudRepository.findOne({
+    // 3. Verificar duplicados PENDIENTES con horario solapado — buscar TODAS
+    const solicitudesDuplicadas = await this.solicitudRepository.find({
       where: {
         estudianteId,
         ofertaId: dto.ofertaId,
@@ -117,9 +120,9 @@ export class SolicitudesService {
       },
     });
 
-    if (solicitudDuplicada) {
+    for (const solicitud of solicitudesDuplicadas) {
       const hayColision = dto.horarios.some((h) =>
-        solicitudDuplicada.horarios.some(
+        solicitud.horarios.some(
           (he) => he.fecha === h.fecha && he.hora === h.hora,
         ),
       );
@@ -135,6 +138,7 @@ export class SolicitudesService {
       estudianteId,
       ofertaId: dto.ofertaId,
       tutorId: oferta.tutorId,
+      nombreEstudiante: nombreEstudiante || null,
       mensaje: dto.mensaje,
       modalidad: modalidadFinal,
       horarios: dto.horarios,
@@ -212,7 +216,7 @@ export class SolicitudesService {
     const data: SolicitudDetailsResponseDto[] = entities.map((s) => {
       const oferta = (s as SolicitudEntity & { oferta?: Oferta }).oferta;
       const precio = Number(oferta?.price ?? oferta?.precioHora ?? 0);
-      const materia = oferta?.categories?.[0] ?? oferta?.areaConocimiento ?? '';
+      const materia = oferta?.titulo ?? oferta?.title ?? '';
       return {
         id: s.id,
         nombreEstudiante: s.nombreEstudiante ?? '',
@@ -285,13 +289,12 @@ export class SolicitudesService {
       const oferta = (s as SolicitudEntity & { oferta?: Oferta }).oferta;
       const tutor = oferta?.tutor;
       const precio = Number(oferta?.price ?? oferta?.precioHora ?? 0);
-      const materia = oferta?.categories?.[0] ?? oferta?.areaConocimiento ?? '';
 
       return {
         id: s.id,
         tutorName: tutor?.nombreCompleto ?? 'N/A',
         tutorAvatarUrl: tutor?.fotoPerfil ?? null,
-        subject: materia,
+        subject: oferta?.titulo ?? oferta?.title ?? '',
         date: s.createdAt
           ? s.createdAt.toISOString()
           : new Date().toISOString(),
@@ -338,13 +341,12 @@ export class SolicitudesService {
     const oferta = (solicitud as SolicitudEntity & { oferta?: Oferta }).oferta;
     const tutor = oferta?.tutor;
     const precio = Number(oferta?.price ?? oferta?.precioHora ?? 0);
-    const materia = oferta?.categories?.[0] ?? oferta?.areaConocimiento ?? '';
 
     return {
       id: solicitud.id,
       tutorName: tutor?.nombreCompleto ?? 'N/A',
       tutorAvatarUrl: tutor?.fotoPerfil ?? null,
-      subject: materia,
+      subject: oferta?.titulo ?? oferta?.title ?? '',
       date: solicitud.createdAt
         ? solicitud.createdAt.toISOString()
         : new Date().toISOString(),

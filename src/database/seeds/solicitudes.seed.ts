@@ -4,6 +4,7 @@ import {
   SolicitudEstado,
 } from '../../solicitudes/entities/solicitud.entity';
 import { HU32_OFERTA_DETALLE_ID } from './ofertas.seed';
+import { SEED_USER_STUDENT_ID, SEED_USER_TUTOR2_ID } from './users.seed';
 
 /**
  * UUID del tutor "en cero" — sincronizado con tutors.seed.ts
@@ -15,8 +16,6 @@ const ZERO_TUTOR_ID = '550e8400-e29b-41d4-a716-446655440000';
 const TUTOR_001 = '550e8400-e29b-41d4-a716-446655440001'; // Juan Carlos Pérez
 const TUTOR_002 = '550e8400-e29b-41d4-a716-446655440002'; // María Fernanda González
 const TUTOR_003 = '550e8400-e29b-41d4-a716-446655440003'; // Carlos Alberto Rodríguez
-const TUTOR_004 = '550e8400-e29b-41d4-a716-446655440004'; // Ana Lucía Torres
-const TUTOR_005 = '550e8400-e29b-41d4-a716-446655440005'; // Roberto Alejandro Mora
 
 /**
  * Seed de Solicitudes para HU-06: Enviar solicitud de tutoría.
@@ -41,15 +40,12 @@ export async function seedSolicitudHU06(dataSource: DataSource): Promise<void> {
   const solicitudRepository = dataSource.getRepository(SolicitudEntity);
 
   const solicitudes: Partial<SolicitudEntity>[] = [
-    // ─────────────────────────────────────────────────────────────────────────
-    // Solicitudes del ESTUDIANTE PRINCIPAL (test-user-123)
-    // ─────────────────────────────────────────────────────────────────────────
-
-    // 1 ─ PENDIENTE → solicitud reciente sin respuesta (oferta HU32 - Cálculo Diferencial)
+    // 1 ─ Solicitud PENDIENTE del estudiante Patricio para la oferta HU32
     {
-      estudianteId: 'test-user-123',
+      estudianteId: SEED_USER_STUDENT_ID,
       ofertaId: HU32_OFERTA_DETALLE_ID,
-      tutorId: TUTOR_001,
+      tutorId: ZERO_TUTOR_ID,
+      nombreEstudiante: 'Patricio Chancusig',
       mensaje:
         'Necesito apoyo con los temas de límites y derivadas. Tengo examen la próxima semana y me cuesta mucho entender la regla de la cadena.',
       modalidad: 'Virtual',
@@ -60,120 +56,12 @@ export async function seedSolicitudHU06(dataSource: DataSource): Promise<void> {
       ],
       estado: SolicitudEstado.PENDIENTE,
     },
-
-    // 2 ─ ACEPTADA → tutoría de álgebra lineal confirmada por Juan Carlos
+    // 2 ─ Solicitud ACEPTADA — María García
     {
-      estudianteId: 'test-user-123',
-      ofertaId: HU32_OFERTA_DETALLE_ID,
-      tutorId: TUTOR_001,
-      mensaje:
-        'Hola Juan Carlos, necesito reforzar álgebra lineal. Tengo dificultades con transformaciones lineales y valores propios. ¿Podríamos ver esos temas en dos sesiones?',
-      modalidad: 'Virtual',
-      horarios: [
-        { fecha: '2024-02-20', hora: '08:00' },
-        { fecha: '2024-02-22', hora: '08:00' },
-      ],
-      estado: SolicitudEstado.ACEPTADA,
-    },
-
-    // 3 ─ RECHAZADA → tutor sin disponibilidad en el horario solicitado
-    {
-      estudianteId: 'test-user-123',
-      ofertaId: HU32_OFERTA_DETALLE_ID,
-      tutorId: TUTOR_001,
-      mensaje:
-        'Quisiera una tutoría de cálculo integral, específicamente integrales de contorno y de superficie. Prefiero los fines de semana.',
-      modalidad: 'Presencial',
-      horarios: [
-        { fecha: '2024-01-27', hora: '07:00' },
-        { fecha: '2024-01-28', hora: '07:00' },
-      ],
-      estado: SolicitudEstado.RECHAZADA,
-    },
-
-    // 4 ─ PENDIENTE → solicitud a María Fernanda (Python/Programación)
-    {
-      estudianteId: 'test-user-123',
-      ofertaId: HU32_OFERTA_DETALLE_ID,
-      tutorId: TUTOR_002,
-      mensaje:
-        'Hola María Fernanda, estoy empezando con Python y me cuesta entender las clases y objetos. Me gustaría tener al menos 3 sesiones para cubrir POO a fondo. Tengo disponibilidad en las tardes.',
-      modalidad: 'Virtual',
-      horarios: [
-        { fecha: '2024-03-19', hora: '15:00' },
-        { fecha: '2024-03-21', hora: '15:00' },
-        { fecha: '2024-03-23', hora: '15:00' },
-      ],
-      estado: SolicitudEstado.PENDIENTE,
-    },
-
-    // 5 ─ ACEPTADA → tutoría de estructuras de datos con Roberto
-    {
-      estudianteId: 'test-user-123',
-      ofertaId: HU32_OFERTA_DETALLE_ID,
-      tutorId: TUTOR_005,
-      mensaje:
-        'Roberto, necesito ayuda con árboles binarios y grafos. Tengo un proyecto de algoritmos en dos semanas y no entiendo bien BFS ni DFS. ¿Puedes ayudarme?',
-      modalidad: 'Virtual',
-      horarios: [
-        { fecha: '2024-03-10', hora: '16:00' },
-        { fecha: '2024-03-12', hora: '16:00' },
-      ],
-      estado: SolicitudEstado.ACEPTADA,
-    },
-
-    // 6 ─ RECHAZADA → solicitud de física rechazada (horario incompatible)
-    {
-      estudianteId: 'test-user-123',
-      ofertaId: HU32_OFERTA_DETALLE_ID,
-      tutorId: TUTOR_003,
-      mensaje:
-        'Hola Carlos, necesito repasar circuitos eléctricos antes del parcial. Tengo dificultades con el análisis nodal y los teoremas de Thevenin y Norton.',
-      modalidad: 'Presencial',
-      horarios: [{ fecha: '2024-01-15', hora: '06:00' }],
-      estado: SolicitudEstado.RECHAZADA,
-    },
-
-    // 7 ─ ACEPTADA → tutoría de estadística con Ana Lucía
-    {
-      estudianteId: 'test-user-123',
-      ofertaId: HU32_OFERTA_DETALLE_ID,
-      tutorId: TUTOR_004,
-      mensaje:
-        'Ana Lucía, me está costando mucho entender las pruebas de hipótesis y los intervalos de confianza. El parcial de estadística es en 10 días y necesito nivelarme urgente.',
-      modalidad: 'Virtual',
-      horarios: [
-        { fecha: '2024-02-05', hora: '14:00' },
-        { fecha: '2024-02-07', hora: '14:00' },
-        { fecha: '2024-02-09', hora: '10:00' },
-      ],
-      estado: SolicitudEstado.ACEPTADA,
-    },
-
-    // 8 ─ PENDIENTE → tutoría de inglés técnico (nueva solicitud)
-    {
-      estudianteId: 'test-user-123',
-      ofertaId: HU32_OFERTA_DETALLE_ID,
-      tutorId: TUTOR_003,
-      mensaje:
-        'Buenos días, necesito mejorar mi inglés técnico para poder leer papers de ingeniería y preparar una presentación académica. ¿Tiene disponibilidad esta semana?',
-      modalidad: 'Virtual',
-      horarios: [
-        { fecha: '2024-03-25', hora: '11:00' },
-        { fecha: '2024-03-26', hora: '11:00' },
-      ],
-      estado: SolicitudEstado.PENDIENTE,
-    },
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Solicitudes de OTROS ESTUDIANTES (para poblar el sistema)
-    // ─────────────────────────────────────────────────────────────────────────
-
-    // 9 ─ ACEPTADA — estudiante 002 / oferta HU32
-    {
-      estudianteId: 'estudiante-uuid-0002-0000-0000-000000000002',
+      estudianteId: SEED_USER_TUTOR2_ID,
       ofertaId: HU32_OFERTA_DETALLE_ID,
       tutorId: ZERO_TUTOR_ID,
+      nombreEstudiante: 'María García',
       mensaje:
         'Quiero repasar álgebra lineal antes del parcial. Tengo dificultades con transformaciones lineales y diagonalización.',
       modalidad: 'Presencial',
@@ -183,14 +71,13 @@ export async function seedSolicitudHU06(dataSource: DataSource): Promise<void> {
       ],
       estado: SolicitudEstado.ACEPTADA,
     },
-
-    // 10 ─ RECHAZADA — estudiante 003 / oferta HU32
+    // 3 ─ Solicitud RECHAZADA
     {
       estudianteId: 'estudiante-uuid-0003-0000-0000-000000000003',
       ofertaId: HU32_OFERTA_DETALLE_ID,
       tutorId: ZERO_TUTOR_ID,
-      mensaje:
-        'Necesito clases de estadística descriptiva e inferencial para mi proyecto de grado.',
+      nombreEstudiante: 'Carlos López',
+      mensaje: 'Necesito clases de estadística descriptiva e inferencial.',
       modalidad: 'Virtual',
       horarios: [{ fecha: '2024-03-20', hora: '16:00' }],
       estado: SolicitudEstado.RECHAZADA,

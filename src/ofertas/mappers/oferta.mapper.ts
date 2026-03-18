@@ -41,12 +41,12 @@ export class OfertaMapper {
 
     return {
       id: oferta.id,
-      titulo: oferta.title,
+      titulo: oferta.titulo || oferta.title || '',
       carrera: null, // campo aún no presente en la entidad actual
-      modalidad: oferta.modality,
-      descripcion: oferta.description,
+      modalidad: oferta.modalidad || oferta.modality || '',
+      descripcion: oferta.descripcion || oferta.description || '',
       lugarReunion: null, // campo aún no presente en la entidad actual
-      precio: parseFloat(String(oferta.price)),
+      precio: parseFloat(String(oferta.precioHora ?? oferta.price ?? 0)),
       tutor,
       imagenRepresentativaUrl: null, // campo aún no presente en la entidad actual
       createdAt: oferta.createdAt?.toISOString() ?? '',

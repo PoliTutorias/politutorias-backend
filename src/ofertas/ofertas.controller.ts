@@ -9,6 +9,8 @@ import {
   ParseUUIDPipe,
   Post,
   Query,
+  Request,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -33,6 +35,14 @@ import { OfertaDto } from './dto/oferta.dto';
 import { OffersQueryParams } from './dto/offers-query.dto';
 import { PaginatedOffersResponse } from './dto/paginated-offers-response.dto';
 import { OfertasService } from './ofertas.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Tutor } from '../tutors/entities/tutor.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+
+interface AuthenticatedRequest {
+  user?: { id: string; name?: string; email?: string; role?: string };
+}
 
 const SUCCESS_MESSAGE = 'Oferta creada exitosamente';
 
@@ -58,7 +68,47 @@ export class OfertasController {
     private readonly createOfertaUseCase: CreateOfertaUseCase,
     private readonly getAllOfertasUseCase: GetAllOfertasUseCase,
     private readonly ofertasService: OfertasService,
+    @InjectRepository(Tutor)
+    private readonly tutorRepository: Repository<Tutor>,
   ) {}
+
+  /**
+   * GET /api/ofertas/mis-ofertas — Obtiene las ofertas del tutor autenticado.
+   * Resuelve el tutorId a partir del userId en el JWT.
+   * IMPORTANTE: debe ir ANTES de cualquier @Get(':id') para evitar conflictos de ruta.
+   */
+  @Get('mis-ofertas')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Obtener mis ofertas (tutor autenticado)',
+    description: 'Retorna las ofertas del tutor autenticado via JWT.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de ofertas del tutor',
+    type: [OfertaDto],
+  })
+  @ApiResponse({ status: 401, description: 'Token JWT ausente o inválido' })
+  async getMisOfertas(
+    @Request() req: AuthenticatedRequest,
+  ): Promise<OfertaDto[]> {
+    const userId = req.user?.id;
+    if (!userId) {
+      return [];
+    }
+
+    // Buscar tutor por userId
+    const tutor = await this.tutorRepository.findOne({
+      where: { userId },
+    });
+
+    if (!tutor) {
+      return [];
+    }
+
+    return this.ofertasService.findAllByTutorId(tutor.id);
+  }
 
   @Get()
   @HttpCode(HttpStatus.OK)
@@ -379,11 +429,24 @@ export class OfertasController {
       },
     },
   })
+  @UseGuards(JwtAuthGuard)
   async create(
     @Body() createOfertaDto: CreateOfertaDto,
+    @Request() req: AuthenticatedRequest,
     @Headers('x-tutor-id') tutorIdHeader?: string,
   ): Promise<CreateOfertaResponse> {
-    const tutorId = tutorIdHeader || this.tutorId;
+    // Prioridad: 1) Buscar tutor por userId del JWT, 2) X-Tutor-Id header, 3) fallback
+    let tutorId = tutorIdHeader || this.tutorId;
+
+    if (req?.user?.id) {
+      const tutor = await this.tutorRepository.findOne({
+        where: { userId: req.user.id },
+      });
+      if (tutor) {
+        tutorId = tutor.id;
+      }
+    }
+
     const oferta = await this.createOfertaUseCase.execute(
       createOfertaDto,
       tutorId,

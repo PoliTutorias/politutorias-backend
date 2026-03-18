@@ -40,7 +40,7 @@ export async function seedOfertas(dataSource: DataSource): Promise<void> {
     // 1 ─ Virtual / Matemáticas + Cálculo / precio medio
     {
       title: 'Cálculo Diferencial e Integral',
-      price: 12.5,
+      price: 13,
       modality: 'Virtual',
       categories: ['Matemáticas', 'Cálculo'],
       description:
@@ -136,7 +136,7 @@ export async function seedOfertas(dataSource: DataSource): Promise<void> {
     // 9 ─ Presencial / Física + Ingeniería
     {
       title: 'Circuitos Eléctricos - Análisis AC/DC',
-      price: 17.5,
+      price: 18,
       modality: 'Presencial',
       categories: ['Ingeniería', 'Eléctrica', 'Física'],
       description:
@@ -227,7 +227,7 @@ export async function seedOfertas(dataSource: DataSource): Promise<void> {
     // 16 ─ HU17: paginación — lleva el total a 16 para verificar totalPages=2 con limit=10
     {
       title: 'Termodinámica e Ingeniería Química',
-      price: 18.5,
+      price: 19,
       modality: 'Presencial',
       categories: ['Química', 'Ingeniería', 'Física'],
       description:
@@ -402,11 +402,11 @@ export async function seedOfertaDetalleHU32(
       'Incluye resolución de exámenes anteriores y material de apoyo. ' +
       'Modalidad virtual o presencial según preferencia del estudiante.',
     modalidad: OfferModality.AMBOS,
-    precioHora: 14.5,
+    precioHora: 15,
     areaConocimiento: 'Matemáticas',
     // Columnas legacy (inglés)
     title: 'Cálculo Diferencial — Detalle Completo',
-    price: 14.5,
+    price: 15,
     modality: 'VIRTUAL/PRESENCIAL',
     categories: ['Matemáticas', 'Cálculo', 'Ingeniería'],
     description:
@@ -473,7 +473,7 @@ export async function seedOfertasHU26(dataSource: DataSource): Promise<void> {
       descripcion:
         'Tutorías presenciales de límites, derivadas e integrales con resolución guiada de ejercicios de examen.',
       modalidad: OfferModality.PRESENCIAL,
-      precioHora: 18.5,
+      precioHora: 19,
       areaConocimiento: 'Matemáticas',
       nivel: 'Universitario',
       tutorId: T1,

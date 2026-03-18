@@ -39,7 +39,7 @@ import { PaginatedStudentSolicitudesDto } from './dto/paginated-student-solicitu
 import { StudentSolicitudDetailDto } from './dto/student-solicitud-detail.dto';
 
 interface AuthenticatedRequest extends Request {
-  user: { id: string };
+  user: { id: string; name?: string; email?: string };
   tutor?: Tutor;
 }
 
@@ -426,6 +426,6 @@ export class SolicitudesController {
     @Request() req: AuthenticatedRequest,
     @Body() dto: CreateSolicitudDto,
   ): Promise<SolicitudResponseDto> {
-    return this.solicitudesService.create(req.user.id, dto);
+    return this.solicitudesService.create(req.user.id, dto, req.user.name);
   }
 }

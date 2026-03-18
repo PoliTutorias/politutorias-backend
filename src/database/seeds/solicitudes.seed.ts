@@ -4,6 +4,7 @@ import {
   SolicitudEstado,
 } from '../../solicitudes/entities/solicitud.entity';
 import { HU32_OFERTA_DETALLE_ID } from './ofertas.seed';
+import { SEED_USER_STUDENT_ID, SEED_USER_TUTOR2_ID } from './users.seed';
 
 /**
  * UUID del tutor "en cero" — sincronizado con tutors.seed.ts
@@ -21,11 +22,12 @@ export async function seedSolicitudHU06(dataSource: DataSource): Promise<void> {
   const solicitudRepository = dataSource.getRepository(SolicitudEntity);
 
   const solicitudes: Partial<SolicitudEntity>[] = [
-    // 1 ─ Solicitud PENDIENTE del estudiante de prueba para la oferta HU32
+    // 1 ─ Solicitud PENDIENTE del estudiante Patricio para la oferta HU32
     {
-      estudianteId: 'test-user-123',
+      estudianteId: SEED_USER_STUDENT_ID,
       ofertaId: HU32_OFERTA_DETALLE_ID,
       tutorId: ZERO_TUTOR_ID,
+      nombreEstudiante: 'Patricio Chancusig',
       mensaje:
         'Necesito apoyo con los temas de límites y derivadas. Tengo examen la próxima semana.',
       modalidad: 'Virtual',
@@ -35,22 +37,24 @@ export async function seedSolicitudHU06(dataSource: DataSource): Promise<void> {
       ],
       estado: SolicitudEstado.PENDIENTE,
     },
-    // 2 ─ Solicitud ACEPTADA — otro estudiante
+    // 2 ─ Solicitud ACEPTADA — María García
     {
-      estudianteId: 'estudiante-uuid-0002-0000-0000-000000000002',
+      estudianteId: SEED_USER_TUTOR2_ID,
       ofertaId: HU32_OFERTA_DETALLE_ID,
       tutorId: ZERO_TUTOR_ID,
+      nombreEstudiante: 'María García',
       mensaje:
         'Quiero repasar álgebra lineal antes del parcial. Tengo dificultades con transformaciones lineales.',
       modalidad: 'Presencial',
       horarios: [{ fecha: '2024-03-18', hora: '09:00' }],
       estado: SolicitudEstado.ACEPTADA,
     },
-    // 3 ─ Solicitud RECHAZADA — otro estudiante
+    // 3 ─ Solicitud RECHAZADA
     {
       estudianteId: 'estudiante-uuid-0003-0000-0000-000000000003',
       ofertaId: HU32_OFERTA_DETALLE_ID,
       tutorId: ZERO_TUTOR_ID,
+      nombreEstudiante: 'Carlos López',
       mensaje: 'Necesito clases de estadística descriptiva e inferencial.',
       modalidad: 'Virtual',
       horarios: [{ fecha: '2024-03-20', hora: '16:00' }],

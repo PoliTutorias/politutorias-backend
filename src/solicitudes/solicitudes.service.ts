@@ -80,6 +80,7 @@ export class SolicitudesService {
   async create(
     estudianteId: string,
     dto: CreateSolicitudDto,
+    nombreEstudiante?: string,
   ): Promise<SolicitudResponseDto> {
     // 1. Verificar que la oferta existe
     const oferta = await this.ofertaRepository.findOne({
@@ -93,7 +94,8 @@ export class SolicitudesService {
     }
 
     // 2. Resolver modalidad
-    const isDual = oferta.modality === MODALITY_DUAL;
+    const ofertaModality = oferta.modalidad || oferta.modality || '';
+    const isDual = ofertaModality === MODALITY_DUAL;
     let modalidadFinal: string;
 
     if (isDual) {
@@ -105,7 +107,7 @@ export class SolicitudesService {
       modalidadFinal = dto.modalidad;
     } else {
       // Modalidad única: asignar automáticamente desde la oferta
-      modalidadFinal = oferta.modality;
+      modalidadFinal = ofertaModality;
     }
 
     // 3. Verificar duplicados PENDIENTES con horario solapado
@@ -135,6 +137,7 @@ export class SolicitudesService {
       estudianteId,
       ofertaId: dto.ofertaId,
       tutorId: oferta.tutorId,
+      nombreEstudiante: nombreEstudiante || null,
       mensaje: dto.mensaje,
       modalidad: modalidadFinal,
       horarios: dto.horarios,

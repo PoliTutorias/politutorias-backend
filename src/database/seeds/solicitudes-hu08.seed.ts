@@ -3,6 +3,7 @@ import {
   SolicitudEntity,
   SolicitudEstado,
 } from '../../solicitudes/entities/solicitud.entity';
+import { Oferta } from '../../ofertas/domain/entities/oferta.entity';
 
 /**
  * UUIDs sincronizados con tutors.seed.ts y users.seed.ts
@@ -28,6 +29,31 @@ const TUTOR_002 = '550e8400-e29b-41d4-a716-446655440002';
  */
 export async function seedSolicitudHU08(dataSource: DataSource): Promise<void> {
   const solicitudRepository = dataSource.getRepository(SolicitudEntity);
+  const ofertaRepository = dataSource.getRepository(Oferta);
+
+  const ofertaLabels = [
+    { key: 'oferta-hu08-001', titulo: 'Cálculo Diferencial e Integral' },
+    { key: 'oferta-hu08-002', titulo: 'Programación en Python - Desde Cero' },
+    { key: 'oferta-hu08-003', titulo: 'Álgebra Lineal y Matrices' },
+    { key: 'oferta-hu08-004', titulo: 'Estructuras de Datos y Algoritmos' },
+    { key: 'oferta-hu08-005', titulo: 'Base de Datos y SQL Avanzado' },
+  ] as const;
+
+  const ofertaIdByLabel = new Map<string, string>();
+  for (const item of ofertaLabels) {
+    const oferta = await ofertaRepository.findOne({
+      where: { titulo: item.titulo },
+      select: { id: true },
+    });
+
+    if (!oferta) {
+      throw new Error(
+        `No se encontro una oferta para HU-08 con titulo: ${item.titulo}`,
+      );
+    }
+
+    ofertaIdByLabel.set(item.key, oferta.id);
+  }
 
   const acceptedSolicitudes: Partial<SolicitudEntity>[] = [
     // ─────────────────────────────────────────────────────────────
@@ -35,7 +61,7 @@ export async function seedSolicitudHU08(dataSource: DataSource): Promise<void> {
     // ─────────────────────────────────────────────────────────────
     {
       estudianteId: 'estudiante-hu08-001',
-      ofertaId: 'oferta-hu08-001',
+      ofertaId: ofertaIdByLabel.get('oferta-hu08-001')!,
       tutorId: ZERO_TUTOR_ID,
       nombreEstudiante: 'Roberto Díaz',
       mensaje:
@@ -53,7 +79,7 @@ export async function seedSolicitudHU08(dataSource: DataSource): Promise<void> {
     // ─────────────────────────────────────────────────────────────
     {
       estudianteId: 'estudiante-hu08-002',
-      ofertaId: 'oferta-hu08-002',
+      ofertaId: ofertaIdByLabel.get('oferta-hu08-002')!,
       tutorId: ZERO_TUTOR_ID,
       nombreEstudiante: 'Laura Mendoza',
       mensaje:
@@ -72,7 +98,7 @@ export async function seedSolicitudHU08(dataSource: DataSource): Promise<void> {
     // ─────────────────────────────────────────────────────────────
     {
       estudianteId: 'estudiante-hu08-003',
-      ofertaId: 'oferta-hu08-003',
+      ofertaId: ofertaIdByLabel.get('oferta-hu08-003')!,
       tutorId: TUTOR_001,
       nombreEstudiante: 'Sofia Herrera',
       mensaje:
@@ -90,7 +116,7 @@ export async function seedSolicitudHU08(dataSource: DataSource): Promise<void> {
     // ─────────────────────────────────────────────────────────────
     {
       estudianteId: 'estudiante-hu08-004',
-      ofertaId: 'oferta-hu08-004',
+      ofertaId: ofertaIdByLabel.get('oferta-hu08-004')!,
       tutorId: TUTOR_002,
       nombreEstudiante: 'Diego Vargas',
       mensaje:
@@ -109,7 +135,7 @@ export async function seedSolicitudHU08(dataSource: DataSource): Promise<void> {
     // ─────────────────────────────────────────────────────────────
     {
       estudianteId: 'estudiante-hu08-005',
-      ofertaId: 'oferta-hu08-005',
+      ofertaId: ofertaIdByLabel.get('oferta-hu08-005')!,
       tutorId: ZERO_TUTOR_ID,
       nombreEstudiante: 'Carmen Ríos',
       mensaje:

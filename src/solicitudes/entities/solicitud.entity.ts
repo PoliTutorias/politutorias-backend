@@ -17,6 +17,13 @@ export enum SolicitudEstado {
   EXPIRADA = 'EXPIRADA',
 }
 
+export enum RejectionReason {
+  CONFLICTO_HORARIOS = 'Conflicto de horarios con otra tutoría',
+  ENFERMEDAD = 'Enfermedad',
+  NO_DISPONIBLE = 'No disponible en esa fecha',
+  OTRO = 'Otro',
+}
+
 @Entity('solicitudes')
 @Index(['estudianteId', 'ofertaId'])
 export class SolicitudEntity {
@@ -54,6 +61,15 @@ export class SolicitudEntity {
     default: SolicitudEstado.PENDIENTE,
   })
   estado: SolicitudEstado;
+
+  @Column({ type: 'enum', enum: RejectionReason, nullable: true })
+  rejectionReason: RejectionReason | null;
+
+  @Column({ type: 'varchar', length: 300, nullable: true })
+  rejectionComment: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  respondedAt: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;

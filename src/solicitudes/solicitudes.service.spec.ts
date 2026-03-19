@@ -1,4 +1,8 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Oferta } from '../ofertas/domain/entities/oferta.entity';
@@ -7,8 +11,13 @@ import { FilterParamsDto } from './dto/filter-params.dto';
 import { GlobalCountsDto } from './dto/global-counts.dto';
 import { PaginatedSolicitudesDto } from './dto/paginated-solicitudes.dto';
 import { VerificarPreviaDto } from './dto/verificar-previa.dto';
-import { SolicitudEntity, SolicitudEstado } from './entities/solicitud.entity';
+import {
+  SolicitudEntity,
+  SolicitudEstado,
+  RejectionReason,
+} from './entities/solicitud.entity';
 import { SolicitudesService } from './solicitudes.service';
+import { RejectSolicitudDto } from './dto/reject-solicitud.dto';
 
 /**
  * Unit Tests — SolicitudesService — HU-06: Enviar solicitud de tutoría
@@ -1239,6 +1248,278 @@ describe('SolicitudesService (Unit Tests) - HU-33 Student Perspective', () => {
           horarios: mockSolicitudPendiente.horarios,
         }),
       );
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // rejectSolicitud — HU-23
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('rejectSolicitud', () => {
+    const TUTOR_ID = 'tutor-uuid-0001-0000-0000-000000000001';
+    const SOLICITUD_ID = 'solicitud-uuid-0001-0000-0000-000000000001';
+
+    const mockSolicitudPendiente: Partial<SolicitudEntity> = {
+      id: SOLICITUD_ID,
+      estudianteId: ESTUDIANTE_ID,
+      tutorId: TUTOR_ID,
+      estado: SolicitudEstado.PENDIENTE,
+      rejectionReason: null,
+      rejectionComment: null,
+      respondedAt: null,
+    };
+
+    /**
+     * Escenario 1: Rechazo exitoso con motivo predefinido.
+     *
+     * DADO QUE: La solicitud existe, está PENDIENTE y pertenece al tutor.
+     * CUANDO:   Se llama a rejectSolicitud con un motivo válido.
+     * ENTONCES: Actualiza estado a RECHAZADA, establece respondedAt y persiste.
+     */
+    it('debe actualizar la solicitud a RECHAZADA con respondedAt cuando el rechazo es exitoso', async () => {
+      const dto: RejectSolicitudDto = {
+        reason: RejectionReason.ENFERMEDAD,
+      };
+
+      mockSolicitudRepository.findOne.mockResolvedValue(mockSolicitudPendiente);
+
+      const savedSolicitud = {
+        ...mockSolicitudPendiente,
+        estado: SolicitudEstado.RECHAZADA,
+        rejectionReason: RejectionReason.ENFERMEDAD,
+        rejectionComment: null,
+        respondedAt: expect.any(Date),
+      };
+
+      mockSolicitudRepository.save.mockResolvedValue(savedSolicitud);
+
+      const result = await service.rejectSolicitud(SOLICITUD_ID, dto, TUTOR_ID);
+
+      expect(mockSolicitudRepository.findOne).toHaveBeenCalledWith({
+        where: { id: SOLICITUD_ID },
+      });
+
+      expect(mockSolicitudRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          estado: SolicitudEstado.RECHAZADA,
+          rejectionReason: RejectionReason.ENFERMEDAD,
+          rejectionComment: null,
+          respondedAt: expect.any(Date),
+        }),
+      );
+
+      expect(result.estado).toBe(SolicitudEstado.RECHAZADA);
+      expect(result.rejectionReason).toBe(RejectionReason.ENFERMEDAD);
+    });
+
+    /**
+     * Escenario 2: Lógica de comentario - si reason !== OTRO, comentario debe ser null.
+     *
+     * DADO QUE: Se envía un motivo que NO es OTRO, incluso con comentario.
+     * CUANDO:   Se llama a rejectSolicitud.
+     * ENTONCES: El rejectionComment debe guardarse como null.
+     */
+    it('debe guardar rejectionComment como null cuando reason !== OTRO, incluso si se envió comentario', async () => {
+      const dto: RejectSolicitudDto = {
+        reason: RejectionReason.CONFLICTO_HORARIOS,
+        comment: 'Este comentario debe ser ignorado',
+      };
+
+      // Crear un nuevo objeto mock para evitar mutaciones entre tests
+      const freshMock = {
+        id: SOLICITUD_ID,
+        estudianteId: ESTUDIANTE_ID,
+        tutorId: TUTOR_ID,
+        estado: SolicitudEstado.PENDIENTE,
+        rejectionReason: null,
+        rejectionComment: null,
+        respondedAt: null,
+      };
+
+      mockSolicitudRepository.findOne.mockResolvedValue(freshMock);
+
+      const savedSolicitud = {
+        ...mockSolicitudPendiente,
+        estado: SolicitudEstado.RECHAZADA,
+        rejectionReason: RejectionReason.CONFLICTO_HORARIOS,
+        rejectionComment: null, // Forzado a null
+        respondedAt: new Date(),
+      };
+
+      mockSolicitudRepository.save.mockResolvedValue(savedSolicitud);
+
+      const result = await service.rejectSolicitud(SOLICITUD_ID, dto, TUTOR_ID);
+
+      expect(mockSolicitudRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          rejectionComment: null,
+        }),
+      );
+
+      expect(result.rejectionComment).toBeNull();
+    });
+
+    /**
+     * Escenario 3: Lógica de comentario - si reason === OTRO, guardar comentario.
+     *
+     * DADO QUE: Se envía motivo OTRO con comentario.
+     * CUANDO:   Se llama a rejectSolicitud.
+     * ENTONCES: El rejectionComment debe guardarse con el valor enviado.
+     */
+    it('debe guardar rejectionComment cuando reason === OTRO', async () => {
+      const dto: RejectSolicitudDto = {
+        reason: RejectionReason.OTRO,
+        comment: 'Tengo una clase presencial a esa misma hora.',
+      };
+
+      // Crear un nuevo objeto mock para evitar mutaciones entre tests
+      const freshMock = {
+        id: SOLICITUD_ID,
+        estudianteId: ESTUDIANTE_ID,
+        tutorId: TUTOR_ID,
+        estado: SolicitudEstado.PENDIENTE,
+        rejectionReason: null,
+        rejectionComment: null,
+        respondedAt: null,
+      };
+
+      mockSolicitudRepository.findOne.mockResolvedValue(freshMock);
+
+      const savedSolicitud = {
+        ...mockSolicitudPendiente,
+        estado: SolicitudEstado.RECHAZADA,
+        rejectionReason: RejectionReason.OTRO,
+        rejectionComment: 'Tengo una clase presencial a esa misma hora.',
+        respondedAt: new Date(),
+      };
+
+      mockSolicitudRepository.save.mockResolvedValue(savedSolicitud);
+
+      const result = await service.rejectSolicitud(SOLICITUD_ID, dto, TUTOR_ID);
+
+      expect(mockSolicitudRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          rejectionComment: 'Tengo una clase presencial a esa misma hora.',
+        }),
+      );
+
+      expect(result.rejectionComment).toBe(
+        'Tengo una clase presencial a esa misma hora.',
+      );
+    });
+
+    /**
+     * Escenario 4: Error cuando solicitud no existe.
+     *
+     * DADO QUE: El ID no corresponde a ninguna solicitud.
+     * CUANDO:   Se llama a rejectSolicitud.
+     * ENTONCES: Debe lanzar NotFoundException.
+     */
+    it('debe lanzar NotFoundException cuando la solicitud no existe', async () => {
+      const dto: RejectSolicitudDto = {
+        reason: RejectionReason.ENFERMEDAD,
+      };
+
+      mockSolicitudRepository.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.rejectSolicitud(SOLICITUD_ID, dto, TUTOR_ID),
+      ).rejects.toThrow(NotFoundException);
+
+      await expect(
+        service.rejectSolicitud(SOLICITUD_ID, dto, TUTOR_ID),
+      ).rejects.toThrow('Solicitud no encontrada');
+    });
+
+    /**
+     * Escenario 5: Error cuando tutorId no coincide (propiedad).
+     *
+     * DADO QUE: El tutorId del JWT no coincide con la solicitud.
+     * CUANDO:   Se llama a rejectSolicitud.
+     * ENTONCES: Debe lanzar ForbiddenException.
+     */
+    it('debe lanzar ForbiddenException cuando el tutorId no coincide', async () => {
+      const dto: RejectSolicitudDto = {
+        reason: RejectionReason.ENFERMEDAD,
+      };
+
+      const solicitudDeOtroTutor = {
+        ...mockSolicitudPendiente,
+        tutorId: 'otro-tutor-id',
+      };
+
+      mockSolicitudRepository.findOne.mockResolvedValue(solicitudDeOtroTutor);
+
+      await expect(
+        service.rejectSolicitud(SOLICITUD_ID, dto, TUTOR_ID),
+      ).rejects.toThrow(ForbiddenException);
+
+      await expect(
+        service.rejectSolicitud(SOLICITUD_ID, dto, TUTOR_ID),
+      ).rejects.toThrow('No tienes permiso para rechazar esta solicitud');
+    });
+
+    /**
+     * Escenario 6: Error cuando estado no es PENDIENTE.
+     *
+     * DADO QUE: La solicitud ya fue ACEPTADA o RECHAZADA.
+     * CUANDO:   Se intenta rechazar nuevamente.
+     * ENTONCES: Debe lanzar BadRequestException.
+     */
+    it('debe lanzar BadRequestException cuando estado !== PENDIENTE', async () => {
+      const dto: RejectSolicitudDto = {
+        reason: RejectionReason.ENFERMEDAD,
+      };
+
+      const solicitudYaRechazada = {
+        ...mockSolicitudPendiente,
+        estado: SolicitudEstado.RECHAZADA,
+      };
+
+      mockSolicitudRepository.findOne.mockResolvedValue(solicitudYaRechazada);
+
+      await expect(
+        service.rejectSolicitud(SOLICITUD_ID, dto, TUTOR_ID),
+      ).rejects.toThrow(BadRequestException);
+
+      await expect(
+        service.rejectSolicitud(SOLICITUD_ID, dto, TUTOR_ID),
+      ).rejects.toThrow(
+        'Solo se pueden rechazar solicitudes en estado PENDIENTE',
+      );
+    });
+
+    /**
+     * Escenario 7: Error de persistencia - propagar error del repositorio.
+     *
+     * DADO QUE: El repositorio falla al guardar.
+     * CUANDO:   Se llama a rejectSolicitud.
+     * ENTONCES: Debe propagar el error.
+     */
+    it('debe propagar el error si el repositorio falla al guardar', async () => {
+      const dto: RejectSolicitudDto = {
+        reason: RejectionReason.ENFERMEDAD,
+      };
+
+      // Crear un nuevo objeto mock para evitar mutaciones entre tests
+      const freshMock = {
+        id: SOLICITUD_ID,
+        estudianteId: ESTUDIANTE_ID,
+        tutorId: TUTOR_ID,
+        estado: SolicitudEstado.PENDIENTE,
+        rejectionReason: null,
+        rejectionComment: null,
+        respondedAt: null,
+      };
+
+      mockSolicitudRepository.findOne.mockResolvedValue(freshMock);
+      mockSolicitudRepository.save.mockRejectedValue(
+        new Error('Database connection failed'),
+      );
+
+      await expect(
+        service.rejectSolicitud(SOLICITUD_ID, dto, TUTOR_ID),
+      ).rejects.toThrow('Database connection failed');
     });
   });
 });

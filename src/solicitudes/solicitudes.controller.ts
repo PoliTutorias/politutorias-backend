@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Query,
   Request,
@@ -37,6 +38,8 @@ import { Tutor } from '../tutors/entities/tutor.entity';
 import { StudentFilterParamsDto } from './dto/student-filter-params.dto';
 import { PaginatedStudentSolicitudesDto } from './dto/paginated-student-solicitudes.dto';
 import { StudentSolicitudDetailDto } from './dto/student-solicitud-detail.dto';
+import { RejectSolicitudDto } from './dto/reject-solicitud.dto';
+import { SolicitudEntity } from './entities/solicitud.entity';
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -248,6 +251,128 @@ export class SolicitudesController {
       // Student perspective (HU-33)
       return this.solicitudesService.findAllForStudent(userId, params);
     }
+  }
+
+  /**
+   * HU23 — PATCH /api/solicitudes/:id/reject
+   * Rechazar una solicitud de tutoría (solo tutor propietario)
+   */
+  @Patch(':id/reject')
+  @UseGuards(JwtAuthGuard, TutorAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  @ApiOperation({
+    summary: 'Rechazar solicitud de tutoría',
+    description:
+      'Permite al tutor propietario rechazar una solicitud en estado PENDIENTE.\n\n' +
+      '**Reglas de negocio:**\n' +
+      '- Solo el tutor asignado a la solicitud puede rechazarla.\n' +
+      '- Solo solicitudes en estado PENDIENTE pueden rechazarse.\n' +
+      '- Si el motivo NO es "Otro", el comentario se descarta (null).\n' +
+      '- El campo `respondedAt` se establece automáticamente.\n\n' +
+      '**Autenticación requerida**: JWT con rol de tutor.',
+  })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'ID de la solicitud (UUID)',
+    example: '550e8400-e29b-41d4-a716-446655440001',
+  })
+  @ApiBody({
+    type: RejectSolicitudDto,
+    description: 'Motivo y comentario opcional del rechazo',
+    examples: {
+      motivo_predefinido: {
+        summary: 'Rechazo con motivo predefinido',
+        value: {
+          reason: 'Enfermedad',
+        },
+      },
+      motivo_otro: {
+        summary: 'Rechazo con motivo "Otro" + comentario',
+        value: {
+          reason: 'Otro',
+          comment: 'Tengo una clase presencial a esa misma hora.',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    type: SolicitudEntity,
+    description: 'Solicitud rechazada exitosamente',
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Estado no PENDIENTE, validación DTO fallida, o comentario > 300 caracteres',
+    schema: {
+      examples: {
+        estado_invalido: {
+          summary: 'Solicitud ya procesada',
+          value: {
+            statusCode: 400,
+            message: 'Solo se pueden rechazar solicitudes en estado PENDIENTE',
+            error: 'Bad Request',
+          },
+        },
+        validacion_dto: {
+          summary: 'Error de validación',
+          value: {
+            statusCode: 400,
+            message: [
+              'reason debe ser un motivo válido',
+              'El comentario no puede superar los 300 caracteres',
+            ],
+            error: 'Bad Request',
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Token JWT ausente o inválido' })
+  @ApiResponse({
+    status: 403,
+    description: 'No es tutor o no es propietario de la solicitud',
+    schema: {
+      examples: {
+        no_tutor: {
+          summary: 'Usuario no es tutor',
+          value: {
+            statusCode: 403,
+            message: 'Solo los tutores pueden acceder a este recurso',
+            error: 'Forbidden',
+          },
+        },
+        no_propietario: {
+          summary: 'Tutor no es propietario',
+          value: {
+            statusCode: 403,
+            message: 'No tienes permiso para rechazar esta solicitud',
+            error: 'Forbidden',
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Solicitud no encontrada',
+    schema: {
+      example: {
+        statusCode: 404,
+        message: 'Solicitud no encontrada',
+        error: 'Not Found',
+      },
+    },
+  })
+  async rejectSolicitud(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() dto: RejectSolicitudDto,
+  ): Promise<SolicitudEntity> {
+    const tutorId = req.tutor?.id ?? '';
+    return this.solicitudesService.rejectSolicitud(id, dto, tutorId);
   }
 
   /**

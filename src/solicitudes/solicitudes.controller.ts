@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -7,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   Request,
   UseGuards,
@@ -39,6 +41,7 @@ import { StudentFilterParamsDto } from './dto/student-filter-params.dto';
 import { PaginatedStudentSolicitudesDto } from './dto/paginated-student-solicitudes.dto';
 import { StudentSolicitudDetailDto } from './dto/student-solicitud-detail.dto';
 import { RejectSolicitudDto } from './dto/reject-solicitud.dto';
+import { AcceptSolicitudDto } from './dto/accept-solicitud.dto';
 import { SolicitudEntity } from './entities/solicitud.entity';
 
 interface AuthenticatedRequest extends Request {
@@ -373,6 +376,143 @@ export class SolicitudesController {
   ): Promise<SolicitudEntity> {
     const tutorId = req.tutor?.id ?? '';
     return this.solicitudesService.rejectSolicitud(id, dto, tutorId);
+  }
+
+  /**
+   * HU08 — PUT /api/solicitudes/:id/confirm
+   * Aceptar una solicitud de tutoría (solo tutor propietario)
+   */
+  @Put(':id/confirm')
+  @UseGuards(JwtAuthGuard, TutorAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  @ApiOperation({
+    summary: 'Aceptar solicitud de tutoría',
+    description:
+      'Permite al tutor propietario aceptar una solicitud en estado PENDIENTE.\n\n' +
+      '**Reglas de negocio:**\n' +
+      '- Solo el tutor asignado a la solicitud puede aceptarla.\n' +
+      '- Solo solicitudes en estado PENDIENTE pueden aceptarse.\n' +
+      '- La modalidad enviada DEBE coincidir con la de la solicitud original.\n' +
+      '- Para **Virtual**: acceptedMeetingLink es obligatorio (URL válida).\n' +
+      '- Para **Presencial**: acceptedMeetingLocation es obligatorio (10-100 caracteres).\n' +
+      '- El campo no usado se establece automáticamente a null.\n' +
+      '- El campo `acceptedAt` se establece automáticamente.\n\n' +
+      '**Autenticación requerida**: JWT con rol de tutor.',
+  })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'ID de la solicitud (UUID)',
+    example: '550e8400-e29b-41d4-a716-446655440001',
+  })
+  @ApiBody({
+    type: AcceptSolicitudDto,
+    description: 'Datos de confirmación de la tutoría',
+    examples: {
+      virtual: {
+        summary: 'Aceptar tutoría Virtual',
+        value: {
+          modalidad: 'Virtual',
+          acceptedMeetingLink: 'https://meet.google.com/abc-defg-hij',
+        },
+      },
+      presencial: {
+        summary: 'Aceptar tutoría Presencial',
+        value: {
+          modalidad: 'Presencial',
+          acceptedMeetingLocation: 'Biblioteca Central, Sala de estudio 3',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    type: SolicitudEntity,
+    description: 'Solicitud aceptada exitosamente',
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Estado no PENDIENTE, modalidad no coincide, o validación DTO fallida',
+    schema: {
+      examples: {
+        estado_invalido: {
+          summary: 'Solicitud ya procesada',
+          value: {
+            statusCode: 400,
+            message: 'Solo se pueden aceptar solicitudes en estado PENDIENTE',
+            error: 'Bad Request',
+          },
+        },
+        modalidad_no_coincide: {
+          summary: 'Modalidad no coincide',
+          value: {
+            statusCode: 400,
+            message:
+              "La modalidad debe ser 'Virtual'. La solicitud fue para 'Presencial'.",
+            error: 'Bad Request',
+          },
+        },
+        validacion_dto: {
+          summary: 'Error de validación',
+          value: {
+            statusCode: 400,
+            message: ['Ingresa una URL válida'],
+            error: 'Bad Request',
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Token JWT ausente o inválido' })
+  @ApiResponse({
+    status: 403,
+    description: 'No es tutor o no es propietario de la solicitud',
+    schema: {
+      examples: {
+        no_tutor: {
+          summary: 'Usuario no es tutor',
+          value: {
+            statusCode: 403,
+            message: 'Solo los tutores pueden acceder a este recurso',
+            error: 'Forbidden',
+          },
+        },
+        no_propietario: {
+          summary: 'Tutor no es propietario',
+          value: {
+            statusCode: 403,
+            message: 'No tienes permiso para aceptar esta solicitud',
+            error: 'Forbidden',
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Solicitud no encontrada',
+    schema: {
+      example: {
+        statusCode: 404,
+        message: 'Solicitud no encontrada',
+        error: 'Not Found',
+      },
+    },
+  })
+  async acceptSolicitud(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() dto: AcceptSolicitudDto,
+  ): Promise<SolicitudEntity> {
+    // Validar que el solicitudId del body coincida con el :id del path
+    if (dto.solicitudId && dto.solicitudId !== id) {
+      throw new BadRequestException('El ID de la solicitud no coincide');
+    }
+
+    const tutorId = req.tutor?.id ?? '';
+    return this.solicitudesService.acceptSolicitud(id, dto, tutorId);
   }
 
   /**

@@ -18,6 +18,7 @@ import {
 } from './seeds/ofertas.seed';
 import { seedPerfilesProfesionales } from './seeds/perfil-profesional.seed';
 import { seedSolicitudHU06 } from './seeds/solicitudes.seed';
+import { seedSolicitudHU08 } from './seeds/solicitudes-hu08.seed';
 import { seedTutors } from './seeds/tutors.seed';
 import { seedUsers } from './seeds/users.seed';
 
@@ -132,6 +133,10 @@ async function runSeed() {
     // HU-06: Solicitudes de tutoría
     // (debe ir DESPUÉS de seedOfertaDetalleHU32 por FK ofertaId)
     await seedSolicitudHU06(AppDataSource);
+
+    // HU-08: Solicitudes aceptadas con campos de reunión
+    // (debe ir DESPUÉS de seedSolicitudHU06)
+    await seedSolicitudHU08(AppDataSource);
 
     console.log('🎉 Seed completado exitosamente');
   } catch (error) {

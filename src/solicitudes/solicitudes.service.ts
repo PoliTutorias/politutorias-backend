@@ -25,6 +25,10 @@ import { StudentSolicitudListItemDto } from './dto/student-solicitud-list-item.d
 import { StudentSolicitudDetailDto } from './dto/student-solicitud-detail.dto';
 import { PaginatedStudentSolicitudesDto } from './dto/paginated-student-solicitudes.dto';
 import { RejectSolicitudDto } from './dto/reject-solicitud.dto';
+import {
+  AcceptSolicitudDto,
+  ModalidadConfirmacion,
+} from './dto/accept-solicitud.dto';
 
 /** Valor de la columna `modality` que indica oferta dual */
 const MODALITY_DUAL = 'VIRTUAL/PRESENCIAL';
@@ -411,6 +415,70 @@ export class SolicitudesService {
     solicitud.rejectionReason = dto.reason;
     solicitud.rejectionComment = finalComment ?? null;
     solicitud.respondedAt = new Date();
+
+    return this.solicitudRepository.save(solicitud);
+  }
+
+  /**
+   * HU-08: Aceptar solicitud de tutoría.
+   *
+   * Reglas de negocio:
+   * 1. La solicitud debe existir (NotFoundException)
+   * 2. Solo el tutor propietario puede aceptarla (ForbiddenException)
+   * 3. Solo solicitudes en estado PENDIENTE pueden aceptarse (BadRequestException)
+   * 4. Modalidad debe coincidir con la solicitada por el estudiante (BadRequestException)
+   * 5. Link/location se setea según modalidad y el otro campo se limpia (null)
+   */
+  async acceptSolicitud(
+    solicitudId: string,
+    dto: AcceptSolicitudDto,
+    tutorId: string,
+  ): Promise<SolicitudEntity> {
+    // 1. Buscar solicitud
+    const solicitud = await this.solicitudRepository.findOne({
+      where: { id: solicitudId },
+    });
+
+    if (!solicitud) {
+      throw new NotFoundException('Solicitud no encontrada');
+    }
+
+    // 2. Validar propiedad
+    if (solicitud.tutorId !== tutorId) {
+      throw new ForbiddenException(
+        'No tienes permiso para aceptar esta solicitud',
+      );
+    }
+
+    // 3. Validar estado
+    if (solicitud.estado !== SolicitudEstado.PENDIENTE) {
+      throw new BadRequestException(
+        'Solo se pueden aceptar solicitudes en estado PENDIENTE',
+      );
+    }
+
+    // 4. Validar modalidad coincide
+    if (solicitud.modalidad && dto.modalidad !== solicitud.modalidad) {
+      throw new BadRequestException(
+        `La modalidad debe ser '${solicitud.modalidad}'. La solicitud fue para '${dto.modalidad}'.`,
+      );
+    }
+
+    // 5. Actualizar solicitud
+    solicitud.estado = SolicitudEstado.ACEPTADA;
+    solicitud.acceptedAt = new Date();
+
+    // Setear campos según modalidad y limpiar el otro
+    const isVirtual =
+      dto.modalidad === ModalidadConfirmacion.VIRTUAL ||
+      dto.modalidad === 'Virtual';
+    if (isVirtual) {
+      solicitud.acceptedMeetingLink = dto.acceptedMeetingLink ?? null;
+      solicitud.acceptedMeetingLocation = null;
+    } else {
+      solicitud.acceptedMeetingLocation = dto.acceptedMeetingLocation ?? null;
+      solicitud.acceptedMeetingLink = null;
+    }
 
     return this.solicitudRepository.save(solicitud);
   }

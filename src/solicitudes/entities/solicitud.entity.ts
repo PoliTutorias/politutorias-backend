@@ -71,6 +71,15 @@ export class SolicitudEntity {
   @Column({ type: 'timestamp', nullable: true })
   respondedAt: Date | null;
 
+  @Column({ type: 'varchar', nullable: true })
+  acceptedMeetingLink: string | null;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  acceptedMeetingLocation: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  acceptedAt: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

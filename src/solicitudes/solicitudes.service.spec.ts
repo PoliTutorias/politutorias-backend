@@ -1288,7 +1288,7 @@ describe('SolicitudesService (Unit Tests) - HU-33 Student Perspective', () => {
         estado: SolicitudEstado.RECHAZADA,
         rejectionReason: RejectionReason.ENFERMEDAD,
         rejectionComment: null,
-        respondedAt: expect.any(Date),
+        respondedAt: expect.any(Date) as Date,
       };
 
       mockSolicitudRepository.save.mockResolvedValue(savedSolicitud);
@@ -1304,7 +1304,7 @@ describe('SolicitudesService (Unit Tests) - HU-33 Student Perspective', () => {
           estado: SolicitudEstado.RECHAZADA,
           rejectionReason: RejectionReason.ENFERMEDAD,
           rejectionComment: null,
-          respondedAt: expect.any(Date),
+          respondedAt: expect.any(Date) as Date,
         }),
       );
 

@@ -1,11 +1,16 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { SolicitudEntity, SolicitudEstado } from './entities/solicitud.entity';
+import {
+  SolicitudEntity,
+  SolicitudEstado,
+  RejectionReason,
+} from './entities/solicitud.entity';
 import { Oferta } from '../ofertas/domain/entities/oferta.entity';
 import { CreateSolicitudDto } from './dto/create-solicitud.dto';
 import { VerificarPreviaDto } from './dto/verificar-previa.dto';
@@ -19,6 +24,7 @@ import { StudentFilterParamsDto } from './dto/student-filter-params.dto';
 import { StudentSolicitudListItemDto } from './dto/student-solicitud-list-item.dto';
 import { StudentSolicitudDetailDto } from './dto/student-solicitud-detail.dto';
 import { PaginatedStudentSolicitudesDto } from './dto/paginated-student-solicitudes.dto';
+import { RejectSolicitudDto } from './dto/reject-solicitud.dto';
 
 /** Valor de la columna `modality` que indica oferta dual */
 const MODALITY_DUAL = 'VIRTUAL/PRESENCIAL';
@@ -357,5 +363,55 @@ export class SolicitudesService {
       horarios: solicitud.horarios,
       // NOTE: Conditional fields (acceptedMeetingLink, rejectionReason) removed - out of scope for HU-33
     };
+  }
+
+  /**
+   * HU-23: Rechazar solicitud de tutoría.
+   *
+   * Reglas de negocio:
+   * 1. La solicitud debe existir.
+   * 2. Solo el tutor propietario puede rechazarla.
+   * 3. Solo solicitudes en estado PENDIENTE pueden ser rechazadas.
+   * 4. Si el motivo NO es OTRO, el comentario se fuerza a null.
+   */
+  async rejectSolicitud(
+    solicitudId: string,
+    dto: RejectSolicitudDto,
+    tutorId: string,
+  ): Promise<SolicitudEntity> {
+    // 1. Buscar solicitud
+    const solicitud = await this.solicitudRepository.findOne({
+      where: { id: solicitudId },
+    });
+
+    if (!solicitud) {
+      throw new NotFoundException('Solicitud no encontrada');
+    }
+
+    // 2. Validar propiedad
+    if (solicitud.tutorId !== tutorId) {
+      throw new ForbiddenException(
+        'No tienes permiso para rechazar esta solicitud',
+      );
+    }
+
+    // 3. Validar estado
+    if (solicitud.estado !== SolicitudEstado.PENDIENTE) {
+      throw new BadRequestException(
+        'Solo se pueden rechazar solicitudes en estado PENDIENTE',
+      );
+    }
+
+    // 4. Lógica de comentario: solo guardar si reason === OTRO
+    const finalComment =
+      dto.reason === RejectionReason.OTRO ? dto.comment : null;
+
+    // 5. Actualizar solicitud
+    solicitud.estado = SolicitudEstado.RECHAZADA;
+    solicitud.rejectionReason = dto.reason;
+    solicitud.rejectionComment = finalComment ?? null;
+    solicitud.respondedAt = new Date();
+
+    return this.solicitudRepository.save(solicitud);
   }
 }

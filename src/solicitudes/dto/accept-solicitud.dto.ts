@@ -24,11 +24,7 @@ export class AcceptSolicitudDto {
   })
   modalidad: ModalidadConfirmacion | string;
 
-  @ValidateIf(
-    (o) =>
-      o.modalidad === ModalidadConfirmacion.VIRTUAL ||
-      o.modalidad === 'Virtual',
-  )
+  @ValidateIf((o: AcceptSolicitudDto) => String(o.modalidad) === 'Virtual')
   @IsOptional()
   @IsUrl({}, { message: 'Ingresa una URL válida' })
   @IsNotEmpty({
@@ -36,11 +32,7 @@ export class AcceptSolicitudDto {
   })
   acceptedMeetingLink?: string | null;
 
-  @ValidateIf(
-    (o) =>
-      o.modalidad === ModalidadConfirmacion.PRESENCIAL ||
-      o.modalidad === 'Presencial',
-  )
+  @ValidateIf((o: AcceptSolicitudDto) => String(o.modalidad) === 'Presencial')
   @IsOptional()
   @IsString()
   @MinLength(10, { message: 'Mínimo 10 caracteres' })

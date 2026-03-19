@@ -25,10 +25,7 @@ import { StudentSolicitudListItemDto } from './dto/student-solicitud-list-item.d
 import { StudentSolicitudDetailDto } from './dto/student-solicitud-detail.dto';
 import { PaginatedStudentSolicitudesDto } from './dto/paginated-student-solicitudes.dto';
 import { RejectSolicitudDto } from './dto/reject-solicitud.dto';
-import {
-  AcceptSolicitudDto,
-  ModalidadConfirmacion,
-} from './dto/accept-solicitud.dto';
+import { AcceptSolicitudDto } from './dto/accept-solicitud.dto';
 
 /** Valor de la columna `modality` que indica oferta dual */
 const MODALITY_DUAL = 'VIRTUAL/PRESENCIAL';
@@ -469,9 +466,8 @@ export class SolicitudesService {
     solicitud.acceptedAt = new Date();
 
     // Setear campos según modalidad y limpiar el otro
-    const isVirtual =
-      dto.modalidad === ModalidadConfirmacion.VIRTUAL ||
-      dto.modalidad === 'Virtual';
+    const modalidadStr = String(dto.modalidad);
+    const isVirtual = modalidadStr === 'Virtual';
     if (isVirtual) {
       solicitud.acceptedMeetingLink = dto.acceptedMeetingLink ?? null;
       solicitud.acceptedMeetingLocation = null;

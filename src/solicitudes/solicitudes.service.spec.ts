@@ -18,10 +18,6 @@ import {
 } from './entities/solicitud.entity';
 import { SolicitudesService } from './solicitudes.service';
 import { RejectSolicitudDto } from './dto/reject-solicitud.dto';
-import {
-  AcceptSolicitudDto,
-  ModalidadConfirmacion,
-} from './dto/accept-solicitud.dto';
 
 /**
  * Unit Tests — SolicitudesService — HU-06: Enviar solicitud de tutoría
@@ -1953,8 +1949,6 @@ describe('SolicitudesService (Unit Tests) - HU-08: Aceptar Solicitud', () => {
         modalidad: 'Virtual' as const,
         acceptedMeetingLink: 'https://meet.google.com/abc-defg-hij',
       };
-
-      const beforeCall = new Date();
 
       const savedSolicitud = {
         ...mockSolicitud,

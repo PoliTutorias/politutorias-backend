@@ -239,9 +239,10 @@ describe('SolicitudesController (E2E) - HU-08: Aceptar Solicitud', () => {
         .expect(HttpStatus.BAD_REQUEST)
         .expect((res) => {
           expect(res.body).toHaveProperty('message');
-          const messages = Array.isArray(res.body.message)
-            ? res.body.message
-            : [res.body.message];
+          const rawMessage = res.body.message as string | string[];
+          const messages = Array.isArray(rawMessage)
+            ? rawMessage
+            : [rawMessage];
           expect(
             messages.some(
               (m: string) => m.includes('URL') || m.includes('url'),
@@ -270,9 +271,10 @@ describe('SolicitudesController (E2E) - HU-08: Aceptar Solicitud', () => {
         .expect(HttpStatus.BAD_REQUEST)
         .expect((res) => {
           expect(res.body).toHaveProperty('message');
-          const messages = Array.isArray(res.body.message)
-            ? res.body.message
-            : [res.body.message];
+          const rawMessage = res.body.message as string | string[];
+          const messages = Array.isArray(rawMessage)
+            ? rawMessage
+            : [rawMessage];
           expect(
             messages.some(
               (m: string) =>

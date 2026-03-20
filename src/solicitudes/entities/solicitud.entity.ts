@@ -21,6 +21,7 @@ export enum RejectionReason {
   CONFLICTO_HORARIOS = 'Conflicto de horarios con otra tutoría',
   ENFERMEDAD = 'Enfermedad',
   NO_DISPONIBLE = 'No disponible en esa fecha',
+  IMPREVISTO_PERSONAL = 'Imprevisto personal',
   OTRO = 'Otro',
 }
 

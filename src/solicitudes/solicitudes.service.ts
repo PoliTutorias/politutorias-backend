@@ -47,17 +47,26 @@ export class SolicitudesService {
     estudianteId: string,
     dto: VerificarPreviaDto,
   ): Promise<VerificarPreviaResponseDto> {
-    // Buscar TODAS las solicitudes pendientes del estudiante para esta oferta
-    const solicitudesExistentes = await this.solicitudRepository.find({
-      where: {
-        estudianteId,
-        ofertaId: dto.ofertaId,
-        estado: SolicitudEstado.PENDIENTE,
-      },
+    // SOL-05: Buscar solicitudes PENDIENTES y ACEPTADAS del estudiante para esta oferta.
+    // Un horario bloqueado por una solicitud aceptada ya comprometida no puede
+    // volver a solicitarse hasta que sea rechazada, completada o expirada.
+    const solicitudesActivas = await this.solicitudRepository.find({
+      where: [
+        {
+          estudianteId,
+          ofertaId: dto.ofertaId,
+          estado: SolicitudEstado.PENDIENTE,
+        },
+        {
+          estudianteId,
+          ofertaId: dto.ofertaId,
+          estado: SolicitudEstado.ACEPTADA,
+        },
+      ],
     });
 
-    // Verificar solapamiento contra TODAS las solicitudes existentes
-    for (const solicitud of solicitudesExistentes) {
+    // Verificar solapamiento de horario contra TODAS las solicitudes activas
+    for (const solicitud of solicitudesActivas) {
       const hayColision = dto.horarios.some((h) =>
         solicitud.horarios.some(
           (he) => he.fecha === h.fecha && he.hora === h.hora,
@@ -65,10 +74,13 @@ export class SolicitudesService {
       );
 
       if (hayColision) {
+        const estadoMsg =
+          solicitud.estado === SolicitudEstado.ACEPTADA
+            ? 'Ya tienes una tutoría ACEPTADA para este horario.'
+            : 'Horario ya solicitado. Ya tienes una solicitud activa para este bloque.';
         return {
           existe: true,
-          mensaje:
-            'Horario ya solicitado. Ya tienes una solicitud activa para este bloque.',
+          mensaje: estadoMsg,
         };
       }
     }
@@ -118,25 +130,34 @@ export class SolicitudesService {
       modalidadFinal = ofertaModality;
     }
 
-    // 3. Verificar duplicados PENDIENTES con horario solapado — buscar TODAS
-    const solicitudesDuplicadas = await this.solicitudRepository.find({
-      where: {
-        estudianteId,
-        ofertaId: dto.ofertaId,
-        estado: SolicitudEstado.PENDIENTE,
-      },
+    // 3. SOL-05: Verificar duplicados PENDIENTES o ACEPTADOS con horario solapado
+    const solicitudesActivas = await this.solicitudRepository.find({
+      where: [
+        {
+          estudianteId,
+          ofertaId: dto.ofertaId,
+          estado: SolicitudEstado.PENDIENTE,
+        },
+        {
+          estudianteId,
+          ofertaId: dto.ofertaId,
+          estado: SolicitudEstado.ACEPTADA,
+        },
+      ],
     });
 
-    for (const solicitud of solicitudesDuplicadas) {
+    for (const solicitud of solicitudesActivas) {
       const hayColision = dto.horarios.some((h) =>
         solicitud.horarios.some(
           (he) => he.fecha === h.fecha && he.hora === h.hora,
         ),
       );
       if (hayColision) {
-        throw new BadRequestException(
-          'Ya tienes una solicitud pendiente con ese horario para esta oferta.',
-        );
+        const estadoMsg =
+          solicitud.estado === SolicitudEstado.ACEPTADA
+            ? 'Ya tienes una tutoría ACEPTADA para este horario. No puedes solicitar el mismo bloque nuevamente.'
+            : 'Ya tienes una solicitud pendiente con ese horario para esta oferta.';
+        throw new BadRequestException(estadoMsg);
       }
     }
 

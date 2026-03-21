@@ -47,53 +47,7 @@ export class AgendaController {
     private readonly sessionsService: SessionsService,
   ) {}
 
-  /**
-   * HU15 — GET /api/tutor/agenda/:year/:month
-   *
-   * Retorna los datos iniciales de la agenda mensual del tutor:
-   * - Días del calendario con indicadores de sesiones
-   * - Lista de sesiones futuras del mes (panel "ESTE MES")
-   * - Total de sesiones confirmadas
-   */
-  @Get(':year/:month')
-  @UseGuards(JwtAuthGuard, IsSessionOwnerGuard)
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Obtener agenda mensual del tutor',
-    description:
-      'Retorna la información del calendario mensual incluyendo días con sesiones, ' +
-      'etiquetas resumidas y la lista de sesiones futuras para el panel lateral.',
-  })
-  @ApiParam({
-    name: 'year',
-    type: Number,
-    description: 'Año (ej: 2026)',
-    example: 2026,
-  })
-  @ApiParam({
-    name: 'month',
-    type: Number,
-    description: 'Mes (1-12)',
-    example: 3,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Agenda mensual obtenida exitosamente',
-    type: InitialAgendaDataDto,
-  })
-  @ApiResponse({ status: 401, description: 'Token JWT ausente o inválido' })
-  @ApiResponse({
-    status: 403,
-    description: 'Solo los tutores pueden acceder a la agenda',
-  })
-  async getMonthlyAgenda(
-    @Request() req: AuthenticatedRequest,
-    @Param('year', ParseIntPipe) year: number,
-    @Param('month', ParseIntPipe) month: number,
-  ): Promise<InitialAgendaDataDto> {
-    const tutorId = req.tutor?.id ?? '';
-    return this.agendaService.getMonthlyAgendaData(tutorId, year, month);
-  }
+  // ─── STATIC routes FIRST (before :year/:month catches everything) ────────
 
   /**
    * HU15 — GET /api/tutor/agenda/sessions/day?date=2026-03-25
@@ -172,5 +126,55 @@ export class AgendaController {
   ): Promise<SessionDetailDto> {
     const tutorId = req.tutor?.id ?? '';
     return this.sessionsService.getDetails(tutorId, id);
+  }
+
+  // ─── DYNAMIC routes LAST ─────────────────────────────────────────────────
+
+  /**
+   * HU15 — GET /api/tutor/agenda/:year/:month
+   *
+   * Retorna los datos iniciales de la agenda mensual del tutor:
+   * - Días del calendario con indicadores de sesiones
+   * - Lista de sesiones futuras del mes (panel "ESTE MES")
+   * - Total de sesiones confirmadas
+   */
+  @Get(':year/:month')
+  @UseGuards(JwtAuthGuard, IsSessionOwnerGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Obtener agenda mensual del tutor',
+    description:
+      'Retorna la información del calendario mensual incluyendo días con sesiones, ' +
+      'etiquetas resumidas y la lista de sesiones futuras para el panel lateral.',
+  })
+  @ApiParam({
+    name: 'year',
+    type: Number,
+    description: 'Año (ej: 2026)',
+    example: 2026,
+  })
+  @ApiParam({
+    name: 'month',
+    type: Number,
+    description: 'Mes (1-12)',
+    example: 3,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Agenda mensual obtenida exitosamente',
+    type: InitialAgendaDataDto,
+  })
+  @ApiResponse({ status: 401, description: 'Token JWT ausente o inválido' })
+  @ApiResponse({
+    status: 403,
+    description: 'Solo los tutores pueden acceder a la agenda',
+  })
+  async getMonthlyAgenda(
+    @Request() req: AuthenticatedRequest,
+    @Param('year', ParseIntPipe) year: number,
+    @Param('month', ParseIntPipe) month: number,
+  ): Promise<InitialAgendaDataDto> {
+    const tutorId = req.tutor?.id ?? '';
+    return this.agendaService.getMonthlyAgendaData(tutorId, year, month);
   }
 }

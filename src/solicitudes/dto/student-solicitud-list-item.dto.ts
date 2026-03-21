@@ -30,8 +30,9 @@ export class StudentSolicitudListItemDto {
   subject: string;
 
   @ApiProperty({
-    description: 'Fecha de creación de la solicitud (ISO 8601)',
-    example: '2024-05-25T10:30:00.000Z',
+    description:
+      'Fecha y hora del horario propuesto por el estudiante — horarios[0] (ISO 8601)',
+    example: '2026-03-23T15:00:00.000Z',
   })
   date: string;
 

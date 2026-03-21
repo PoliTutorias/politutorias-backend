@@ -47,17 +47,26 @@ export class SolicitudesService {
     estudianteId: string,
     dto: VerificarPreviaDto,
   ): Promise<VerificarPreviaResponseDto> {
-    // Buscar TODAS las solicitudes pendientes del estudiante para esta oferta
-    const solicitudesExistentes = await this.solicitudRepository.find({
-      where: {
-        estudianteId,
-        ofertaId: dto.ofertaId,
-        estado: SolicitudEstado.PENDIENTE,
-      },
+    // SOL-05: Buscar solicitudes PENDIENTES y ACEPTADAS del estudiante para esta oferta.
+    // Un horario bloqueado por una solicitud aceptada ya comprometida no puede
+    // volver a solicitarse hasta que sea rechazada, completada o expirada.
+    const solicitudesActivas = await this.solicitudRepository.find({
+      where: [
+        {
+          estudianteId,
+          ofertaId: dto.ofertaId,
+          estado: SolicitudEstado.PENDIENTE,
+        },
+        {
+          estudianteId,
+          ofertaId: dto.ofertaId,
+          estado: SolicitudEstado.ACEPTADA,
+        },
+      ],
     });
 
-    // Verificar solapamiento contra TODAS las solicitudes existentes
-    for (const solicitud of solicitudesExistentes) {
+    // Verificar solapamiento de horario contra TODAS las solicitudes activas
+    for (const solicitud of solicitudesActivas) {
       const hayColision = dto.horarios.some((h) =>
         solicitud.horarios.some(
           (he) => he.fecha === h.fecha && he.hora === h.hora,
@@ -65,10 +74,13 @@ export class SolicitudesService {
       );
 
       if (hayColision) {
+        const estadoMsg =
+          solicitud.estado === SolicitudEstado.ACEPTADA
+            ? 'Ya tienes una tutoría ACEPTADA para este horario.'
+            : 'Horario ya solicitado. Ya tienes una solicitud activa para este bloque.';
         return {
           existe: true,
-          mensaje:
-            'Horario ya solicitado. Ya tienes una solicitud activa para este bloque.',
+          mensaje: estadoMsg,
         };
       }
     }
@@ -118,25 +130,34 @@ export class SolicitudesService {
       modalidadFinal = ofertaModality;
     }
 
-    // 3. Verificar duplicados PENDIENTES con horario solapado — buscar TODAS
-    const solicitudesDuplicadas = await this.solicitudRepository.find({
-      where: {
-        estudianteId,
-        ofertaId: dto.ofertaId,
-        estado: SolicitudEstado.PENDIENTE,
-      },
+    // 3. SOL-05: Verificar duplicados PENDIENTES o ACEPTADOS con horario solapado
+    const solicitudesActivas = await this.solicitudRepository.find({
+      where: [
+        {
+          estudianteId,
+          ofertaId: dto.ofertaId,
+          estado: SolicitudEstado.PENDIENTE,
+        },
+        {
+          estudianteId,
+          ofertaId: dto.ofertaId,
+          estado: SolicitudEstado.ACEPTADA,
+        },
+      ],
     });
 
-    for (const solicitud of solicitudesDuplicadas) {
+    for (const solicitud of solicitudesActivas) {
       const hayColision = dto.horarios.some((h) =>
         solicitud.horarios.some(
           (he) => he.fecha === h.fecha && he.hora === h.hora,
         ),
       );
       if (hayColision) {
-        throw new BadRequestException(
-          'Ya tienes una solicitud pendiente con ese horario para esta oferta.',
-        );
+        const estadoMsg =
+          solicitud.estado === SolicitudEstado.ACEPTADA
+            ? 'Ya tienes una tutoría ACEPTADA para este horario. No puedes solicitar el mismo bloque nuevamente.'
+            : 'Ya tienes una solicitud pendiente con ese horario para esta oferta.';
+        throw new BadRequestException(estadoMsg);
       }
     }
 
@@ -228,15 +249,15 @@ export class SolicitudesService {
         id: s.id,
         nombreEstudiante: s.nombreEstudiante ?? '',
         materia,
-        fechaHora: s.createdAt
-          ? s.createdAt.toLocaleDateString('es-ES', {
-              day: '2-digit',
-              month: 'short',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            })
-          : '',
+        // Devolver como string local (sin zona) para que el navegador muestre
+        // la hora Ecuador sin desplazamiento de dia por conversion UTC
+        fechaHora: (() => {
+          const h = s.horarios?.[0];
+          if (h?.fecha && h?.hora) {
+            return `${h.fecha}T${h.hora}:00`; // local naive — no UTC
+          }
+          return s.createdAt ? s.createdAt.toISOString() : '';
+        })(),
         mensajeResumen:
           s.mensaje.length > 50
             ? s.mensaje.substring(0, 50) + '...'
@@ -302,9 +323,18 @@ export class SolicitudesService {
         tutorName: tutor?.nombreCompleto ?? 'N/A',
         tutorAvatarUrl: tutor?.fotoPerfil ?? null,
         subject: oferta?.titulo ?? oferta?.title ?? '',
-        date: s.createdAt
-          ? s.createdAt.toISOString()
-          : new Date().toISOString(),
+        // Usar el horario propuesto (horarios[0]) como fecha de la tarjeta,
+        // no el createdAt (que es cuando el estudiante creó la solicitud).
+        // Local naive — no Z para evitar desplazamiento de dia en cliente UTC-5
+        date: (() => {
+          const h = s.horarios?.[0];
+          if (h?.fecha && h?.hora) {
+            return `${h.fecha}T${h.hora}:00`;
+          }
+          return s.createdAt
+            ? s.createdAt.toISOString().slice(0, 19)
+            : new Date().toISOString().slice(0, 19);
+        })(),
         modality: s.modalidad ?? '',
         pricePerHour: precio,
         status: s.estado,
@@ -354,9 +384,14 @@ export class SolicitudesService {
       tutorName: tutor?.nombreCompleto ?? 'N/A',
       tutorAvatarUrl: tutor?.fotoPerfil ?? null,
       subject: oferta?.titulo ?? oferta?.title ?? '',
-      date: solicitud.createdAt
-        ? solicitud.createdAt.toISOString()
-        : new Date().toISOString(),
+      // Local naive — usa horarios[0] igual que findAllForStudent
+      date: (() => {
+        const h = solicitud.horarios?.[0];
+        if (h?.fecha && h?.hora) return `${h.fecha}T${h.hora}:00`;
+        return solicitud.createdAt
+          ? solicitud.createdAt.toISOString().slice(0, 19)
+          : new Date().toISOString().slice(0, 19);
+      })(),
       modality: solicitud.modalidad ?? '',
       pricePerHour: precio,
       status: solicitud.estado,
@@ -454,8 +489,11 @@ export class SolicitudesService {
       );
     }
 
-    // 4. Validar modalidad coincide
-    if (solicitud.modalidad && dto.modalidad !== solicitud.modalidad) {
+    // 4. Validar modalidad coincide (comparar en uppercase para tolerar
+    //    'Virtual' == 'VIRTUAL' y 'Presencial' == 'PRESENCIAL')
+    const modalidadSolicitada = String(solicitud.modalidad ?? '').toUpperCase();
+    const modalidadConfirmada = String(dto.modalidad ?? '').toUpperCase();
+    if (modalidadSolicitada && modalidadConfirmada !== modalidadSolicitada) {
       throw new BadRequestException(
         `La modalidad debe ser '${solicitud.modalidad}'. La solicitud fue para '${dto.modalidad}'.`,
       );
@@ -466,8 +504,8 @@ export class SolicitudesService {
     solicitud.acceptedAt = new Date();
 
     // Setear campos según modalidad y limpiar el otro
-    const modalidadStr = String(dto.modalidad);
-    const isVirtual = modalidadStr === 'Virtual';
+    const modalidadStr = String(dto.modalidad).toUpperCase();
+    const isVirtual = modalidadStr === 'VIRTUAL';
     if (isVirtual) {
       solicitud.acceptedMeetingLink = dto.acceptedMeetingLink ?? null;
       solicitud.acceptedMeetingLocation = null;

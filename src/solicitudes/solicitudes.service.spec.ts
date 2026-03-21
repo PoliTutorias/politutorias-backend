@@ -6,6 +6,9 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Oferta } from '../ofertas/domain/entities/oferta.entity';
+// Alias usado en los mocks de HU-33
+
+type OfertaEntity = any;
 import { CreateSolicitudDto } from './dto/create-solicitud.dto';
 import { FilterParamsDto } from './dto/filter-params.dto';
 import { GlobalCountsDto } from './dto/global-counts.dto';
@@ -1073,7 +1076,8 @@ describe('SolicitudesService (Unit Tests) - HU-33 Student Perspective', () => {
           tutorName: mockTutor.nombreCompleto,
           tutorAvatarUrl: mockTutor.fotoPerfil,
           subject: mockOferta.title,
-          date: mockSolicitudPendiente.createdAt.toISOString(),
+          // Ahora date = horarios[0].fecha + hora (local-naive, no createdAt)
+          date: `${mockSolicitudPendiente.horarios![0].fecha}T${mockSolicitudPendiente.horarios![0].hora}:00`,
           modality: mockSolicitudPendiente.modalidad,
           pricePerHour: Number(mockOferta.price),
           status: mockSolicitudPendiente.estado,
@@ -1132,7 +1136,7 @@ describe('SolicitudesService (Unit Tests) - HU-33 Student Perspective', () => {
 
       const result = await service.findByIdForStudent(
         ESTUDIANTE_ID,
-        mockSolicitudPendiente.id,
+        mockSolicitudPendiente.id!,
       );
 
       expect(result).toHaveProperty('id', mockSolicitudPendiente.id);
@@ -1181,7 +1185,7 @@ describe('SolicitudesService (Unit Tests) - HU-33 Student Perspective', () => {
       await expect(
         service.findByIdForStudent(
           OTHER_ESTUDIANTE_ID,
-          mockSolicitudPendiente.id,
+          mockSolicitudPendiente.id!,
         ),
       ).rejects.toThrow(NotFoundException);
     });
@@ -1202,7 +1206,7 @@ describe('SolicitudesService (Unit Tests) - HU-33 Student Perspective', () => {
 
       await service.findByIdForStudent(
         ESTUDIANTE_ID,
-        mockSolicitudPendiente.id,
+        mockSolicitudPendiente.id!,
       );
 
       expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
@@ -1231,7 +1235,7 @@ describe('SolicitudesService (Unit Tests) - HU-33 Student Perspective', () => {
 
       const result = await service.findByIdForStudent(
         ESTUDIANTE_ID,
-        mockSolicitudPendiente.id,
+        mockSolicitudPendiente.id!,
       );
 
       expect(result).toEqual(
@@ -1240,7 +1244,8 @@ describe('SolicitudesService (Unit Tests) - HU-33 Student Perspective', () => {
           tutorName: mockTutor.nombreCompleto,
           tutorAvatarUrl: mockTutor.fotoPerfil,
           subject: mockOferta.title,
-          date: mockSolicitudPendiente.createdAt.toISOString(),
+          // date = horarios[0] local-naive
+          date: `${mockSolicitudPendiente.horarios![0].fecha}T${mockSolicitudPendiente.horarios![0].hora}:00`,
           modality: mockSolicitudPendiente.modalidad,
           pricePerHour: Number(mockOferta.price),
           status: mockSolicitudPendiente.estado,
@@ -1637,11 +1642,11 @@ describe('SolicitudesService (Unit Tests) - HU-08: Aceptar Solicitud', () => {
       );
 
       expect(result.estado).toBe(SolicitudEstado.ACEPTADA);
-      expect((result as Record<string, unknown>).acceptedMeetingLink).toBe(
-        'https://meet.google.com/abc-defg-hij',
-      );
       expect(
-        (result as Record<string, unknown>).acceptedMeetingLocation,
+        (result as unknown as Record<string, unknown>).acceptedMeetingLink,
+      ).toBe('https://meet.google.com/abc-defg-hij');
+      expect(
+        (result as unknown as Record<string, unknown>).acceptedMeetingLocation,
       ).toBeNull();
     });
 
@@ -1687,11 +1692,11 @@ describe('SolicitudesService (Unit Tests) - HU-08: Aceptar Solicitud', () => {
       );
 
       expect(result.estado).toBe(SolicitudEstado.ACEPTADA);
-      expect((result as Record<string, unknown>).acceptedMeetingLocation).toBe(
-        'Biblioteca Central, Sala 302',
-      );
       expect(
-        (result as Record<string, unknown>).acceptedMeetingLink,
+        (result as unknown as Record<string, unknown>).acceptedMeetingLocation,
+      ).toBe('Biblioteca Central, Sala 302');
+      expect(
+        (result as unknown as Record<string, unknown>).acceptedMeetingLink,
       ).toBeNull();
     });
 
@@ -1889,7 +1894,7 @@ describe('SolicitudesService (Unit Tests) - HU-08: Aceptar Solicitud', () => {
       );
 
       expect(
-        (result as Record<string, unknown>).acceptedMeetingLink,
+        (result as unknown as Record<string, unknown>).acceptedMeetingLink,
       ).toBeNull();
     });
 
@@ -1931,7 +1936,7 @@ describe('SolicitudesService (Unit Tests) - HU-08: Aceptar Solicitud', () => {
       );
 
       expect(
-        (result as Record<string, unknown>).acceptedMeetingLocation,
+        (result as unknown as Record<string, unknown>).acceptedMeetingLocation,
       ).toBeNull();
     });
 
@@ -1967,9 +1972,9 @@ describe('SolicitudesService (Unit Tests) - HU-08: Aceptar Solicitud', () => {
         }),
       );
 
-      expect((result as Record<string, unknown>).acceptedAt).toBeInstanceOf(
-        Date,
-      );
+      expect(
+        (result as unknown as Record<string, unknown>).acceptedAt,
+      ).toBeInstanceOf(Date);
     });
   });
 });

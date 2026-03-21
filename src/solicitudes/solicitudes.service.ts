@@ -454,8 +454,11 @@ export class SolicitudesService {
       );
     }
 
-    // 4. Validar modalidad coincide
-    if (solicitud.modalidad && dto.modalidad !== solicitud.modalidad) {
+    // 4. Validar modalidad coincide (comparar en uppercase para tolerar
+    //    'Virtual' == 'VIRTUAL' y 'Presencial' == 'PRESENCIAL')
+    const modalidadSolicitada = String(solicitud.modalidad ?? '').toUpperCase();
+    const modalidadConfirmada = String(dto.modalidad ?? '').toUpperCase();
+    if (modalidadSolicitada && modalidadConfirmada !== modalidadSolicitada) {
       throw new BadRequestException(
         `La modalidad debe ser '${solicitud.modalidad}'. La solicitud fue para '${dto.modalidad}'.`,
       );
@@ -466,8 +469,8 @@ export class SolicitudesService {
     solicitud.acceptedAt = new Date();
 
     // Setear campos según modalidad y limpiar el otro
-    const modalidadStr = String(dto.modalidad);
-    const isVirtual = modalidadStr === 'Virtual';
+    const modalidadStr = String(dto.modalidad).toUpperCase();
+    const isVirtual = modalidadStr === 'VIRTUAL';
     if (isVirtual) {
       solicitud.acceptedMeetingLink = dto.acceptedMeetingLink ?? null;
       solicitud.acceptedMeetingLocation = null;

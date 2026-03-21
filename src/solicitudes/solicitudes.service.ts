@@ -249,15 +249,15 @@ export class SolicitudesService {
         id: s.id,
         nombreEstudiante: s.nombreEstudiante ?? '',
         materia,
-        fechaHora: s.createdAt
-          ? s.createdAt.toLocaleDateString('es-ES', {
-              day: '2-digit',
-              month: 'short',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            })
-          : '',
+        // Devolver como string local (sin zona) para que el navegador muestre
+        // la hora Ecuador sin desplazamiento de dia por conversion UTC
+        fechaHora: (() => {
+          const h = s.horarios?.[0];
+          if (h?.fecha && h?.hora) {
+            return `${h.fecha}T${h.hora}:00`; // local naive — no UTC
+          }
+          return s.createdAt ? s.createdAt.toISOString() : '';
+        })(),
         mensajeResumen:
           s.mensaje.length > 50
             ? s.mensaje.substring(0, 50) + '...'
@@ -323,9 +323,18 @@ export class SolicitudesService {
         tutorName: tutor?.nombreCompleto ?? 'N/A',
         tutorAvatarUrl: tutor?.fotoPerfil ?? null,
         subject: oferta?.titulo ?? oferta?.title ?? '',
-        date: s.createdAt
-          ? s.createdAt.toISOString()
-          : new Date().toISOString(),
+        // Usar el horario propuesto (horarios[0]) como fecha de la tarjeta,
+        // no el createdAt (que es cuando el estudiante creó la solicitud).
+        // Local naive — no Z para evitar desplazamiento de dia en cliente UTC-5
+        date: (() => {
+          const h = s.horarios?.[0];
+          if (h?.fecha && h?.hora) {
+            return `${h.fecha}T${h.hora}:00`;
+          }
+          return s.createdAt
+            ? s.createdAt.toISOString().slice(0, 19)
+            : new Date().toISOString().slice(0, 19);
+        })(),
         modality: s.modalidad ?? '',
         pricePerHour: precio,
         status: s.estado,

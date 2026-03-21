@@ -19,6 +19,7 @@ import {
 import { seedPerfilesProfesionales } from './seeds/perfil-profesional.seed';
 import { seedSolicitudHU06 } from './seeds/solicitudes.seed';
 import { seedSolicitudHU08 } from './seeds/solicitudes-hu08.seed';
+import { seedSolicitudHU15 } from './seeds/solicitudes-hu15.seed';
 import { seedTutors } from './seeds/tutors.seed';
 import { seedUsers } from './seeds/users.seed';
 
@@ -137,6 +138,10 @@ async function runSeed() {
     // HU-08: Solicitudes aceptadas con campos de reunión
     // (debe ir DESPUÉS de seedSolicitudHU06)
     await seedSolicitudHU08(AppDataSource);
+
+    // HU-15: Solicitudes ACEPTADAS/COMPLETADAS con fechas en 2026 para la agenda del tutor
+    // (debe ir DESPUÉS de seedSolicitudHU08)
+    await seedSolicitudHU15(AppDataSource);
 
     console.log('🎉 Seed completado exitosamente');
   } catch (error) {

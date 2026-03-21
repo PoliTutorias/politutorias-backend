@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AgendaModule } from './agenda/agenda.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -61,6 +62,7 @@ import { TutorsModule } from './tutors/tutors.module';
     ExperienciasModule,
     PerfilModule,
     SolicitudesModule,
+    AgendaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

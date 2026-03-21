@@ -1206,7 +1206,7 @@ describe('SolicitudesService (Unit Tests) - HU-33 Student Perspective', () => {
 
       await service.findByIdForStudent(
         ESTUDIANTE_ID,
-        mockSolicitudPendiente.id,
+        mockSolicitudPendiente.id!,
       );
 
       expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
@@ -1972,9 +1972,9 @@ describe('SolicitudesService (Unit Tests) - HU-08: Aceptar Solicitud', () => {
         }),
       );
 
-      expect((result as Record<string, unknown>).acceptedAt).toBeInstanceOf(
-        Date,
-      );
+      expect(
+        (result as unknown as Record<string, unknown>).acceptedAt,
+      ).toBeInstanceOf(Date);
     });
   });
 });

@@ -384,9 +384,14 @@ export class SolicitudesService {
       tutorName: tutor?.nombreCompleto ?? 'N/A',
       tutorAvatarUrl: tutor?.fotoPerfil ?? null,
       subject: oferta?.titulo ?? oferta?.title ?? '',
-      date: solicitud.createdAt
-        ? solicitud.createdAt.toISOString()
-        : new Date().toISOString(),
+      // Local naive — usa horarios[0] igual que findAllForStudent
+      date: (() => {
+        const h = solicitud.horarios?.[0];
+        if (h?.fecha && h?.hora) return `${h.fecha}T${h.hora}:00`;
+        return solicitud.createdAt
+          ? solicitud.createdAt.toISOString().slice(0, 19)
+          : new Date().toISOString().slice(0, 19);
+      })(),
       modality: solicitud.modalidad ?? '',
       pricePerHour: precio,
       status: solicitud.estado,

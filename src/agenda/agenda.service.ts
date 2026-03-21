@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
+import { Repository } from 'typeorm';
 import {
   SolicitudEntity,
   SolicitudEstado,
@@ -101,9 +101,7 @@ export class AgendaService {
       .map(({ solicitud, horario }) => {
         const oferta = (solicitud as SolicitudEntity & { oferta?: Oferta })
           .oferta;
-        const sessionDateTime = new Date(
-          `${horario.fecha}T${horario.hora}:00`,
-        );
+        const sessionDateTime = new Date(`${horario.fecha}T${horario.hora}:00`);
         const isCompleted =
           solicitud.estado === SolicitudEstado.COMPLETADA ||
           sessionDateTime < now;
@@ -115,9 +113,7 @@ export class AgendaService {
           date: horario.fecha,
           hour: horario.hora,
           modality: solicitud.modalidad ?? '',
-          status: (isCompleted ? 'COMPLETED' : 'PENDING') as
-            | 'PENDING'
-            | 'COMPLETED',
+          status: isCompleted ? 'COMPLETED' : 'PENDING',
         };
       });
 

@@ -7,19 +7,32 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
  * Los campos condicionales (meetingLink / meetingLocation) dependen de la modalidad.
  */
 export class SessionDetailDto {
-  @ApiProperty({ description: 'ID de la solicitud (sesión)', example: '550e8400-e29b-41d4-a716-446655440001' })
+  @ApiProperty({
+    description: 'ID de la solicitud (sesión)',
+    example: '550e8400-e29b-41d4-a716-446655440001',
+  })
   id: string;
 
   @ApiProperty({ description: 'Nombre del estudiante', example: 'Ana García' })
   studentName: string;
 
-  @ApiProperty({ description: 'Email del estudiante', nullable: true, example: 'ana.g@epn.edu.ec' })
+  @ApiProperty({
+    description: 'Email del estudiante',
+    nullable: true,
+    example: 'ana.g@epn.edu.ec',
+  })
   studentEmail: string | null;
 
-  @ApiProperty({ description: 'Título de la materia/oferta', example: 'Cálculo Vectorial' })
+  @ApiProperty({
+    description: 'Título de la materia/oferta',
+    example: 'Cálculo Vectorial',
+  })
   subject: string;
 
-  @ApiProperty({ description: 'Fecha de la sesión (ISO)', example: '2026-03-25' })
+  @ApiProperty({
+    description: 'Fecha de la sesión (ISO)',
+    example: '2026-03-25',
+  })
   date: string;
 
   @ApiProperty({ description: 'Hora de la sesión', example: '14:00' })
@@ -38,14 +51,21 @@ export class SessionDetailDto {
   meetingLink: string | null;
 
   @ApiPropertyOptional({
-    description: 'Lugar de encuentro presencial (solo si modalidad es Presencial)',
+    description:
+      'Lugar de encuentro presencial (solo si modalidad es Presencial)',
     example: 'Biblioteca Central, Sala de estudio 3',
   })
   meetingLocation: string | null;
 
-  @ApiProperty({ description: 'Mensaje del estudiante', example: 'Necesito repasar integrales.' })
+  @ApiProperty({
+    description: 'Mensaje del estudiante',
+    example: 'Necesito repasar integrales.',
+  })
   studentMessage: string;
 
-  @ApiProperty({ description: 'Estado de la sesión: PENDING o COMPLETED', example: 'PENDING' })
+  @ApiProperty({
+    description: 'Estado de la sesión: PENDING o COMPLETED',
+    example: 'PENDING',
+  })
   status: 'PENDING' | 'COMPLETED';
 }

@@ -4,10 +4,16 @@ import { ApiProperty } from '@nestjs/swagger';
  * Representa una sesión resumida dentro de un día del calendario.
  */
 export class CalendarSessionSummaryDto {
-  @ApiProperty({ description: 'ID de la solicitud (sesión)', example: '550e8400-e29b-41d4-a716-446655440001' })
+  @ApiProperty({
+    description: 'ID de la solicitud (sesión)',
+    example: '550e8400-e29b-41d4-a716-446655440001',
+  })
   id: string;
 
-  @ApiProperty({ description: 'Título de la materia/oferta', example: 'Cálculo Vectorial' })
+  @ApiProperty({
+    description: 'Título de la materia/oferta',
+    example: 'Cálculo Vectorial',
+  })
   subject: string;
 
   @ApiProperty({ description: 'Hora de la sesión', example: '14:00' })
@@ -31,7 +37,8 @@ export class CalendarDayDto {
   sessionCount: number;
 
   @ApiProperty({
-    description: 'Etiquetas resumidas de las sesiones (para mostrar en el calendario)',
+    description:
+      'Etiquetas resumidas de las sesiones (para mostrar en el calendario)',
     example: ['14:00 Cálculo', '16:00 Física'],
     type: [String],
   })

@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -9,7 +6,11 @@ import {
   SolicitudEstado,
 } from '../solicitudes/entities/solicitud.entity';
 import { Oferta } from '../ofertas/domain/entities/oferta.entity';
-import { SessionDetailDto, SelectedDayInfoDto, CalendarSessionSummaryDto } from './dto';
+import {
+  SessionDetailDto,
+  SelectedDayInfoDto,
+  CalendarSessionSummaryDto,
+} from './dto';
 
 @Injectable()
 export class SessionsService {
@@ -38,7 +39,6 @@ export class SessionsService {
       .getMany();
 
     // Filtrar las que tienen horario en la fecha indicada
-    const now = new Date();
     const sessions: CalendarSessionSummaryDto[] = [];
 
     for (const solicitud of solicitudes) {

@@ -7,10 +7,16 @@ import { CalendarSessionSummaryDto } from './calendar-day.dto';
  * Información para el panel lateral al seleccionar un día del calendario.
  */
 export class SelectedDayInfoDto {
-  @ApiProperty({ description: 'Fecha seleccionada (ISO)', example: '2026-03-25' })
+  @ApiProperty({
+    description: 'Fecha seleccionada (ISO)',
+    example: '2026-03-25',
+  })
   date: string;
 
-  @ApiProperty({ description: 'Cantidad de sesiones en el día seleccionado', example: 2 })
+  @ApiProperty({
+    description: 'Cantidad de sesiones en el día seleccionado',
+    example: 2,
+  })
   sessionCount: number;
 
   @ApiProperty({

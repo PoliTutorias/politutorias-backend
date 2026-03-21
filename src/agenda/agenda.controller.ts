@@ -29,7 +29,12 @@ import {
 import { Tutor } from '../tutors/entities/tutor.entity';
 
 interface AuthenticatedRequest extends Request {
-  user: { id: string; name?: string; email?: string; role?: 'tutor' | 'student' };
+  user: {
+    id: string;
+    name?: string;
+    email?: string;
+    role?: 'tutor' | 'student';
+  };
   tutor?: Tutor;
 }
 

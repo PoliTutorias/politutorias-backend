@@ -1,12 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan } from 'typeorm';
-import {
-  SolicitudEntity,
-  SolicitudEstado,
-} from './entities/solicitud.entity';
+import { LessThan, Repository } from 'typeorm';
 import { estaExpirado } from '../common/utils/week-window.util';
+import { SolicitudEntity, SolicitudEstado } from './entities/solicitud.entity';
 
 /**
  * Tarea programada que implementa SOL-03:

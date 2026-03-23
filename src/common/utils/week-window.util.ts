@@ -40,8 +40,7 @@ function getMondayOf(ref: Date): Date {
  * @param ahora Momento de referencia. Por defecto new Date() (ahora mismo).
  */
 export function calcularVentanaActiva(ahora: Date = new Date()): ActiveWindow {
-  const esDomingoPost20 =
-    ahora.getDay() === 0 && ahora.getHours() >= 20;
+  const esDomingoPost20 = ahora.getDay() === 0 && ahora.getHours() >= 20;
 
   const mondayBase = getMondayOf(ahora);
 

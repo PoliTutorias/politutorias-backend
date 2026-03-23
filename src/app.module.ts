@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AgendaModule } from './agenda/agenda.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
@@ -55,6 +56,7 @@ import { TutorsModule } from './tutors/tutors.module';
       inject: [ConfigService],
     }),
     AuthModule,
+    ScheduleModule.forRoot(),
     OfertasModule,
     OffersModule,
     TutorsModule,

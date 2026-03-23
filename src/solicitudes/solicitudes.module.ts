@@ -6,10 +6,11 @@ import { Tutor } from '../tutors/entities/tutor.entity';
 import { SolicitudesController } from './solicitudes.controller';
 import { SolicitudesService } from './solicitudes.service';
 import { TutorAuthGuard } from '../auth/guards/tutor-auth.guard';
+import { SolicitudesExpirationTask } from './solicitudes-expiration.task';
 
 @Module({
   imports: [TypeOrmModule.forFeature([SolicitudEntity, Oferta, Tutor])],
   controllers: [SolicitudesController],
-  providers: [SolicitudesService, TutorAuthGuard],
+  providers: [SolicitudesService, TutorAuthGuard, SolicitudesExpirationTask],
 })
 export class SolicitudesModule {}

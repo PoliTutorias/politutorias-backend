@@ -26,6 +26,11 @@ import { StudentSolicitudDetailDto } from './dto/student-solicitud-detail.dto';
 import { PaginatedStudentSolicitudesDto } from './dto/paginated-student-solicitudes.dto';
 import { RejectSolicitudDto } from './dto/reject-solicitud.dto';
 import { AcceptSolicitudDto } from './dto/accept-solicitud.dto';
+import {
+  calcularVentanaActiva,
+  fechaEnVentanaActiva,
+  cumpleAnticipacionMinima,
+} from '../common/utils/week-window.util';
 
 /** Valor de la columna `modality` que indica oferta dual */
 const MODALITY_DUAL = 'VIRTUAL/PRESENCIAL';
@@ -93,9 +98,11 @@ export class SolicitudesService {
    *
    * Reglas de negocio:
    * 1. La oferta debe existir.
-   * 2. Si la oferta es dual (VIRTUAL/PRESENCIAL), el DTO debe incluir modalidad.
-   * 3. Si la oferta es única, la modalidad se asigna automáticamente desde la oferta.
-   * 4. No puede haber ya una solicitud PENDIENTE del mismo estudiante para la misma oferta con el mismo horario.
+   * 2. SOL-01 (revisada): Todos los horarios deben caer dentro de la ventana activa.
+   * 3. SOL-02: Cada horario debe tener al menos 12 horas de anticipación.
+   * 4. Si la oferta es dual (VIRTUAL/PRESENCIAL), el DTO debe incluir modalidad.
+   * 5. Si la oferta es única, la modalidad se asigna automáticamente desde la oferta.
+   * 6. No puede haber ya una solicitud PENDIENTE del mismo estudiante para la misma oferta con el mismo horario.
    */
   async create(
     estudianteId: string,
@@ -111,6 +118,27 @@ export class SolicitudesService {
       throw new NotFoundException(
         `Oferta con id '${dto.ofertaId}' no encontrada`,
       );
+    }
+
+    // 2. SOL-01 (ventana activa): validar que todos los horarios caen en la ventana
+    const ahora = new Date();
+    const ventana = calcularVentanaActiva(ahora);
+    for (const h of dto.horarios) {
+      if (!fechaEnVentanaActiva(h.fecha, ventana)) {
+        throw new BadRequestException(
+          `La fecha ${h.fecha} no pertenece a la ventana activa (${ventana.label}). ` +
+            `Solo puedes solicitar tutorías para la ${ventana.label}.`,
+        );
+      }
+    }
+
+    // 3. SOL-02: anticipación mínima de 4 horas
+    for (const h of dto.horarios) {
+      if (!cumpleAnticipacionMinima(h.fecha, h.hora, 4, ahora)) {
+        throw new BadRequestException(
+          `El horario ${h.fecha} ${h.hora} no cumple la anticipación mínima de 4 horas (SOL-02).`,
+        );
+      }
     }
 
     // 2. Resolver modalidad

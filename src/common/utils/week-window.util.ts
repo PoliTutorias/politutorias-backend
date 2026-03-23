@@ -92,7 +92,7 @@ export function fechaEnVentanaActiva(
 export function cumpleAnticipacionMinima(
   fechaStr: string,
   horaStr: string,
-  minHoras = 12,
+  minHoras = 4,
   ahora: Date = new Date(),
 ): boolean {
   const [year, month, day] = fechaStr.split('-').map(Number);

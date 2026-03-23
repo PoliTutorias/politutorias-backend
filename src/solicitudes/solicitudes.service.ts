@@ -132,11 +132,11 @@ export class SolicitudesService {
       }
     }
 
-    // 3. SOL-02: anticipación mínima de 12 horas
+    // 3. SOL-02: anticipación mínima de 4 horas
     for (const h of dto.horarios) {
-      if (!cumpleAnticipacionMinima(h.fecha, h.hora, 12, ahora)) {
+      if (!cumpleAnticipacionMinima(h.fecha, h.hora, 4, ahora)) {
         throw new BadRequestException(
-          `El horario ${h.fecha} ${h.hora} no cumple la anticipación mínima de 12 horas (SOL-02).`,
+          `El horario ${h.fecha} ${h.hora} no cumple la anticipación mínima de 4 horas (SOL-02).`,
         );
       }
     }

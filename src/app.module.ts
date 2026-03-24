@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AgendaModule } from './agenda/agenda.module';
+import { AgendaEstudianteModule } from './agenda-estudiante/agenda-estudiante.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -65,6 +66,7 @@ import { TutorsModule } from './tutors/tutors.module';
     PerfilModule,
     SolicitudesModule,
     AgendaModule,
+    AgendaEstudianteModule,
   ],
   controllers: [AppController],
   providers: [AppService],

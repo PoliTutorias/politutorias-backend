@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
 import { TutorAuthGuard } from '../src/auth/guards/tutor-auth.guard';
@@ -122,6 +122,7 @@ describe('TutoriasController (E2E)', () => {
       expect(Array.isArray(response.body.paginatedData.items)).toBe(true);
 
       // Validar estructura de items
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const item = response.body.paginatedData.items[0];
       expect(item).toHaveProperty('id');
       expect(item).toHaveProperty('studentName');

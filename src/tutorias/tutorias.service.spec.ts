@@ -1,14 +1,15 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/unbound-method */
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { NotFoundException } from '@nestjs/common';
-import { TutoriasService } from './tutorias.service';
+import { Oferta } from '../ofertas/domain/entities/oferta.entity';
 import {
   SolicitudEntity,
   SolicitudEstado,
 } from '../solicitudes/entities/solicitud.entity';
-import { Oferta } from '../ofertas/domain/entities/oferta.entity';
 import { HistoryQueryParamsDto } from './dto/history-query-params.dto';
+import { TutoriasService } from './tutorias.service';
 
 /**
  * Unit Tests — TutoriasService — HU-39
@@ -21,7 +22,6 @@ import { HistoryQueryParamsDto } from './dto/history-query-params.dto';
 describe('TutoriasService', () => {
   let service: TutoriasService;
   let solicitudRepository: jest.Mocked<Repository<SolicitudEntity>>;
-  let ofertaRepository: jest.Mocked<Repository<Oferta>>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -47,7 +47,6 @@ describe('TutoriasService', () => {
 
     service = module.get<TutoriasService>(TutoriasService);
     solicitudRepository = module.get(getRepositoryToken(SolicitudEntity));
-    ofertaRepository = module.get(getRepositoryToken(Oferta));
   });
 
   afterEach(() => {
@@ -78,18 +77,24 @@ describe('TutoriasService', () => {
       solicitudRepository.count.mockResolvedValue(1);
 
       // Mock find
-      solicitudRepository.find.mockResolvedValue(mockSolicitudes as any);
+
+      solicitudRepository.find.mockResolvedValue(mockSolicitudes as never);
 
       // Mock createQueryBuilder para summary
+
       const mockQueryBuilder = {
         leftJoin: jest.fn().mockReturnThis(),
+
         select: jest.fn().mockReturnThis(),
+
         where: jest.fn().mockReturnThis(),
+
         andWhere: jest.fn().mockReturnThis(),
         getRawMany: jest.fn().mockResolvedValue([]),
       };
+
       solicitudRepository.createQueryBuilder.mockReturnValue(
-        mockQueryBuilder as any,
+        mockQueryBuilder as never,
       );
 
       const result = await service.getHistorial(tutorId, params);
@@ -127,17 +132,22 @@ describe('TutoriasService', () => {
       ];
 
       solicitudRepository.count.mockResolvedValue(1);
-      solicitudRepository.find.mockResolvedValue(mockSolicitudes as any);
+
+      solicitudRepository.find.mockResolvedValue(mockSolicitudes as never);
 
       const mockQueryBuilder = {
         leftJoin: jest.fn().mockReturnThis(),
+
         select: jest.fn().mockReturnThis(),
+
         where: jest.fn().mockReturnThis(),
+
         andWhere: jest.fn().mockReturnThis(),
         getRawMany: jest.fn().mockResolvedValue([]),
       };
+
       solicitudRepository.createQueryBuilder.mockReturnValue(
-        mockQueryBuilder as any,
+        mockQueryBuilder as never,
       );
 
       const result = await service.getHistorial(tutorId, params);
@@ -154,13 +164,17 @@ describe('TutoriasService', () => {
 
       const mockQueryBuilder = {
         leftJoin: jest.fn().mockReturnThis(),
+
         select: jest.fn().mockReturnThis(),
+
         where: jest.fn().mockReturnThis(),
+
         andWhere: jest.fn().mockReturnThis(),
         getRawMany: jest.fn().mockResolvedValue([]),
       };
+
       solicitudRepository.createQueryBuilder.mockReturnValue(
-        mockQueryBuilder as any,
+        mockQueryBuilder as never,
       );
 
       const result = await service.getHistorial(tutorId, params);
@@ -191,7 +205,7 @@ describe('TutoriasService', () => {
         },
       };
 
-      solicitudRepository.findOne.mockResolvedValue(mockSolicitud as any);
+      solicitudRepository.findOne.mockResolvedValue(mockSolicitud as never);
 
       await expect(service.getDetalle(tutorId, solicitudId)).rejects.toThrow(
         NotFoundException,
@@ -230,7 +244,7 @@ describe('TutoriasService', () => {
         },
       };
 
-      solicitudRepository.findOne.mockResolvedValue(mockSolicitud as any);
+      solicitudRepository.findOne.mockResolvedValue(mockSolicitud as never);
 
       const result = await service.getDetalle(tutorId, solicitudId);
 
@@ -259,7 +273,7 @@ describe('TutoriasService', () => {
         },
       };
 
-      solicitudRepository.findOne.mockResolvedValue(mockSolicitud as any);
+      solicitudRepository.findOne.mockResolvedValue(mockSolicitud as never);
 
       const result = await service.getDetalle(tutorId, solicitudId);
 
@@ -288,7 +302,7 @@ describe('TutoriasService', () => {
         },
       };
 
-      solicitudRepository.findOne.mockResolvedValue(mockSolicitud as any);
+      solicitudRepository.findOne.mockResolvedValue(mockSolicitud as never);
 
       const result = await service.getDetalle(tutorId, solicitudId);
 
@@ -319,7 +333,7 @@ describe('TutoriasService', () => {
         },
       };
 
-      solicitudRepository.findOne.mockResolvedValue(mockSolicitud as any);
+      solicitudRepository.findOne.mockResolvedValue(mockSolicitud as never);
 
       const result = await service.getDetalle(tutorId, solicitudId);
 
@@ -338,23 +352,30 @@ describe('TutoriasService', () => {
 
       const mockQueryBuilder = {
         leftJoin: jest.fn().mockReturnThis(),
+
         select: jest.fn().mockReturnThis(),
+
         where: jest.fn().mockReturnThis(),
+
         andWhere: jest.fn().mockReturnThis(),
         getRawMany: jest.fn().mockResolvedValue([]),
       };
 
       // Mock para materias
+
       mockQueryBuilder.getRawMany
-        .mockResolvedValueOnce([{ materia: 'Cálculo' }, { materia: 'Álgebra' }])
+        .mockResolvedValueOnce([
+          { materia: 'Cálculo' },
+          { materia: 'Álgebra' },
+        ] as never)
         .mockResolvedValueOnce([
           { estudianteId: 'student-1' },
           { estudianteId: 'student-2' },
           { estudianteId: 'student-3' },
-        ]);
+        ] as never);
 
       solicitudRepository.createQueryBuilder.mockReturnValue(
-        mockQueryBuilder as any,
+        mockQueryBuilder as never,
       );
 
       const result = await service.getSummary(tutorId);
@@ -369,24 +390,28 @@ describe('TutoriasService', () => {
 
       const mockQueryBuilder = {
         leftJoin: jest.fn().mockReturnThis(),
+
         select: jest.fn().mockReturnThis(),
+
         where: jest.fn().mockReturnThis(),
+
         andWhere: jest.fn().mockReturnThis(),
         getRawMany: jest.fn().mockResolvedValue([]),
       };
 
       // Mock para materias (primer llamado a getRawMany)
+
       mockQueryBuilder.getRawMany
         .mockResolvedValueOnce([
           { materia: 'Cálculo Diferencial' },
           { materia: 'Álgebra Lineal' },
           { materia: 'Física I' },
           { materia: 'Química General' },
-        ])
-        .mockResolvedValueOnce([{ estudianteId: 'student-1' }]);
+        ] as never)
+        .mockResolvedValueOnce([{ estudianteId: 'student-1' }] as never);
 
       solicitudRepository.createQueryBuilder.mockReturnValue(
-        mockQueryBuilder as any,
+        mockQueryBuilder as never,
       );
 
       const result = await service.getSummary(tutorId);

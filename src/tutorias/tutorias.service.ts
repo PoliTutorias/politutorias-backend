@@ -154,11 +154,14 @@ export class TutoriasService {
     const primeraHora = solicitud.horarios?.[0]?.hora ?? '';
     const formattedTime = this.formatTime(primeraHora);
 
+    const studentName = solicitud.nombreEstudiante ?? 'Estudiante';
+    const studentAvatar = this.generateAvatarUrl(studentName);
+
     return {
       id: solicitud.id,
       student: {
-        name: solicitud.nombreEstudiante ?? 'Estudiante',
-        avatar: null, // Por ahora null, requeriría JOIN con UserEntity
+        name: studentName,
+        avatar: studentAvatar,
       },
       subject: solicitud.oferta?.titulo ?? 'Materia',
       date: formattedDate,
@@ -217,5 +220,34 @@ export class TutoriasService {
     const endHour = startHour + 1;
 
     return `${hora} - ${endHour.toString().padStart(2, '0')}:${minutes}`;
+  }
+
+  /**
+   * Genera una URL de avatar usando UI Avatars (servicio público gratuito)
+   * Crea avatares con las iniciales del nombre del estudiante
+   *
+   * @param name - Nombre completo del estudiante
+   * @returns URL del avatar generado
+   *
+   * Ejemplo: "Juan Pérez" → https://ui-avatars.com/api/?name=Juan+Pérez&background=0D8ABC&color=fff&size=128
+   *
+   * UI Avatars: https://ui-avatars.com/
+   * - background: Color de fondo (azul institucional)
+   * - color: Color del texto (blanco)
+   * - size: Tamaño en píxeles (128x128)
+   * - bold: Texto en negrita
+   * - rounded: Bordes redondeados
+   */
+  private generateAvatarUrl(name: string): string {
+    if (!name || name === 'Estudiante') {
+      // Avatar por defecto para nombres vacíos o genéricos
+      return 'https://ui-avatars.com/api/?name=E&background=6c757d&color=fff&size=128&bold=true&rounded=true';
+    }
+
+    // Codificar el nombre para URL (espacios → +)
+    const encodedName = encodeURIComponent(name).replace(/%20/g, '+');
+
+    // UI Avatars automáticamente extrae las iniciales (ej: "Juan Pérez" → "JP")
+    return `https://ui-avatars.com/api/?name=${encodedName}&background=0D8ABC&color=fff&size=128&bold=true&rounded=true`;
   }
 }

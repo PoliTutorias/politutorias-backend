@@ -266,6 +266,68 @@ describe('TutoriasService', () => {
       expect(result.location).toBe('Biblioteca Central, Sala 3');
       expect(result.meetingLink).toBeNull();
     });
+
+    it('debe generar avatar URL usando UI Avatars', async () => {
+      const tutorId = 'tutor-123';
+      const solicitudId = 'sol-1';
+
+      const mockSolicitud = {
+        id: solicitudId,
+        tutorId,
+        estudianteId: 'student-1',
+        nombreEstudiante: 'Juan Pérez',
+        estado: SolicitudEstado.COMPLETADA,
+        mensaje: 'Test avatar',
+        modalidad: 'Virtual',
+        horarios: [{ fecha: '2024-05-20', hora: '14:00' }],
+        acceptedMeetingLink: 'https://zoom.us/j/123',
+        acceptedMeetingLocation: null,
+        oferta: {
+          titulo: 'Cálculo',
+          precioHora: 15,
+        },
+      };
+
+      solicitudRepository.findOne.mockResolvedValue(mockSolicitud as any);
+
+      const result = await service.getDetalle(tutorId, solicitudId);
+
+      expect(result.student.name).toBe('Juan Pérez');
+      expect(result.student.avatar).toBe(
+        'https://ui-avatars.com/api/?name=Juan+P%C3%A9rez&background=0D8ABC&color=fff&size=128&bold=true&rounded=true',
+      );
+    });
+
+    it('debe generar avatar por defecto para nombre genérico', async () => {
+      const tutorId = 'tutor-123';
+      const solicitudId = 'sol-1';
+
+      const mockSolicitud = {
+        id: solicitudId,
+        tutorId,
+        estudianteId: 'student-1',
+        nombreEstudiante: null, // Nombre null
+        estado: SolicitudEstado.COMPLETADA,
+        mensaje: 'Test avatar por defecto',
+        modalidad: 'Virtual',
+        horarios: [{ fecha: '2024-05-20', hora: '14:00' }],
+        acceptedMeetingLink: 'https://zoom.us/j/123',
+        acceptedMeetingLocation: null,
+        oferta: {
+          titulo: 'Cálculo',
+          precioHora: 15,
+        },
+      };
+
+      solicitudRepository.findOne.mockResolvedValue(mockSolicitud as any);
+
+      const result = await service.getDetalle(tutorId, solicitudId);
+
+      expect(result.student.name).toBe('Estudiante');
+      expect(result.student.avatar).toBe(
+        'https://ui-avatars.com/api/?name=E&background=6c757d&color=fff&size=128&bold=true&rounded=true',
+      );
+    });
   });
 
   describe('getSummary', () => {

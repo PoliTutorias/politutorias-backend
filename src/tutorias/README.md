@@ -61,7 +61,7 @@ Obtiene el detalle completo de una tutoría específica.
   "id": "uuid",
   "student": {
     "name": "Juan Pérez",
-    "avatar": null
+    "avatar": "https://ui-avatars.com/api/?name=Juan+P%C3%A9rez&background=0D8ABC&color=fff&size=128&bold=true&rounded=true"
   },
   "subject": "Cálculo Diferencial",
   "date": "20 de mayo, 2024",
@@ -148,6 +148,35 @@ src/tutorias/
   - Validación de parámetros (page < 1, limit > 100)
   - Ownership check
   - 404 en registros inexistentes
+
+### Generación de Avatares
+
+Los avatares de estudiantes se generan automáticamente usando **UI Avatars** (https://ui-avatars.com/), un servicio público gratuito que crea avatares basados en iniciales.
+
+**Características:**
+
+- **Fuente**: Nombre completo del estudiante (`nombreEstudiante`)
+- **Iniciales automáticas**: "Juan Pérez" → "JP"
+- **Colores**: Fondo azul institucional (`#0D8ABC`), texto blanco
+- **Tamaño**: 128x128 píxeles
+- **Estilo**: Negrita, bordes redondeados
+
+**Ejemplos de URLs generadas:**
+
+```typescript
+// Nombre normal: "Juan Pérez"
+'https://ui-avatars.com/api/?name=Juan+P%C3%A9rez&background=0D8ABC&color=fff&size=128&bold=true&rounded=true';
+
+// Nombre vacío o genérico
+'https://ui-avatars.com/api/?name=E&background=6c757d&color=fff&size=128&bold=true&rounded=true';
+```
+
+**Ventajas:**
+
+- ✅ No requiere almacenamiento de imágenes
+- ✅ Avatares consistentes y profesionales
+- ✅ Carga rápida y compatible con todos los navegadores
+- ✅ Fallback automático para nombres vacíos
 
 ## Dependencias
 

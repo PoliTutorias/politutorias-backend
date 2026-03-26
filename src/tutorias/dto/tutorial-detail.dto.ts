@@ -8,11 +8,12 @@ class StudentInfoDto {
   name: string;
 
   @ApiProperty({
-    description: 'Avatar del estudiante',
-    example: 'https://example.com/avatar.jpg',
-    nullable: true,
+    description:
+      'Avatar del estudiante (generado automáticamente con UI Avatars)',
+    example:
+      'https://ui-avatars.com/api/?name=Juan+Pérez&background=0D8ABC&color=fff&size=128&bold=true&rounded=true',
   })
-  avatar: string | null;
+  avatar: string;
 }
 
 export class TutorialDetailDto {

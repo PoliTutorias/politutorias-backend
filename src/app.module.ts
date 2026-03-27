@@ -22,6 +22,7 @@ import { SolicitudEntity } from './solicitudes/entities/solicitud.entity';
 import { SolicitudesModule } from './solicitudes/solicitudes.module';
 import { Tutor } from './tutors/entities/tutor.entity';
 import { TutorsModule } from './tutors/tutors.module';
+import { TutoriasModule } from './tutorias/tutorias.module';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { TutorsModule } from './tutors/tutors.module';
     SolicitudesModule,
     AgendaModule,
     AgendaEstudianteModule,
+    TutoriasModule,
   ],
   controllers: [AppController],
   providers: [AppService],

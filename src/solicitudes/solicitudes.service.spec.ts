@@ -1,7 +1,7 @@
 import {
-  BadRequestException,
-  ForbiddenException,
-  NotFoundException,
+    BadRequestException,
+    ForbiddenException,
+    NotFoundException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -13,9 +13,9 @@ import { PaginatedSolicitudesDto } from './dto/paginated-solicitudes.dto';
 import { RejectSolicitudDto } from './dto/reject-solicitud.dto';
 import { VerificarPreviaDto } from './dto/verificar-previa.dto';
 import {
-  RejectionReason,
-  SolicitudEntity,
-  SolicitudEstado,
+    RejectionReason,
+    SolicitudEntity,
+    SolicitudEstado,
 } from './entities/solicitud.entity';
 import { SolicitudesService } from './solicitudes.service';
 
@@ -71,12 +71,12 @@ describe('SolicitudesService (Unit Tests) - HU-06', () => {
   };
 
   // Helper para generar fechas válidas de la semana actual
-  // Hoy es 2026-03-23 (lunes), la semana actual es 2026-03-23 a 2026-03-29
+  // Hoy es 2026-03-26 (jueves), la semana actual es 2026-03-23 a 2026-03-29
   // Las fechas deben ser futuras con al menos 4+ horas de anticipación y en la semana actual
   const getThisWeekDate = (daysFromMonday: number): string => {
-    const today = new Date(2026, 2, 23); // March 23, 2026 (Monday)
+    const today = new Date(2026, 2, 26); // March 26, 2026 (Thursday)
     const date = new Date(today);
-    date.setDate(date.getDate() + Math.max(1, daysFromMonday)); // Usar martes (1) o posterior
+    date.setDate(date.getDate() + Math.max(1, daysFromMonday)); // Usar viernes (1) o posterior
     return date.toISOString().split('T')[0]; // YYYY-MM-DD
   };
 

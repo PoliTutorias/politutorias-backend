@@ -26,6 +26,12 @@ export class HistoryItemDto {
   date: string;
 
   @ApiProperty({
+    description: 'Horario de la tutoría',
+    example: '11:00',
+  })
+  time: string;
+
+  @ApiProperty({
     description: 'Estado de la tutoría',
     example: 'Completada',
   })

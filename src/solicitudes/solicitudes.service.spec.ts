@@ -1,7 +1,7 @@
 import {
-    BadRequestException,
-    ForbiddenException,
-    NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -13,9 +13,9 @@ import { PaginatedSolicitudesDto } from './dto/paginated-solicitudes.dto';
 import { RejectSolicitudDto } from './dto/reject-solicitud.dto';
 import { VerificarPreviaDto } from './dto/verificar-previa.dto';
 import {
-    RejectionReason,
-    SolicitudEntity,
-    SolicitudEstado,
+  RejectionReason,
+  SolicitudEntity,
+  SolicitudEstado,
 } from './entities/solicitud.entity';
 import { SolicitudesService } from './solicitudes.service';
 

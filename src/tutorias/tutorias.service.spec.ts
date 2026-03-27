@@ -110,6 +110,7 @@ describe('TutoriasService', () => {
 
       expect(result.paginatedData.items).toHaveLength(1);
       expect(result.paginatedData.items[0].id).toBe('sol-1');
+      expect(result.paginatedData.items[0].time).toBe('14:00');
     });
 
     it('debe mapear SolicitudEstado.COMPLETADA a "Completada"', async () => {
@@ -153,6 +154,45 @@ describe('TutoriasService', () => {
       const result = await service.getHistorial(tutorId, params);
 
       expect(result.paginatedData.items[0].status).toBe('Completada');
+    });
+
+    it('debe incluir el campo time con el horario de la primera entrada', async () => {
+      const tutorId = 'tutor-123';
+      const params: HistoryQueryParamsDto = { page: 1, limit: 5 };
+
+      const mockSolicitudes = [
+        {
+          id: 'sol-1',
+          tutorId,
+          estudianteId: 'student-1',
+          nombreEstudiante: 'Juan Pérez',
+          estado: SolicitudEstado.COMPLETADA,
+          horarios: [{ fecha: '2024-05-20', hora: '11:00' }],
+          oferta: {
+            titulo: 'Cálculo',
+            precioHora: 15,
+          },
+        },
+      ];
+
+      solicitudRepository.count.mockResolvedValue(1);
+      solicitudRepository.find.mockResolvedValue(mockSolicitudes as never);
+
+      const mockQueryBuilder = {
+        leftJoin: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue([]),
+      };
+
+      solicitudRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as never,
+      );
+
+      const result = await service.getHistorial(tutorId, params);
+
+      expect(result.paginatedData.items[0].time).toBe('11:00');
     });
 
     it('debe calcular lastPage correctamente (total=25, limit=5 → lastPage=5)', async () => {

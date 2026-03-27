@@ -14,29 +14,35 @@ export async function seedDisponibilidad(
   const availabilityRepository = dataSource.getRepository(AvailabilityEntity);
 
   // Bloques de disponibilidad para los tutores de prueba
-  // Sin duplicados - verificado manualmente
+  // Nota: Se eliminan duplicados y se garantiza unicidad de (tutorId, day, hour).
+
+  // Días y horas disponibles en el sistema
+  const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  const HOURS = [
+    '07:00',
+    '08:00',
+    '09:00',
+    '10:00',
+    '11:00',
+    '12:00',
+    '13:00',
+    '14:00',
+    '15:00',
+    '16:00',
+    '17:00',
+    '18:00',
+    '19:00',
+    '20:00',
+  ];
+
+  // Generar todos los bloques para el tutor daniel.v (ZERO_TUTOR_ID) — facilita pruebas
+  const zeroBloques: Partial<AvailabilityEntity>[] = DAYS.flatMap((day) =>
+    HOURS.map((hour) => ({ tutorId: ZERO_TUTOR_ID, day, hour })),
+  );
+
   const availabilityBlocks: Partial<AvailabilityEntity>[] = [
-    // ── Tutor "en cero" (550e8400-e29b-41d4-a716-446655440000) ───────────────
-    {
-      tutorId: ZERO_TUTOR_ID,
-      day: 'Lun',
-      hour: '09:00',
-    },
-    {
-      tutorId: ZERO_TUTOR_ID,
-      day: 'Lun',
-      hour: '10:00',
-    },
-    {
-      tutorId: ZERO_TUTOR_ID,
-      day: 'Mié',
-      hour: '14:00',
-    },
-    {
-      tutorId: ZERO_TUTOR_ID,
-      day: 'Vie',
-      hour: '15:00',
-    },
+    // ── Tutor "en cero" daniel.v@epn.edu.ec — TODAS las horas habilitadas ────
+    ...zeroBloques,
 
     // ── Juan Carlos Pérez (550e8400-e29b-41d4-a716-446655440001) ──────────────
     {

@@ -98,14 +98,16 @@ export class TutoriasService {
 
     // Mapear a HistoryItemDto
     const items: HistoryItemDto[] = solicitudes.map((sol) => {
-      // Extraer la primera fecha de horarios
+      // Extraer la primera fecha y hora de horarios
       const primeraFecha = sol.horarios?.[0]?.fecha ?? '';
+      const primeraHora = sol.horarios?.[0]?.hora ?? '';
 
       return {
         id: sol.id,
         studentName: sol.nombreEstudiante ?? 'Estudiante',
         subjectName: sol.oferta?.titulo ?? 'Materia',
         date: primeraFecha,
+        time: primeraHora,
         status:
           sol.estado === SolicitudEstado.COMPLETADA ? 'Completada' : 'Aceptada',
         pricePerHour: `$${sol.oferta?.precioHora ?? 0}/h`,

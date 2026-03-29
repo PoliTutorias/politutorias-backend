@@ -587,13 +587,11 @@ describe('TutoriasService', () => {
       );
 
       const savedSolicitud = { ...mockSolicitud };
-      solicitudRepository.save.mockImplementation(
-        async (entity: SolicitudEntity) => {
-          savedSolicitud.estado = entity.estado;
-          savedSolicitud.noShowAt = entity.noShowAt;
-          return savedSolicitud as SolicitudEntity;
-        },
-      );
+      solicitudRepository.save.mockImplementation((entity: SolicitudEntity) => {
+        savedSolicitud.estado = entity.estado;
+        savedSolicitud.noShowAt = entity.noShowAt;
+        return savedSolicitud as SolicitudEntity;
+      });
 
       // Act
       const beforeCall = new Date();

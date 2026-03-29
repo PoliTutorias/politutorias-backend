@@ -1,27 +1,26 @@
 import {
   Controller,
   Get,
-  Post,
   HttpCode,
   HttpStatus,
   Param,
+  Post,
   Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
 import {
-  ApiTags,
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TutorAuthGuard } from '../auth/guards/tutor-auth.guard';
-import { TutoriasService } from './tutorias.service';
 import { HistoryQueryParamsDto } from './dto/history-query-params.dto';
 import { HistoryResponseDto } from './dto/history-response.dto';
 import { TutorialDetailDto } from './dto/tutorial-detail.dto';
-import { SolicitudEntity } from '../solicitudes/entities/solicitud.entity';
+import { TutoriasService } from './tutorias.service';
 
 interface AuthenticatedRequest extends Request {
   user: {

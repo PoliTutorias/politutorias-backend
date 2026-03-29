@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   HttpCode,
   HttpStatus,
   Param,
@@ -20,6 +21,7 @@ import { TutoriasService } from './tutorias.service';
 import { HistoryQueryParamsDto } from './dto/history-query-params.dto';
 import { HistoryResponseDto } from './dto/history-response.dto';
 import { TutorialDetailDto } from './dto/tutorial-detail.dto';
+import { SolicitudEntity } from '../solicitudes/entities/solicitud.entity';
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -77,5 +79,58 @@ export class TutoriasController {
   ): Promise<TutorialDetailDto> {
     const tutorId = req.tutor?.id ?? '';
     return this.tutoriasService.getDetalle(tutorId, id);
+  }
+
+  @Post(':id/inasistencia')
+  @UseGuards(JwtAuthGuard, TutorAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Reportar inasistencia del estudiante',
+    description:
+      'Marca una tutoría como inasistencia (NO_SHOW) cuando el estudiante no se presenta. Solo válido para tutorías en estado ACEPTADA.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Inasistencia registrada exitosamente',
+    schema: {
+      example: {
+        success: true,
+        message: 'Inasistencia del estudiante registrada con éxito.',
+        data: {
+          id: '550e8400-e29b-41d4-a716-446655440000',
+          status: 'no-show',
+          updatedAt: '2024-05-24T10:00:00.000Z',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Tutoría no encontrada o no pertenece al tutor',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'La tutoría no está en estado ACEPTADA',
+  })
+  async reportarInasistencia(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ): Promise<{
+    success: boolean;
+    message: string;
+    data: { id: string; status: string; updatedAt: string };
+  }> {
+    const tutorId = req.tutor?.id ?? '';
+    const result = await this.tutoriasService.reportarInasistencia(id, tutorId);
+
+    return {
+      success: true,
+      message: 'Inasistencia del estudiante registrada con éxito.',
+      data: {
+        id: result.id,
+        status: 'no-show',
+        updatedAt: result.updatedAt.toISOString(),
+      },
+    };
   }
 }

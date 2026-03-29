@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import {
@@ -25,11 +29,15 @@ export class TutoriasService {
    * Obtiene el resumen de métricas del tutor
    */
   async getSummary(tutorId: string): Promise<HistorySummaryDto> {
-    // Total de tutorías completadas o aceptadas
+    // Total de tutorías completadas, aceptadas o con inasistencia
     const totalCompleted = await this.solicitudRepository.count({
       where: {
         tutorId,
-        estado: In([SolicitudEstado.COMPLETADA, SolicitudEstado.ACEPTADA]),
+        estado: In([
+          SolicitudEstado.COMPLETADA,
+          SolicitudEstado.ACEPTADA,
+          SolicitudEstado.NO_SHOW,
+        ]),
       },
     });
 
@@ -40,7 +48,11 @@ export class TutoriasService {
       .select('DISTINCT oferta.titulo', 'materia')
       .where('s.tutorId = :tutorId', { tutorId })
       .andWhere('s.estado IN (:...estados)', {
-        estados: [SolicitudEstado.COMPLETADA, SolicitudEstado.ACEPTADA],
+        estados: [
+          SolicitudEstado.COMPLETADA,
+          SolicitudEstado.ACEPTADA,
+          SolicitudEstado.NO_SHOW,
+        ],
       })
       .getRawMany();
 
@@ -50,7 +62,11 @@ export class TutoriasService {
       .select('DISTINCT s.estudianteId')
       .where('s.tutorId = :tutorId', { tutorId })
       .andWhere('s.estado IN (:...estados)', {
-        estados: [SolicitudEstado.COMPLETADA, SolicitudEstado.ACEPTADA],
+        estados: [
+          SolicitudEstado.COMPLETADA,
+          SolicitudEstado.ACEPTADA,
+          SolicitudEstado.NO_SHOW,
+        ],
       })
       .getRawMany();
 
@@ -75,10 +91,14 @@ export class TutoriasService {
     // Obtener summary
     const summary = await this.getSummary(tutorId);
 
-    // Filtrar solo tutorías completadas o aceptadas
+    // Filtrar solo tutorías completadas, aceptadas o con inasistencia
     const where = {
       tutorId,
-      estado: In([SolicitudEstado.COMPLETADA, SolicitudEstado.ACEPTADA]),
+      estado: In([
+        SolicitudEstado.COMPLETADA,
+        SolicitudEstado.ACEPTADA,
+        SolicitudEstado.NO_SHOW,
+      ]),
     };
 
     // Contar total
@@ -108,8 +128,7 @@ export class TutoriasService {
         subjectName: sol.oferta?.titulo ?? 'Materia',
         date: primeraFecha,
         time: primeraHora,
-        status:
-          sol.estado === SolicitudEstado.COMPLETADA ? 'Completada' : 'Aceptada',
+        status: this.mapEstadoToDto(sol.estado),
         pricePerHour: `$${sol.oferta?.precioHora ?? 0}/h`,
       };
     });
@@ -180,6 +199,60 @@ export class TutoriasService {
       pricePerHour: `$${solicitud.oferta?.precioHora ?? 0}/h`,
       studentMessage: solicitud.mensaje,
     };
+  }
+
+  /**
+   * Reporta la inasistencia de un estudiante a una tutoría programada
+   * Solo puede reportarse inasistencia para tutorías en estado ACEPTADA
+   */
+  async reportarInasistencia(
+    tutoriaId: string,
+    tutorId: string,
+  ): Promise<SolicitudEntity> {
+    // 1. Buscar la solicitud
+    const solicitud = await this.solicitudRepository.findOne({
+      where: { id: tutoriaId },
+    });
+
+    // 2. Validar que existe
+    if (!solicitud) {
+      throw new NotFoundException('Tutoría no encontrada');
+    }
+
+    // 3. Validar ownership (por seguridad, mismo mensaje de error)
+    if (solicitud.tutorId !== tutorId) {
+      throw new NotFoundException('Tutoría no encontrada');
+    }
+
+    // 4. Validar estado (solo ACEPTADA puede marcarse como NO_SHOW)
+    if (solicitud.estado !== SolicitudEstado.ACEPTADA) {
+      throw new BadRequestException(
+        'Solo se puede reportar inasistencia para tutorías sin confirmar (ACEPTADA).',
+      );
+    }
+
+    // 5. Actualizar estado y timestamp
+    solicitud.estado = SolicitudEstado.NO_SHOW;
+    solicitud.noShowAt = new Date();
+
+    // 6. Persistir cambios
+    return this.solicitudRepository.save(solicitud);
+  }
+
+  /**
+   * Mapea el estado de la base de datos al formato esperado por el DTO
+   */
+  private mapEstadoToDto(estado: SolicitudEstado): string {
+    switch (estado) {
+      case SolicitudEstado.NO_SHOW:
+        return 'INASISTENCIA';
+      case SolicitudEstado.ACEPTADA:
+        return 'SIN_CONFIRMAR';
+      case SolicitudEstado.COMPLETADA:
+        return 'Completada';
+      default:
+        return estado;
+    }
   }
 
   /**

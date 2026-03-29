@@ -16,6 +16,7 @@ export enum SolicitudEstado {
   RECHAZADA = 'RECHAZADA',
   EXPIRADA = 'EXPIRADA',
   COMPLETADA = 'COMPLETADA',
+  NO_SHOW = 'NO_SHOW',
 }
 
 export enum RejectionReason {
@@ -84,6 +85,9 @@ export class SolicitudEntity {
 
   @Column({ type: 'timestamp', nullable: true })
   completedAt: Date | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  noShowAt: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;

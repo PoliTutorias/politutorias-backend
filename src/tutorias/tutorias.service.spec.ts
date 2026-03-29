@@ -33,6 +33,7 @@ describe('TutoriasService', () => {
             count: jest.fn(),
             find: jest.fn(),
             findOne: jest.fn(),
+            save: jest.fn(),
             createQueryBuilder: jest.fn(),
           },
         },
@@ -457,6 +458,158 @@ describe('TutoriasService', () => {
       const result = await service.getSummary(tutorId);
 
       expect(result.totalSubjects).toBe(4);
+    });
+  });
+
+  /**
+   * FASE ROJA - HU-48: Reportar Inasistencia
+   * Estos tests fallarán hasta implementar el método reportarInasistencia()
+   */
+  describe('reportarInasistencia', () => {
+    const tutoriaId = '550e8400-e29b-41d4-a716-446655440000';
+    const tutorId = 'tutor-123';
+
+    it('debe lanzar NotFoundException si la solicitud no existe', async () => {
+      // Arrange: Mock retorna null (no existe)
+      solicitudRepository.findOne.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        service.reportarInasistencia(tutoriaId, tutorId),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(solicitudRepository.findOne).toHaveBeenCalledWith({
+        where: { id: tutoriaId },
+      });
+    });
+
+    it('debe lanzar NotFoundException si el tutorId no coincide (ownership)', async () => {
+      // Arrange: Mock retorna solicitud de otro tutor
+      const mockSolicitud = {
+        id: tutoriaId,
+        tutorId: 'otro-tutor-456', // Diferente al tutorId solicitante
+        estado: SolicitudEstado.ACEPTADA,
+        horarios: [{ fecha: '2024-05-24', hora: '10:00' }],
+      };
+
+      solicitudRepository.findOne.mockResolvedValue(
+        mockSolicitud as SolicitudEntity,
+      );
+
+      // Act & Assert
+      await expect(
+        service.reportarInasistencia(tutoriaId, tutorId),
+      ).rejects.toThrow(NotFoundException);
+
+      // No debe llamar a save()
+      expect(solicitudRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('debe lanzar BadRequestException si el estado no es ACEPTADA', async () => {
+      // Arrange: Mock solicitud en estado COMPLETADA
+      const mockSolicitud = {
+        id: tutoriaId,
+        tutorId,
+        estado: SolicitudEstado.COMPLETADA, // No es ACEPTADA
+        horarios: [{ fecha: '2024-05-24', hora: '10:00' }],
+      };
+
+      solicitudRepository.findOne.mockResolvedValue(
+        mockSolicitud as SolicitudEntity,
+      );
+
+      // Act & Assert
+      await expect(
+        service.reportarInasistencia(tutoriaId, tutorId),
+      ).rejects.toThrow(
+        'Solo se puede reportar inasistencia para tutorías sin confirmar (ACEPTADA).',
+      );
+
+      // No debe llamar a save()
+      expect(solicitudRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('debe actualizar el estado a NO_SHOW y llamar a save() cuando todo es válido', async () => {
+      // Arrange: Mock solicitud válida
+      const mockSolicitud = {
+        id: tutoriaId,
+        tutorId,
+        estado: SolicitudEstado.ACEPTADA,
+        horarios: [{ fecha: '2024-05-24', hora: '10:00' }],
+        noShowAt: null,
+      };
+
+      solicitudRepository.findOne.mockResolvedValue(
+        mockSolicitud as SolicitudEntity,
+      );
+
+      const mockUpdatedSolicitud = {
+        ...mockSolicitud,
+        estado: SolicitudEstado.NO_SHOW,
+        noShowAt: expect.any(Date),
+      };
+
+      solicitudRepository.save.mockResolvedValue(
+        mockUpdatedSolicitud as SolicitudEntity,
+      );
+
+      // Act
+      const result = await service.reportarInasistencia(tutoriaId, tutorId);
+
+      // Assert
+      expect(solicitudRepository.findOne).toHaveBeenCalledWith({
+        where: { id: tutoriaId },
+      });
+
+      expect(solicitudRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: tutoriaId,
+          estado: SolicitudEstado.NO_SHOW,
+          noShowAt: expect.any(Date),
+        }),
+      );
+
+      expect(result.estado).toBe(SolicitudEstado.NO_SHOW);
+    });
+
+    it('debe establecer noShowAt con un timestamp actual', async () => {
+      // Arrange
+      const mockSolicitud = {
+        id: tutoriaId,
+        tutorId,
+        estado: SolicitudEstado.ACEPTADA,
+        horarios: [{ fecha: '2024-05-24', hora: '10:00' }],
+        noShowAt: null,
+      };
+
+      solicitudRepository.findOne.mockResolvedValue(
+        mockSolicitud as SolicitudEntity,
+      );
+
+      const savedSolicitud = { ...mockSolicitud };
+      solicitudRepository.save.mockImplementation(
+        async (entity: SolicitudEntity) => {
+          savedSolicitud.estado = entity.estado;
+          savedSolicitud.noShowAt = entity.noShowAt;
+          return savedSolicitud as SolicitudEntity;
+        },
+      );
+
+      // Act
+      const beforeCall = new Date();
+      await service.reportarInasistencia(tutoriaId, tutorId);
+      const afterCall = new Date();
+
+      // Assert: verificar que save fue llamado con un Date válido
+      const savedEntity = solicitudRepository.save.mock
+        .calls[0][0] as SolicitudEntity;
+      expect(savedEntity.noShowAt).toBeInstanceOf(Date);
+      expect(savedEntity.noShowAt!.getTime()).toBeGreaterThanOrEqual(
+        beforeCall.getTime(),
+      );
+      expect(savedEntity.noShowAt!.getTime()).toBeLessThanOrEqual(
+        afterCall.getTime(),
+      );
     });
   });
 });

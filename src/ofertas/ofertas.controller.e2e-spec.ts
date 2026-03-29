@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
+  CanActivate,
   HttpException,
   HttpStatus,
   INestApplication,
@@ -8,8 +9,11 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import request from 'supertest';
 import { v4 as uuid } from 'uuid';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Tutor } from '../tutors/entities/tutor.entity';
 import { CreateOfertaUseCase } from './application/use-cases/create-oferta.use-case';
 import { GetAllOfertasUseCase } from './application/use-cases/get-all-ofertas.use-case';
 import { Oferta } from './domain/entities/oferta.entity';
@@ -37,12 +41,28 @@ const mockOfertasService = {
   searchOffers: jest.fn(),
 };
 
+const createMockTutorRepository = () => ({
+  findOne: jest.fn(),
+  find: jest.fn(),
+  save: jest.fn(),
+});
+
+const mockJwtAuthGuard: CanActivate = {
+  canActivate: jest.fn((context) => {
+    const req = context.switchToHttp().getRequest<{ user?: { id: string } }>();
+    req.user = { id: 'e2e-user-id' };
+    return true;
+  }),
+};
+
 describe('OfertasController (e2e)', () => {
   let app: INestApplication;
   const tutorId = '550e8400-e29b-41d4-a716-446655440000'; // ZERO_TUTOR_ID hardcodeado en el controlador
+  let mockTutorRepository: ReturnType<typeof createMockTutorRepository>;
 
   beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
+    mockTutorRepository = createMockTutorRepository();
+    const moduleBuilder = Test.createTestingModule({
       controllers: [OfertasController],
       providers: [
         {
@@ -57,8 +77,17 @@ describe('OfertasController (e2e)', () => {
           provide: OfertasService,
           useValue: mockOfertasService,
         },
+        {
+          provide: getRepositoryToken(Tutor),
+          useValue: mockTutorRepository,
+        },
       ],
-    }).compile();
+    });
+
+    const moduleFixture: TestingModule = await moduleBuilder
+      .overrideGuard(JwtAuthGuard)
+      .useValue(mockJwtAuthGuard)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(
@@ -72,6 +101,7 @@ describe('OfertasController (e2e)', () => {
 
   afterEach(async () => {
     jest.clearAllMocks();
+    (mockJwtAuthGuard.canActivate as jest.Mock).mockClear();
     await app.close();
   });
 
@@ -330,6 +360,7 @@ describe('OfertasController (e2e)', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 describe('OfertasController - GET /api/ofertas/search (e2e) - HU17', () => {
   let app: INestApplication;
+  let mockTutorRepository: ReturnType<typeof createMockTutorRepository>;
 
   const mockOfertasServiceHU17 = {
     findAllByTutorId: jest.fn(),
@@ -356,6 +387,7 @@ describe('OfertasController - GET /api/ofertas/search (e2e) - HU17', () => {
   };
 
   beforeEach(async () => {
+    mockTutorRepository = createMockTutorRepository();
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [OfertasController],
       providers: [
@@ -370,6 +402,10 @@ describe('OfertasController - GET /api/ofertas/search (e2e) - HU17', () => {
         {
           provide: OfertasService,
           useValue: mockOfertasServiceHU17,
+        },
+        {
+          provide: getRepositoryToken(Tutor),
+          useValue: mockTutorRepository,
         },
       ],
     }).compile();

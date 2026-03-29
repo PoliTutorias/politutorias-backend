@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, HttpStatus } from '@nestjs/common';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import request from 'supertest';
-import { OfertasController } from '../src/ofertas/ofertas.controller';
 import { CreateOfertaUseCase } from '../src/ofertas/application/use-cases/create-oferta.use-case';
 import { GetAllOfertasUseCase } from '../src/ofertas/application/use-cases/get-all-ofertas.use-case';
+import { OfertasController } from '../src/ofertas/ofertas.controller';
 import { OfertasService } from '../src/ofertas/ofertas.service';
+import { Tutor } from '../src/tutors/entities/tutor.entity';
 
 /**
  * E2E Tests for HU17: GET /api/ofertas/search
@@ -30,10 +32,18 @@ const mockGetAllOfertasUseCase = {
   execute: jest.fn(),
 };
 
+const createMockTutorRepository = () => ({
+  findOne: jest.fn(),
+  find: jest.fn(),
+  save: jest.fn(),
+});
+
 describe('OfertasController - GET /api/ofertas/search (e2e) - HU17', () => {
   let app: INestApplication;
+  let mockTutorRepository: ReturnType<typeof createMockTutorRepository>;
 
   beforeEach(async () => {
+    mockTutorRepository = createMockTutorRepository();
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [OfertasController],
       providers: [
@@ -48,6 +58,10 @@ describe('OfertasController - GET /api/ofertas/search (e2e) - HU17', () => {
         {
           provide: GetAllOfertasUseCase,
           useValue: mockGetAllOfertasUseCase,
+        },
+        {
+          provide: getRepositoryToken(Tutor),
+          useValue: mockTutorRepository,
         },
       ],
     }).compile();

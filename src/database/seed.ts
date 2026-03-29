@@ -96,6 +96,7 @@ async function runSeed() {
       DROP TYPE IF EXISTS tutors_semestreactual_enum   CASCADE;
       DROP TYPE IF EXISTS ofertas_modalidad_enum       CASCADE;
       DROP TYPE IF EXISTS solicitudes_estado_enum      CASCADE;
+      DROP TYPE IF EXISTS solicitudes_rejectionreason_enum CASCADE;
     `);
     await PreDataSource.destroy();
     console.log('✅ Tablas eliminadas');

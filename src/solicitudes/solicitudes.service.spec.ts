@@ -19,6 +19,18 @@ import {
 } from './entities/solicitud.entity';
 import { SolicitudesService } from './solicitudes.service';
 
+// Congelar el tiempo para mantener consistentes las validaciones SOL-01/SOL-02.
+const FIXED_NOW = new Date('2026-03-26T10:00:00Z');
+
+beforeAll(() => {
+  jest.useFakeTimers();
+  jest.setSystemTime(FIXED_NOW);
+});
+
+afterAll(() => {
+  jest.useRealTimers();
+});
+
 /**
  * Unit Tests — SolicitudesService — HU-06: Enviar solicitud de tutoría
  *

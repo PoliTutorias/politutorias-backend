@@ -586,11 +586,11 @@ describe('TutoriasService', () => {
         mockSolicitud as SolicitudEntity,
       );
 
-      const savedSolicitud = { ...mockSolicitud };
+      const savedSolicitud: Partial<SolicitudEntity> = { ...mockSolicitud };
       solicitudRepository.save.mockImplementation((entity: SolicitudEntity) => {
         savedSolicitud.estado = entity.estado;
         savedSolicitud.noShowAt = entity.noShowAt;
-        return savedSolicitud as SolicitudEntity;
+        return Promise.resolve(savedSolicitud as SolicitudEntity);
       });
 
       // Act

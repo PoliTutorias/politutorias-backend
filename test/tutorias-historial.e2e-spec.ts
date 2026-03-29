@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import {
+  INestApplication,
+  UnauthorizedException,
+  ValidationPipe,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
@@ -155,7 +159,32 @@ describe('TutoriasController (E2E)', () => {
             useValue: mockTutoriasService,
           },
         ],
-      }).compile();
+      })
+        .overrideGuard(JwtAuthGuard)
+        .useValue({
+          canActivate: (context: import('@nestjs/common').ExecutionContext) => {
+            const req = context.switchToHttp().getRequest<{
+              headers: Record<string, string | undefined>;
+              user?: { id: string; role: string };
+            }>();
+            if (!req.headers.authorization) {
+              throw new UnauthorizedException();
+            }
+            req.user = { id: 'test-user-123', role: 'tutor' };
+            return true;
+          },
+        })
+        .overrideGuard(TutorAuthGuard)
+        .useValue({
+          canActivate: (context: import('@nestjs/common').ExecutionContext) => {
+            const req = context.switchToHttp().getRequest<{
+              tutor?: { id: string };
+            }>();
+            req.tutor = { id: 'tutor-123' };
+            return true;
+          },
+        })
+        .compile();
 
       const testApp = moduleFixture.createNestApplication();
       testApp.useGlobalPipes(
@@ -272,7 +301,32 @@ describe('TutoriasController (E2E)', () => {
             useValue: mockTutoriasService,
           },
         ],
-      }).compile();
+      })
+        .overrideGuard(JwtAuthGuard)
+        .useValue({
+          canActivate: (context: import('@nestjs/common').ExecutionContext) => {
+            const req = context.switchToHttp().getRequest<{
+              headers: Record<string, string | undefined>;
+              user?: { id: string; role: string };
+            }>();
+            if (!req.headers.authorization) {
+              throw new UnauthorizedException();
+            }
+            req.user = { id: 'test-user-123', role: 'tutor' };
+            return true;
+          },
+        })
+        .overrideGuard(TutorAuthGuard)
+        .useValue({
+          canActivate: (context: import('@nestjs/common').ExecutionContext) => {
+            const req = context.switchToHttp().getRequest<{
+              tutor?: { id: string };
+            }>();
+            req.tutor = { id: 'tutor-123' };
+            return true;
+          },
+        })
+        .compile();
 
       const testApp = moduleFixture.createNestApplication();
       testApp.useGlobalPipes(

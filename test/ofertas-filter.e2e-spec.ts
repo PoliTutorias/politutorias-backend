@@ -7,11 +7,13 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import request from 'supertest';
 import { CreateOfertaUseCase } from '../src/ofertas/application/use-cases/create-oferta.use-case';
 import { GetAllOfertasUseCase } from '../src/ofertas/application/use-cases/get-all-ofertas.use-case';
 import { OfertasController } from '../src/ofertas/ofertas.controller';
 import { OfertasService } from '../src/ofertas/ofertas.service';
+import { Tutor } from '../src/tutors/entities/tutor.entity';
 
 /**
  * E2E Tests for HU27: GET /api/ofertas (filtrado por rango de precio)
@@ -101,13 +103,21 @@ const mockOfertasService = {
 const mockCreateOfertaUseCase = { execute: jest.fn() };
 const mockGetAllOfertasUseCase = { execute: jest.fn() };
 
+const createMockTutorRepository = () => ({
+  findOne: jest.fn(),
+  find: jest.fn(),
+  save: jest.fn(),
+});
+
 // ---------------------------------------------------------------------------
 // Suite principal
 // ---------------------------------------------------------------------------
 describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
   let app: INestApplication;
+  let mockTutorRepository: ReturnType<typeof createMockTutorRepository>;
 
   beforeEach(async () => {
+    mockTutorRepository = createMockTutorRepository();
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [OfertasController],
       providers: [
@@ -122,6 +132,10 @@ describe('OfertasController - GET /api/ofertas (e2e) - HU27', () => {
         {
           provide: GetAllOfertasUseCase,
           useValue: mockGetAllOfertasUseCase,
+        },
+        {
+          provide: getRepositoryToken(Tutor),
+          useValue: mockTutorRepository,
         },
       ],
     }).compile();

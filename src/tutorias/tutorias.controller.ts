@@ -19,6 +19,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TutorAuthGuard } from '../auth/guards/tutor-auth.guard';
 import { HistoryQueryParamsDto } from './dto/history-query-params.dto';
 import { HistoryResponseDto } from './dto/history-response.dto';
+import { ReportInasistenciaResponseDto } from './dto/report-inasistencia.dto';
 import { TutorialDetailDto } from './dto/tutorial-detail.dto';
 import { TutoriasService } from './tutorias.service';
 
@@ -90,18 +91,8 @@ export class TutoriasController {
   })
   @ApiResponse({
     status: 200,
+    type: ReportInasistenciaResponseDto,
     description: 'Inasistencia registrada exitosamente',
-    schema: {
-      example: {
-        success: true,
-        message: 'Inasistencia del estudiante registrada con éxito.',
-        data: {
-          id: '550e8400-e29b-41d4-a716-446655440000',
-          status: 'no-show',
-          updatedAt: '2024-05-24T10:00:00.000Z',
-        },
-      },
-    },
   })
   @ApiResponse({
     status: 404,
@@ -114,11 +105,7 @@ export class TutoriasController {
   async reportarInasistencia(
     @Request() req: AuthenticatedRequest,
     @Param('id') id: string,
-  ): Promise<{
-    success: boolean;
-    message: string;
-    data: { id: string; status: string; updatedAt: string };
-  }> {
+  ): Promise<ReportInasistenciaResponseDto> {
     const tutorId = req.tutor?.id ?? '';
     const result = await this.tutoriasService.reportarInasistencia(id, tutorId);
 

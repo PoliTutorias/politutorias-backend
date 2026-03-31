@@ -927,9 +927,7 @@ describe('TutoriasService', () => {
         },
       };
 
-      solicitudRepository.findOne.mockResolvedValue(
-        mockSolicitud as never,
-      );
+      solicitudRepository.findOne.mockResolvedValue(mockSolicitud as never);
 
       reviewRepository.findOne.mockResolvedValue({
         rating: 5,
@@ -966,9 +964,7 @@ describe('TutoriasService', () => {
         },
       };
 
-      solicitudRepository.findOne.mockResolvedValue(
-        mockSolicitud as never,
-      );
+      solicitudRepository.findOne.mockResolvedValue(mockSolicitud as never);
 
       reviewRepository.findOne.mockResolvedValue(null);
 

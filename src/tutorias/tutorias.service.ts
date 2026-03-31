@@ -354,8 +354,7 @@ export class TutoriasService {
 
       return {
         id: sol.id,
-        tutorName:
-          sol.oferta?.tutor?.nombreCompleto ?? 'Tutor',
+        tutorName: sol.oferta?.tutor?.nombreCompleto ?? 'Tutor',
         subjectName: sol.oferta?.titulo ?? 'Materia',
         date: primeraFecha,
         time: primeraHora,
@@ -397,8 +396,7 @@ export class TutoriasService {
       where: { solicitudId: id },
     });
 
-    const tutorName =
-      solicitud.oferta?.tutor?.nombreCompleto ?? 'Tutor';
+    const tutorName = solicitud.oferta?.tutor?.nombreCompleto ?? 'Tutor';
     const tutorAvatar = this.generateAvatarUrl(tutorName);
 
     const primeraFecha = solicitud.horarios?.[0]?.fecha ?? '';

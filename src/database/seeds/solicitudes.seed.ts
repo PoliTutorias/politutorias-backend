@@ -70,6 +70,10 @@ export async function seedSolicitudHU06(dataSource: DataSource): Promise<void> {
         { fecha: '2024-03-19', hora: '09:00' },
       ],
       estado: SolicitudEstado.ACEPTADA,
+      acceptedMeetingLink: null,
+      acceptedMeetingLocation:
+        'Cafetería EPN, Mesa al fondo junto a las ventanas',
+      acceptedAt: new Date('2024-03-15T08:00:00.000Z'),
     },
     // 3 ─ Solicitud RECHAZADA
     {

@@ -81,17 +81,19 @@ describe('TutoriasService', () => {
 
       solicitudRepository.find.mockResolvedValue(mockSolicitudes as never);
 
-      // Mock createQueryBuilder para summary
+      // Mock createQueryBuilder para summary y getHistorial
 
       const mockQueryBuilder = {
         leftJoin: jest.fn().mockReturnThis(),
-
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
-
         where: jest.fn().mockReturnThis(),
-
         andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
         getRawMany: jest.fn().mockResolvedValue([]),
+        getMany: jest.fn().mockResolvedValue(mockSolicitudes),
       };
 
       solicitudRepository.createQueryBuilder.mockReturnValue(
@@ -100,12 +102,20 @@ describe('TutoriasService', () => {
 
       const result = await service.getHistorial(tutorId, params);
 
-      // Verificar que se filtró por tutorId
-      expect(solicitudRepository.find).toHaveBeenCalledWith(
+      // Verificar que se usó createQueryBuilder con los filtros correctos
+      expect(solicitudRepository.createQueryBuilder).toHaveBeenCalledWith('s');
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+        's.tutorId = :tutorId',
+        { tutorId },
+      );
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        's.estado IN (:...estados)',
         expect.objectContaining({
-          where: expect.objectContaining({
-            tutorId,
-          }),
+          estados: expect.arrayContaining([
+            SolicitudEstado.COMPLETADA,
+            SolicitudEstado.ACEPTADA,
+            SolicitudEstado.NO_SHOW,
+          ]),
         }),
       );
 
@@ -135,17 +145,17 @@ describe('TutoriasService', () => {
 
       solicitudRepository.count.mockResolvedValue(1);
 
-      solicitudRepository.find.mockResolvedValue(mockSolicitudes as never);
-
       const mockQueryBuilder = {
         leftJoin: jest.fn().mockReturnThis(),
-
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
-
         where: jest.fn().mockReturnThis(),
-
         andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
         getRawMany: jest.fn().mockResolvedValue([]),
+        getMany: jest.fn().mockResolvedValue(mockSolicitudes),
       };
 
       solicitudRepository.createQueryBuilder.mockReturnValue(
@@ -177,14 +187,18 @@ describe('TutoriasService', () => {
       ];
 
       solicitudRepository.count.mockResolvedValue(1);
-      solicitudRepository.find.mockResolvedValue(mockSolicitudes as never);
 
       const mockQueryBuilder = {
         leftJoin: jest.fn().mockReturnThis(),
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
         getRawMany: jest.fn().mockResolvedValue([]),
+        getMany: jest.fn().mockResolvedValue(mockSolicitudes),
       };
 
       solicitudRepository.createQueryBuilder.mockReturnValue(
@@ -201,17 +215,18 @@ describe('TutoriasService', () => {
       const params: HistoryQueryParamsDto = { page: 1, limit: 5 };
 
       solicitudRepository.count.mockResolvedValue(25);
-      solicitudRepository.find.mockResolvedValue([]);
 
       const mockQueryBuilder = {
         leftJoin: jest.fn().mockReturnThis(),
-
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
-
         where: jest.fn().mockReturnThis(),
-
         andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
         getRawMany: jest.fn().mockResolvedValue([]),
+        getMany: jest.fn().mockResolvedValue([]),
       };
 
       solicitudRepository.createQueryBuilder.mockReturnValue(

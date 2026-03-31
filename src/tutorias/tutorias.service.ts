@@ -105,16 +105,26 @@ export class TutoriasService {
     const total = await this.solicitudRepository.count({ where });
 
     // Obtener solicitudes paginadas con relación a oferta
-    const solicitudes = await this.solicitudRepository.find({
-      where,
-      relations: ['oferta'],
-      order: {
-        completedAt: 'DESC',
-        acceptedAt: 'DESC',
-      },
-      skip,
-      take: limit,
-    });
+    // Ordenar por el timestamp más reciente (completedAt, noShowAt, o acceptedAt)
+    const solicitudes = await this.solicitudRepository
+      .createQueryBuilder('s')
+      .leftJoinAndSelect('s.oferta', 'oferta')
+      .where('s.tutorId = :tutorId', { tutorId })
+      .andWhere('s.estado IN (:...estados)', {
+        estados: [
+          SolicitudEstado.COMPLETADA,
+          SolicitudEstado.ACEPTADA,
+          SolicitudEstado.NO_SHOW,
+        ],
+      })
+      .orderBy(
+        'COALESCE(s.completedAt, s.noShowAt, s.acceptedAt)',
+        'DESC',
+        'NULLS LAST',
+      )
+      .skip(skip)
+      .take(limit)
+      .getMany();
 
     // Mapear a HistoryItemDto
     const items: HistoryItemDto[] = solicitudes.map((sol) => {

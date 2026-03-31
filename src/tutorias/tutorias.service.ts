@@ -128,7 +128,7 @@ export class TutoriasService {
         subjectName: sol.oferta?.titulo ?? 'Materia',
         date: primeraFecha,
         time: primeraHora,
-        status: this.mapTutorialStatusToDtoStatus(sol.estado),
+        status: this.mapEstadoToDto(sol.estado),
         pricePerHour: `$${sol.oferta?.precioHora ?? 0}/h`,
       };
     });
@@ -240,19 +240,9 @@ export class TutoriasService {
   }
 
   /**
-   * Mapea el estado de la base de datos al formato esperado por el DTO del frontend.
-   *
-   * PRD HU-48 §7 — Mapeo de Estados:
-   *   DB Value (SolicitudEstado) | DTO Value (Frontend)
-   *   ─────────────────────────── | ────────────────────
-   *   ACEPTADA  (≡ scheduled)    | SIN_CONFIRMAR
-   *   NO_SHOW                    | INASISTENCIA
-   *   COMPLETADA                 | Completada
-   *
-   * Expuesto como método público para permitir pruebas unitarias directas
-   * según PRD §10.2 (mapTutorialStatusToDtoStatus).
+   * Mapea el estado de la base de datos al formato esperado por el DTO
    */
-  mapTutorialStatusToDtoStatus(estado: SolicitudEstado): string {
+  private mapEstadoToDto(estado: SolicitudEstado): string {
     switch (estado) {
       case SolicitudEstado.NO_SHOW:
         return 'INASISTENCIA';

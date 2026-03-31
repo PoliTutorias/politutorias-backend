@@ -4,6 +4,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Oferta } from '../ofertas/domain/entities/oferta.entity';
+import { Tutor } from '../tutors/entities/tutor.entity';
+import { ReviewEntity } from './entities/review.entity';
 import {
   SolicitudEntity,
   SolicitudEstado,
@@ -22,6 +24,7 @@ import { TutoriasService } from './tutorias.service';
 describe('TutoriasService', () => {
   let service: TutoriasService;
   let solicitudRepository: jest.Mocked<Repository<SolicitudEntity>>;
+  let reviewRepository: jest.Mocked<Repository<ReviewEntity>>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -43,11 +46,24 @@ describe('TutoriasService', () => {
             findOne: jest.fn(),
           },
         },
+        {
+          provide: getRepositoryToken(Tutor),
+          useValue: {
+            findOne: jest.fn(),
+          },
+        },
+        {
+          provide: getRepositoryToken(ReviewEntity),
+          useValue: {
+            findOne: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<TutoriasService>(TutoriasService);
     solicitudRepository = module.get(getRepositoryToken(SolicitudEntity));
+    reviewRepository = module.get(getRepositoryToken(ReviewEntity));
   });
 
   afterEach(() => {
@@ -793,6 +809,177 @@ describe('TutoriasService', () => {
       expect(savedEntity.completedAt!.getTime()).toBeLessThanOrEqual(
         afterCall.getTime(),
       );
+    });
+  });
+
+  describe('findHistorialByStudent', () => {
+    it('debe filtrar por estudianteId y estados COMPLETADA/NO_SHOW', async () => {
+      const studentId = 'student-001';
+      const params = { page: 1, limit: 5 };
+
+      solicitudRepository.count.mockResolvedValue(2);
+
+      const mockSolicitudes = [
+        {
+          id: 'sol-1',
+          estudianteId: studentId,
+          estado: SolicitudEstado.COMPLETADA,
+          horarios: [{ fecha: '2026-03-01', hora: '10:00' }],
+          oferta: {
+            titulo: 'Cálculo',
+            precioHora: 15,
+            tutor: { nombreCompleto: 'Carlos López' },
+          },
+        },
+        {
+          id: 'sol-2',
+          estudianteId: studentId,
+          estado: SolicitudEstado.NO_SHOW,
+          horarios: [{ fecha: '2026-03-05', hora: '14:00' }],
+          oferta: {
+            titulo: 'Álgebra',
+            precioHora: 12,
+            tutor: { nombreCompleto: 'Ana Martínez' },
+          },
+        },
+      ];
+
+      const mockQB = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(mockSolicitudes),
+      };
+
+      solicitudRepository.createQueryBuilder.mockReturnValue(mockQB as never);
+
+      const result = await service.findHistorialByStudent(studentId, params);
+
+      expect(result.paginatedData.items).toHaveLength(2);
+      expect(result.paginatedData.items[0].tutorName).toBe('Carlos López');
+      expect(result.paginatedData.items[1].status).toBe('INASISTENCIA');
+      expect(result.paginatedData.total).toBe(2);
+    });
+
+    it('debe calcular lastPage correctamente', async () => {
+      const studentId = 'student-001';
+      solicitudRepository.count.mockResolvedValue(12);
+
+      const mockQB = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([]),
+      };
+
+      solicitudRepository.createQueryBuilder.mockReturnValue(mockQB as never);
+
+      const result = await service.findHistorialByStudent(studentId, {
+        page: 1,
+        limit: 5,
+      });
+
+      expect(result.paginatedData.lastPage).toBe(3);
+    });
+  });
+
+  describe('findOneTutoriaDetalle', () => {
+    it('debe lanzar NotFoundException si no existe', async () => {
+      solicitudRepository.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.findOneTutoriaDetalle('student-001', 'no-existe'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('debe lanzar NotFoundException si estudianteId no coincide', async () => {
+      solicitudRepository.findOne.mockResolvedValue({
+        id: 'sol-1',
+        estudianteId: 'otro-student',
+        estado: SolicitudEstado.COMPLETADA,
+      } as SolicitudEntity);
+
+      await expect(
+        service.findOneTutoriaDetalle('student-001', 'sol-1'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('debe retornar detalle con review si existe', async () => {
+      const mockSolicitud = {
+        id: 'sol-1',
+        estudianteId: 'student-001',
+        estado: SolicitudEstado.COMPLETADA,
+        mensaje: 'Ayuda con cálculo',
+        modalidad: 'Virtual',
+        horarios: [{ fecha: '2026-03-01', hora: '10:00' }],
+        acceptedMeetingLink: 'https://zoom.us/j/123',
+        acceptedMeetingLocation: null,
+        oferta: {
+          titulo: 'Cálculo',
+          precioHora: 15,
+          tutor: { nombreCompleto: 'Carlos López' },
+        },
+      };
+
+      solicitudRepository.findOne.mockResolvedValue(
+        mockSolicitud as never,
+      );
+
+      reviewRepository.findOne.mockResolvedValue({
+        rating: 5,
+        comment: 'Excelente',
+        createdAt: new Date('2026-03-02T10:00:00Z'),
+      } as ReviewEntity);
+
+      const result = await service.findOneTutoriaDetalle(
+        'student-001',
+        'sol-1',
+      );
+
+      expect(result.tutor.name).toBe('Carlos López');
+      expect(result.status).toBe('Completada');
+      expect(result.review).not.toBeNull();
+      expect(result.review!.rating).toBe(5);
+      expect(result.meetingLink).toBe('https://zoom.us/j/123');
+    });
+
+    it('debe retornar review null si no existe', async () => {
+      const mockSolicitud = {
+        id: 'sol-2',
+        estudianteId: 'student-001',
+        estado: SolicitudEstado.NO_SHOW,
+        mensaje: 'Repaso series',
+        modalidad: 'Presencial',
+        horarios: [{ fecha: '2026-03-05', hora: '14:00' }],
+        acceptedMeetingLink: null,
+        acceptedMeetingLocation: 'Lab 102',
+        oferta: {
+          titulo: 'Álgebra',
+          precioHora: 12,
+          tutor: { nombreCompleto: 'Ana Martínez' },
+        },
+      };
+
+      solicitudRepository.findOne.mockResolvedValue(
+        mockSolicitud as never,
+      );
+
+      reviewRepository.findOne.mockResolvedValue(null);
+
+      const result = await service.findOneTutoriaDetalle(
+        'student-001',
+        'sol-2',
+      );
+
+      expect(result.status).toBe('INASISTENCIA');
+      expect(result.review).toBeNull();
+      expect(result.location).toBe('Lab 102');
     });
   });
 });

@@ -4,7 +4,6 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  Patch,
   Post,
   Query,
   Request,
@@ -23,7 +22,6 @@ import { HistoryResponseDto } from './dto/history-response.dto';
 import { ReportInasistenciaResponseDto } from './dto/report-inasistencia.dto';
 import { TutorialDetailDto } from './dto/tutorial-detail.dto';
 import { TutoriasService } from './tutorias.service';
-import { CompletarTutoriaResponseDto } from './dto/completar-tutoria-response.dto';
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -117,46 +115,6 @@ export class TutoriasController {
       data: {
         id: result.id,
         status: 'no-show',
-        updatedAt: result.updatedAt.toISOString(),
-      },
-    };
-  }
-
-  @Patch(':id/completar')
-  @UseGuards(JwtAuthGuard, TutorAuthGuard)
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Registrar tutoría completada',
-    description:
-      'Marca una tutoría como completada. Solo válido para tutorías en estado ACEPTADA (SIN_CONFIRMAR).',
-  })
-  @ApiResponse({
-    status: 200,
-    type: CompletarTutoriaResponseDto,
-    description: 'Tutoría marcada como completada exitosamente',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Tutoría no encontrada o no pertenece al tutor',
-  })
-  @ApiResponse({
-    status: 400,
-    description:
-      'Solo se pueden completar tutorías programadas (SIN_CONFIRMAR)',
-  })
-  async completarTutoria(
-    @Request() req: AuthenticatedRequest,
-    @Param('id') id: string,
-  ): Promise<CompletarTutoriaResponseDto> {
-    const tutorId = req.tutor?.id ?? '';
-    const result = await this.tutoriasService.completarTutoria(id, tutorId);
-
-    return {
-      success: true,
-      message: 'Tutoría marcada como completada exitosamente.',
-      data: {
-        id: result.id,
-        status: 'COMPLETADA',
         updatedAt: result.updatedAt.toISOString(),
       },
     };

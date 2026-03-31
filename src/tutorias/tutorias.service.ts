@@ -198,7 +198,49 @@ export class TutoriasService {
           : null,
       pricePerHour: `$${solicitud.oferta?.precioHora ?? 0}/h`,
       studentMessage: solicitud.mensaje,
+      status: this.mapTutorialStatusToDtoStatus(solicitud.estado),
+      // Campos de HU-10 (calificación) - null por ahora hasta que se implemente
+      studentRating: null,
+      studentComment: null,
     };
+  }
+
+  /**
+   * Marca una tutoría como completada
+   * Solo puede completarse si está en estado ACEPTADA (SIN_CONFIRMAR)
+   */
+  async completarTutoria(
+    tutoriaId: string,
+    tutorId: string,
+  ): Promise<SolicitudEntity> {
+    // 1. Buscar la solicitud
+    const solicitud = await this.solicitudRepository.findOne({
+      where: { id: tutoriaId },
+    });
+
+    // 2. Validar que existe
+    if (!solicitud) {
+      throw new NotFoundException('Tutoría no encontrada');
+    }
+
+    // 3. Validar ownership (por seguridad, mismo mensaje de error)
+    if (solicitud.tutorId !== tutorId) {
+      throw new NotFoundException('Tutoría no encontrada');
+    }
+
+    // 4. Validar estado (solo ACEPTADA puede marcarse como COMPLETADA)
+    if (solicitud.estado !== SolicitudEstado.ACEPTADA) {
+      throw new BadRequestException(
+        'Solo se pueden completar tutorías programadas (SIN_CONFIRMAR).',
+      );
+    }
+
+    // 5. Actualizar estado y timestamp
+    solicitud.estado = SolicitudEstado.COMPLETADA;
+    solicitud.completedAt = new Date();
+
+    // 6. Persistir cambios
+    return this.solicitudRepository.save(solicitud);
   }
 
   /**

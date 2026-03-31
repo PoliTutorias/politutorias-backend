@@ -78,4 +78,27 @@ export class TutorialDetailDto {
     example: 'Necesito ayuda con límites y derivadas',
   })
   studentMessage: string;
+
+  @ApiProperty({
+    description: 'Estado de la tutoría',
+    example: 'SIN_CONFIRMAR',
+    enum: ['SIN_CONFIRMAR', 'COMPLETADA', 'CANCELADA', 'INASISTENCIA'],
+  })
+  status: string;
+
+  @ApiProperty({
+    description: 'Calificación del estudiante (HU-10)',
+    example: 5,
+    required: false,
+    nullable: true,
+  })
+  studentRating: number | null;
+
+  @ApiProperty({
+    description: 'Comentario del estudiante (HU-10)',
+    example: 'Excelente explicación',
+    required: false,
+    nullable: true,
+  })
+  studentComment: string | null;
 }

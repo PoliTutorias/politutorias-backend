@@ -1,13 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ScheduleModule } from '@nestjs/schedule';
-import { AgendaModule } from './agenda/agenda.module';
-import { AgendaEstudianteModule } from './agenda-estudiante/agenda-estudiante.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthModule } from './auth/auth.module';
-import { UserEntity } from './users/entities/user.entity';
 import { DisponibilidadModule } from './disponibilidad/disponibilidad.module';
 import { AvailabilityEntity } from './disponibilidad/entities/availability.entity';
 import { ExperienciaEntity } from './experiencias/entities/experiencia.entity';
@@ -22,7 +17,6 @@ import { SolicitudEntity } from './solicitudes/entities/solicitud.entity';
 import { SolicitudesModule } from './solicitudes/solicitudes.module';
 import { Tutor } from './tutors/entities/tutor.entity';
 import { TutorsModule } from './tutors/tutors.module';
-import { TutoriasModule } from './tutorias/tutorias.module';
 
 @Module({
   imports: [
@@ -40,7 +34,6 @@ import { TutoriasModule } from './tutorias/tutorias.module';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
         entities: [
-          UserEntity,
           Oferta,
           Tutor,
           AvailabilityEntity,
@@ -57,8 +50,6 @@ import { TutoriasModule } from './tutorias/tutorias.module';
       }),
       inject: [ConfigService],
     }),
-    AuthModule,
-    ScheduleModule.forRoot(),
     OfertasModule,
     OffersModule,
     TutorsModule,
@@ -66,9 +57,6 @@ import { TutoriasModule } from './tutorias/tutorias.module';
     ExperienciasModule,
     PerfilModule,
     SolicitudesModule,
-    AgendaModule,
-    AgendaEstudianteModule,
-    TutoriasModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -480,7 +480,7 @@ describe('TutoriasService', () => {
 
       expect(solicitudRepository.findOne).toHaveBeenCalledWith({
         where: { id: tutoriaId },
-        relations: ['oferta', 'oferta.tutor', 'oferta.materia'],
+        relations: ['oferta'],
       });
     });
 
@@ -560,7 +560,7 @@ describe('TutoriasService', () => {
       // Assert
       expect(solicitudRepository.findOne).toHaveBeenCalledWith({
         where: { id: tutoriaId },
-        relations: ['oferta', 'oferta.tutor', 'oferta.materia'],
+        relations: ['oferta'],
       });
 
       expect(solicitudRepository.save).toHaveBeenCalledWith(
@@ -629,7 +629,7 @@ describe('TutoriasService', () => {
 
       expect(solicitudRepository.findOne).toHaveBeenCalledWith({
         where: { id: tutoriaId },
-        relations: ['oferta', 'oferta.tutor', 'oferta.materia'],
+        relations: ['oferta'],
       });
     });
 
@@ -712,7 +712,7 @@ describe('TutoriasService', () => {
       // Assert
       expect(solicitudRepository.findOne).toHaveBeenCalledWith({
         where: { id: tutoriaId },
-        relations: ['oferta', 'oferta.tutor', 'oferta.materia'],
+        relations: ['oferta'],
       });
 
       expect(solicitudRepository.save).toHaveBeenCalledWith(

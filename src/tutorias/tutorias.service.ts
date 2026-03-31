@@ -278,7 +278,7 @@ export class TutoriasService {
   ): Promise<SolicitudEntity> {
     const solicitud = await this.solicitudRepository.findOne({
       where: { id },
-      relations: ['oferta', 'oferta.tutor', 'oferta.materia'],
+      relations: ['oferta'],
     });
 
     if (!solicitud) {

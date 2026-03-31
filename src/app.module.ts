@@ -9,7 +9,6 @@ import { ExperienciaEntity } from './experiencias/entities/experiencia.entity';
 import { ExperienciasModule } from './experiencias/experiencias.module';
 import { MateriaEntity } from './materias/entities/materia.entity';
 import { Oferta } from './ofertas/domain/entities/oferta.entity';
-import { OfertaEntity } from './ofertas/entities/oferta.entity';
 import { OfertasModule } from './ofertas/ofertas.module';
 import { OffersModule } from './offers/offers.module';
 import { PerfilProfesionalEntity } from './perfil/entities/perfil-profesional.entity';
@@ -36,7 +35,6 @@ import { TutorsModule } from './tutors/tutors.module';
         database: configService.get<string>('DB_NAME'),
         entities: [
           Oferta,
-          OfertaEntity,
           Tutor,
           AvailabilityEntity,
           ExperienciaEntity,

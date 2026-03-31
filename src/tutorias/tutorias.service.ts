@@ -10,11 +10,17 @@ import {
   SolicitudEstado,
 } from '../solicitudes/entities/solicitud.entity';
 import { Oferta } from '../ofertas/domain/entities/oferta.entity';
+import { Tutor } from '../tutors/entities/tutor.entity';
+import { ReviewEntity } from './entities/review.entity';
 import { HistoryQueryParamsDto } from './dto/history-query-params.dto';
 import { HistoryResponseDto } from './dto/history-response.dto';
 import { HistorySummaryDto } from './dto/history-summary.dto';
 import { TutorialDetailDto } from './dto/tutorial-detail.dto';
 import { HistoryItemDto } from './dto/history-item.dto';
+import { HistorialEstudianteQueryDto } from './dto/historial-estudiante-query.dto';
+import { HistorialEstudianteResponseDto } from './dto/historial-estudiante-response.dto';
+import { HistorialEstudianteItemDto } from './dto/historial-estudiante-item.dto';
+import { TutoriaDetalleEstudianteDto } from './dto/tutoria-detalle-estudiante.dto';
 
 @Injectable()
 export class TutoriasService {
@@ -23,6 +29,10 @@ export class TutoriasService {
     private readonly solicitudRepository: Repository<SolicitudEntity>,
     @InjectRepository(Oferta)
     private readonly ofertaRepository: Repository<Oferta>,
+    @InjectRepository(Tutor)
+    private readonly tutorRepository: Repository<Tutor>,
+    @InjectRepository(ReviewEntity)
+    private readonly reviewRepository: Repository<ReviewEntity>,
   ) {}
 
   /**
@@ -306,6 +316,121 @@ export class TutoriasService {
     return solicitud;
   }
 
+  /**
+   * HU-40: Obtiene el historial paginado del estudiante
+   * Solo muestra tutorías COMPLETADA y NO_SHOW
+   */
+  async findHistorialByStudent(
+    studentId: string,
+    params: HistorialEstudianteQueryDto,
+  ): Promise<HistorialEstudianteResponseDto> {
+    const page = params.page ?? 1;
+    const limit = params.limit ?? 5;
+    const skip = (page - 1) * limit;
+
+    const estados = [SolicitudEstado.COMPLETADA, SolicitudEstado.NO_SHOW];
+
+    // Contar total
+    const total = await this.solicitudRepository.count({
+      where: { estudianteId: studentId, estado: In(estados) },
+    });
+
+    // QueryBuilder con join a oferta y oferta.tutor
+    const solicitudes = await this.solicitudRepository
+      .createQueryBuilder('s')
+      .leftJoinAndSelect('s.oferta', 'oferta')
+      .leftJoinAndSelect('oferta.tutor', 'tutor')
+      .where('s.estudianteId = :studentId', { studentId })
+      .andWhere('s.estado IN (:...estados)', { estados })
+      .addOrderBy('s.completedAt', 'DESC', 'NULLS LAST')
+      .addOrderBy('s.noShowAt', 'DESC', 'NULLS LAST')
+      .skip(skip)
+      .take(limit)
+      .getMany();
+
+    const items: HistorialEstudianteItemDto[] = solicitudes.map((sol) => {
+      const primeraFecha = sol.horarios?.[0]?.fecha ?? '';
+      const primeraHora = sol.horarios?.[0]?.hora ?? '';
+
+      return {
+        id: sol.id,
+        tutorName: sol.oferta?.tutor?.nombreCompleto ?? 'Tutor',
+        subjectName: sol.oferta?.titulo ?? 'Materia',
+        date: primeraFecha,
+        time: primeraHora,
+        status: this.mapEstadoToDto(sol.estado),
+        pricePerHour: `$${sol.oferta?.precioHora ?? 0}/h`,
+      };
+    });
+
+    const lastPage = Math.ceil(total / limit) || 1;
+
+    return {
+      paginatedData: { items, total, page, lastPage },
+    };
+  }
+
+  /**
+   * HU-40: Detalle de una tutoría para el estudiante
+   * Carga relaciones Review, Tutor y valida propiedad
+   */
+  async findOneTutoriaDetalle(
+    studentId: string,
+    id: string,
+  ): Promise<TutoriaDetalleEstudianteDto> {
+    const solicitud = await this.solicitudRepository.findOne({
+      where: { id },
+      relations: ['oferta', 'oferta.tutor'],
+    });
+
+    if (!solicitud) {
+      throw new NotFoundException('Tutoría no encontrada');
+    }
+
+    if (solicitud.estudianteId !== studentId) {
+      throw new NotFoundException('Tutoría no encontrada');
+    }
+
+    // Cargar review si existe
+    const review = await this.reviewRepository.findOne({
+      where: { solicitudId: id },
+    });
+
+    const tutorName = solicitud.oferta?.tutor?.nombreCompleto ?? 'Tutor';
+    const tutorAvatar = this.generateAvatarUrl(tutorName);
+
+    const primeraFecha = solicitud.horarios?.[0]?.fecha ?? '';
+    const formattedDate = this.formatDate(primeraFecha);
+    const primeraHora = solicitud.horarios?.[0]?.hora ?? '';
+    const formattedTime = this.formatTime(primeraHora);
+
+    return {
+      id: solicitud.id,
+      tutor: { name: tutorName, avatar: tutorAvatar },
+      subject: solicitud.oferta?.titulo ?? 'Materia',
+      date: formattedDate,
+      time: formattedTime,
+      modality: solicitud.modalidad ?? 'Virtual',
+      meetingLink:
+        solicitud.modalidad === 'Virtual'
+          ? solicitud.acceptedMeetingLink
+          : null,
+      location:
+        solicitud.modalidad === 'Presencial'
+          ? solicitud.acceptedMeetingLocation
+          : null,
+      pricePerHour: `$${solicitud.oferta?.precioHora ?? 0}/h`,
+      studentMessage: solicitud.mensaje,
+      status: this.mapEstadoToDto(solicitud.estado),
+      review: review
+        ? {
+            rating: review.rating,
+            comment: review.comment,
+            createdAt: review.createdAt.toISOString(),
+          }
+        : null,
+    };
+  }
   /**
    * Mapea el estado de la base de datos al formato esperado por el DTO
    */

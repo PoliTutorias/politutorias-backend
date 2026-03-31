@@ -21,6 +21,9 @@ import { TutorAuthGuard } from '../auth/guards/tutor-auth.guard';
 import { HistoryQueryParamsDto } from './dto/history-query-params.dto';
 import { HistoryResponseDto } from './dto/history-response.dto';
 import { TutorialDetailDto } from './dto/tutorial-detail.dto';
+import { HistorialEstudianteQueryDto } from './dto/historial-estudiante-query.dto';
+import { HistorialEstudianteResponseDto } from './dto/historial-estudiante-response.dto';
+import { TutoriaDetalleEstudianteDto } from './dto/tutoria-detalle-estudiante.dto';
 import { TutoriasService } from './tutorias.service';
 
 interface AuthenticatedRequest extends Request {
@@ -58,6 +61,53 @@ export class TutoriasController {
   ): Promise<HistoryResponseDto> {
     const tutorId = req.tutor?.id ?? '';
     return this.tutoriasService.getHistorial(tutorId, params);
+  }
+
+  /**
+   * HU-40: GET /api/tutorias/estudiante/historial
+   */
+  @Get('estudiante/historial')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Historial de tutorías del estudiante',
+    description:
+      'Retorna el historial paginado de tutorías completadas y con inasistencia del estudiante autenticado.',
+  })
+  @ApiResponse({
+    status: 200,
+    type: HistorialEstudianteResponseDto,
+  })
+  async getHistorialEstudiante(
+    @Request() req: AuthenticatedRequest,
+    @Query() params: HistorialEstudianteQueryDto,
+  ): Promise<HistorialEstudianteResponseDto> {
+    const studentId = req.user.id;
+    return this.tutoriasService.findHistorialByStudent(studentId, params);
+  }
+
+  /**
+   * HU-40: GET /api/tutorias/estudiante/:id
+   */
+  @Get('estudiante/:id')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Detalle de tutoría del estudiante',
+    description:
+      'Retorna el detalle de una tutoría específica del estudiante, incluyendo reseña si existe.',
+  })
+  @ApiResponse({
+    status: 200,
+    type: TutoriaDetalleEstudianteDto,
+  })
+  @ApiResponse({ status: 404, description: 'Tutoría no encontrada' })
+  async getDetalleEstudiante(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ): Promise<TutoriaDetalleEstudianteDto> {
+    const studentId = req.user.id;
+    return this.tutoriasService.findOneTutoriaDetalle(studentId, id);
   }
 
   @Get(':id')

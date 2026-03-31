@@ -69,7 +69,7 @@ export async function seedSolicitudHU11(dataSource: DataSource): Promise<void> {
     // SESIONES FUTURAS (ACEPTADA) → "proximas"
     // ─────────────────────────────────────────────────────────────
 
-    // S1 — Futura Virtual — Cálculo — 25 julio 2099 — 10:00
+    // S1 — Futura Virtual — Cálculo — 27 marzo 2026 — 10:00
     {
       estudianteId: 'estudiante-hu11-001',
       ofertaId: getOfertaId('oferta-calc'),
@@ -78,11 +78,11 @@ export async function seedSolicitudHU11(dataSource: DataSource): Promise<void> {
       mensaje:
         'Necesito ayuda con límites y derivadas para el examen del próximo mes.',
       modalidad: 'Virtual',
-      horarios: [{ fecha: '2099-07-25', hora: '10:00' }],
+      horarios: [{ fecha: '2026-03-27', hora: '10:00' }],
       estado: SolicitudEstado.ACEPTADA,
       acceptedMeetingLink: 'https://zoom.us/j/poli-calc-hu11-001',
       acceptedMeetingLocation: null,
-      acceptedAt: new Date('2099-07-20T08:00:00.000Z'),
+      acceptedAt: new Date('2026-03-22T08:00:00.000Z'),
     },
 
     // S2 — Futura Presencial — Álgebra — 15 agosto 2099 — 09:00

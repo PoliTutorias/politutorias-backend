@@ -106,7 +106,8 @@ export class TutoriasService {
 
     // Obtener solicitudes paginadas con relación a oferta
     // Ordenar por el timestamp más reciente (completedAt, noShowAt, o acceptedAt)
-    const solicitudes = await this.solicitudRepository
+    // Uso de subconsultas múltiples para evitar problemas con COALESCE en addOrderBy
+    const queryBuilder = this.solicitudRepository
       .createQueryBuilder('s')
       .leftJoinAndSelect('s.oferta', 'oferta')
       .where('s.tutorId = :tutorId', { tutorId })
@@ -116,14 +117,18 @@ export class TutoriasService {
           SolicitudEstado.ACEPTADA,
           SolicitudEstado.NO_SHOW,
         ],
-      })
-      .addOrderBy(
-        'COALESCE(s."completedAt", s."noShowAt", s."acceptedAt")',
-        'DESC',
-      )
-      .skip(skip)
-      .take(limit)
-      .getMany();
+      });
+
+    // Ordenar usando múltiples criterios para evitar problemas con COALESCE
+    // Primero por completedAt (las completadas al final por ser más recientes)
+    // Luego por noShowAt (inasistencias)
+    // Finalmente por acceptedAt (aceptadas sin confirmar)
+    queryBuilder
+      .addOrderBy('s.completedAt', 'DESC', 'NULLS LAST')
+      .addOrderBy('s.noShowAt', 'DESC', 'NULLS LAST')
+      .addOrderBy('s.acceptedAt', 'DESC', 'NULLS LAST');
+
+    const solicitudes = await queryBuilder.skip(skip).take(limit).getMany();
 
     // Mapear a HistoryItemDto
     const items: HistoryItemDto[] = solicitudes.map((sol) => {

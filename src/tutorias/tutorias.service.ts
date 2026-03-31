@@ -209,20 +209,8 @@ export class TutoriasService {
     tutoriaId: string,
     tutorId: string,
   ): Promise<SolicitudEntity> {
-    // 1. Buscar la solicitud
-    const solicitud = await this.solicitudRepository.findOne({
-      where: { id: tutoriaId },
-    });
-
-    // 2. Validar que existe
-    if (!solicitud) {
-      throw new NotFoundException('Tutoría no encontrada');
-    }
-
-    // 3. Validar ownership (por seguridad, mismo mensaje de error)
-    if (solicitud.tutorId !== tutorId) {
-      throw new NotFoundException('Tutoría no encontrada');
-    }
+    // 1-3. Validar existencia y ownership
+    const solicitud = await this.validarYObtenerSolicitud(tutoriaId, tutorId);
 
     // 4. Validar estado (solo ACEPTADA puede marcarse como NO_SHOW)
     if (solicitud.estado !== SolicitudEstado.ACEPTADA) {
@@ -237,6 +225,71 @@ export class TutoriasService {
 
     // 6. Persistir cambios
     return this.solicitudRepository.save(solicitud);
+  }
+
+  /**
+   * Marca una tutoría como completada (HU-43)
+   * Solo válido para tutorías en estado ACEPTADA
+   */
+  async marcarCompletada(
+    id: string,
+    tutorId: string,
+  ): Promise<{
+    success: boolean;
+    message: string;
+    data: { id: string; status: string; updatedAt: string };
+  }> {
+    // 1-3. Validar existencia y ownership
+    const solicitud = await this.validarYObtenerSolicitud(id, tutorId);
+
+    // 4. Validar estado permitido
+    if (solicitud.estado !== SolicitudEstado.ACEPTADA) {
+      throw new BadRequestException(
+        'Solo se pueden completar tutorías programadas',
+      );
+    }
+
+    // 5. Actualizar estado y timestamp
+    solicitud.estado = SolicitudEstado.COMPLETADA;
+    solicitud.completedAt = new Date();
+
+    // 6. Persistir
+    const solicitudActualizada = await this.solicitudRepository.save(solicitud);
+
+    // 7. Retornar con formato consistente
+    return {
+      success: true,
+      message: 'Tutoría marcada como completada',
+      data: {
+        id: solicitudActualizada.id,
+        status: 'completed',
+        updatedAt: solicitudActualizada.updatedAt.toISOString(),
+      },
+    };
+  }
+
+  /**
+   * Valida la existencia de una solicitud y ownership del tutor
+   * Helper privado para eliminar duplicación entre métodos
+   */
+  private async validarYObtenerSolicitud(
+    id: string,
+    tutorId: string,
+  ): Promise<SolicitudEntity> {
+    const solicitud = await this.solicitudRepository.findOne({
+      where: { id },
+      relations: ['oferta', 'oferta.tutor', 'oferta.materia'],
+    });
+
+    if (!solicitud) {
+      throw new NotFoundException('Tutoría no encontrada');
+    }
+
+    if (solicitud.tutorId !== tutorId) {
+      throw new NotFoundException('Tutoría no encontrada');
+    }
+
+    return solicitud;
   }
 
   /**

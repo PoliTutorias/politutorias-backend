@@ -480,6 +480,7 @@ describe('TutoriasService', () => {
 
       expect(solicitudRepository.findOne).toHaveBeenCalledWith({
         where: { id: tutoriaId },
+        relations: ['oferta', 'oferta.tutor', 'oferta.materia'],
       });
     });
 
@@ -559,6 +560,7 @@ describe('TutoriasService', () => {
       // Assert
       expect(solicitudRepository.findOne).toHaveBeenCalledWith({
         where: { id: tutoriaId },
+        relations: ['oferta', 'oferta.tutor', 'oferta.materia'],
       });
 
       expect(solicitudRepository.save).toHaveBeenCalledWith(
@@ -606,6 +608,170 @@ describe('TutoriasService', () => {
         beforeCall.getTime(),
       );
       expect(savedEntity.noShowAt!.getTime()).toBeLessThanOrEqual(
+        afterCall.getTime(),
+      );
+    });
+  });
+
+  describe('marcarCompletada', () => {
+    const tutoriaId = '550e8400-e29b-41d4-a716-446655440000';
+    const tutorId = 'tutor-123';
+
+    // U-01: Tutoría no existe
+    it('should throw NotFoundException if tutorial does not exist', async () => {
+      // Arrange: Mock retorna null (no existe)
+      solicitudRepository.findOne.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        service.marcarCompletada(tutoriaId, tutorId),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(solicitudRepository.findOne).toHaveBeenCalledWith({
+        where: { id: tutoriaId },
+        relations: ['oferta', 'oferta.tutor', 'oferta.materia'],
+      });
+    });
+
+    // U-02: Ownership validation
+    it('should throw NotFoundException if tutorId does not match', async () => {
+      // Arrange: Mock retorna solicitud de otro tutor
+      const mockSolicitud = {
+        id: tutoriaId,
+        tutorId: 'otro-tutor-456', // Diferente al tutorId solicitante
+        estado: SolicitudEstado.ACEPTADA,
+        horarios: [{ fecha: '2024-05-24', hora: '10:00' }],
+      };
+
+      solicitudRepository.findOne.mockResolvedValue(
+        mockSolicitud as SolicitudEntity,
+      );
+
+      // Act & Assert
+      await expect(
+        service.marcarCompletada(tutoriaId, tutorId),
+      ).rejects.toThrow(NotFoundException);
+
+      // No debe llamar a save()
+      expect(solicitudRepository.save).not.toHaveBeenCalled();
+    });
+
+    // U-03: Estado inválido
+    it('should throw BadRequestException if status is not ACEPTADA', async () => {
+      // Arrange: Mock solicitud en estado COMPLETADA
+      const mockSolicitud = {
+        id: tutoriaId,
+        tutorId,
+        estado: SolicitudEstado.COMPLETADA, // No es ACEPTADA
+        horarios: [{ fecha: '2024-05-24', hora: '10:00' }],
+      };
+
+      solicitudRepository.findOne.mockResolvedValue(
+        mockSolicitud as SolicitudEntity,
+      );
+
+      // Act & Assert
+      await expect(
+        service.marcarCompletada(tutoriaId, tutorId),
+      ).rejects.toThrow('Solo se pueden completar tutorías programadas');
+
+      // No debe llamar a save()
+      expect(solicitudRepository.save).not.toHaveBeenCalled();
+    });
+
+    // U-04: Happy path
+    it('should update status to COMPLETADA and save', async () => {
+      // Arrange: Mock solicitud válida
+      const mockSolicitud = {
+        id: tutoriaId,
+        tutorId,
+        estado: SolicitudEstado.ACEPTADA,
+        horarios: [{ fecha: '2024-05-24', hora: '10:00' }],
+        completedAt: null,
+        updatedAt: new Date('2024-05-24T10:00:00Z'),
+      };
+
+      solicitudRepository.findOne.mockResolvedValue(
+        mockSolicitud as SolicitudEntity,
+      );
+
+      const mockUpdatedSolicitud = {
+        ...mockSolicitud,
+        estado: SolicitudEstado.COMPLETADA,
+        completedAt: expect.any(Date),
+        updatedAt: new Date('2024-05-24T10:30:00Z'),
+      };
+
+      solicitudRepository.save.mockResolvedValue(
+        mockUpdatedSolicitud as SolicitudEntity,
+      );
+
+      // Act
+      const result = await service.marcarCompletada(tutoriaId, tutorId);
+
+      // Assert
+      expect(solicitudRepository.findOne).toHaveBeenCalledWith({
+        where: { id: tutoriaId },
+        relations: ['oferta', 'oferta.tutor', 'oferta.materia'],
+      });
+
+      expect(solicitudRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: tutoriaId,
+          estado: SolicitudEstado.COMPLETADA,
+          completedAt: expect.any(Date),
+        }),
+      );
+
+      // Validar estructura del resultado
+      expect(result).toEqual({
+        success: true,
+        message: 'Tutoría marcada como completada',
+        data: {
+          id: tutoriaId,
+          status: 'completed',
+          updatedAt: expect.any(String),
+        },
+      });
+    });
+
+    // U-05: Timestamp actualizado
+    it('should set completedAt timestamp when marking as completed', async () => {
+      // Arrange
+      const mockSolicitud = {
+        id: tutoriaId,
+        tutorId,
+        estado: SolicitudEstado.ACEPTADA,
+        horarios: [{ fecha: '2024-05-24', hora: '10:00' }],
+        completedAt: null,
+        updatedAt: new Date('2024-05-24T10:00:00Z'),
+      };
+
+      solicitudRepository.findOne.mockResolvedValue(
+        mockSolicitud as SolicitudEntity,
+      );
+
+      const savedSolicitud: Partial<SolicitudEntity> = { ...mockSolicitud };
+      solicitudRepository.save.mockImplementation((entity: SolicitudEntity) => {
+        savedSolicitud.estado = entity.estado;
+        savedSolicitud.completedAt = entity.completedAt;
+        savedSolicitud.updatedAt = new Date();
+        return Promise.resolve(savedSolicitud as SolicitudEntity);
+      });
+
+      // Act
+      const beforeCall = new Date();
+      await service.marcarCompletada(tutoriaId, tutorId);
+      const afterCall = new Date();
+
+      // Assert: verificar que save fue llamado con un Date válido
+      const savedEntity = solicitudRepository.save.mock
+        .calls[0][0] as SolicitudEntity;
+      expect(savedEntity.completedAt).toBeInstanceOf(Date);
+      expect(savedEntity.completedAt!.getTime()).toBeGreaterThanOrEqual(
+        beforeCall.getTime(),
+      );
+      expect(savedEntity.completedAt!.getTime()).toBeLessThanOrEqual(
         afterCall.getTime(),
       );
     });

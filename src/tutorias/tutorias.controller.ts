@@ -4,6 +4,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Query,
   Request,
@@ -131,5 +132,52 @@ export class TutoriasController {
         updatedAt: result.updatedAt.toISOString(),
       },
     };
+  }
+
+  @Patch(':id/completar')
+  @UseGuards(JwtAuthGuard, TutorAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Marcar tutoría como completada',
+    description:
+      'Marca una tutoría como completada (COMPLETADA). Solo válido para tutorías en estado ACEPTADA.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Tutoría marcada como completada',
+    schema: {
+      example: {
+        success: true,
+        message: 'Tutoría marcada como completada',
+        data: {
+          id: 'uuid-string',
+          status: 'completed',
+          updatedAt: '2026-03-31T10:30:00Z',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Tutoría no encontrada',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Estado inválido',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'No autenticado',
+  })
+  async completar(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ): Promise<{
+    success: boolean;
+    message: string;
+    data: { id: string; status: string; updatedAt: string };
+  }> {
+    const tutorId = req.tutor?.id ?? '';
+    return this.tutoriasService.marcarCompletada(id, tutorId);
   }
 }

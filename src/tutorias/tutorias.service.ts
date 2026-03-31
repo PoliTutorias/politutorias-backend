@@ -117,10 +117,9 @@ export class TutoriasService {
           SolicitudEstado.NO_SHOW,
         ],
       })
-      .orderBy(
-        'COALESCE(s.completedAt, s.noShowAt, s.acceptedAt)',
+      .addOrderBy(
+        'COALESCE(s."completedAt", s."noShowAt", s."acceptedAt")',
         'DESC',
-        'NULLS LAST',
       )
       .skip(skip)
       .take(limit)

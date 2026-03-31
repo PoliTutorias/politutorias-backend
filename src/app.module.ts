@@ -22,6 +22,7 @@ import { SolicitudEntity } from './solicitudes/entities/solicitud.entity';
 import { SolicitudesModule } from './solicitudes/solicitudes.module';
 import { Tutor } from './tutors/entities/tutor.entity';
 import { TutorsModule } from './tutors/tutors.module';
+import { ReviewEntity } from './tutorias/entities/review.entity';
 import { TutoriasModule } from './tutorias/tutorias.module';
 
 @Module({
@@ -48,6 +49,7 @@ import { TutoriasModule } from './tutorias/tutorias.module';
           PerfilProfesionalEntity,
           MateriaEntity,
           SolicitudEntity,
+          ReviewEntity,
         ],
         synchronize: configService.get<string>('NODE_ENV') !== 'production',
         logging: false,

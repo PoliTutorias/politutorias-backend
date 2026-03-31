@@ -372,6 +372,68 @@ export class TutoriasService {
   }
 
   /**
+   * HU-40: Detalle de una tutoría para el estudiante
+   * Carga relaciones Review, Tutor y valida propiedad
+   */
+  async findOneTutoriaDetalle(
+    studentId: string,
+    id: string,
+  ): Promise<TutoriaDetalleEstudianteDto> {
+    const solicitud = await this.solicitudRepository.findOne({
+      where: { id },
+      relations: ['oferta', 'oferta.tutor'],
+    });
+
+    if (!solicitud) {
+      throw new NotFoundException('Tutoría no encontrada');
+    }
+
+    if (solicitud.estudianteId !== studentId) {
+      throw new NotFoundException('Tutoría no encontrada');
+    }
+
+    // Cargar review si existe
+    const review = await this.reviewRepository.findOne({
+      where: { solicitudId: id },
+    });
+
+    const tutorName =
+      solicitud.oferta?.tutor?.nombreCompleto ?? 'Tutor';
+    const tutorAvatar = this.generateAvatarUrl(tutorName);
+
+    const primeraFecha = solicitud.horarios?.[0]?.fecha ?? '';
+    const formattedDate = this.formatDate(primeraFecha);
+    const primeraHora = solicitud.horarios?.[0]?.hora ?? '';
+    const formattedTime = this.formatTime(primeraHora);
+
+    return {
+      id: solicitud.id,
+      tutor: { name: tutorName, avatar: tutorAvatar },
+      subject: solicitud.oferta?.titulo ?? 'Materia',
+      date: formattedDate,
+      time: formattedTime,
+      modality: solicitud.modalidad ?? 'Virtual',
+      meetingLink:
+        solicitud.modalidad === 'Virtual'
+          ? solicitud.acceptedMeetingLink
+          : null,
+      location:
+        solicitud.modalidad === 'Presencial'
+          ? solicitud.acceptedMeetingLocation
+          : null,
+      pricePerHour: `$${solicitud.oferta?.precioHora ?? 0}/h`,
+      studentMessage: solicitud.mensaje,
+      status: this.mapEstadoToDto(solicitud.estado),
+      review: review
+        ? {
+            rating: review.rating,
+            comment: review.comment,
+            createdAt: review.createdAt.toISOString(),
+          }
+        : null,
+    };
+  }
+  /**
    * Mapea el estado de la base de datos al formato esperado por el DTO
    */
   private mapEstadoToDto(estado: SolicitudEstado): string {

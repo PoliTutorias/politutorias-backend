@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class HistorialEstudianteItemDto {
   @ApiProperty({
@@ -43,4 +43,11 @@ export class HistorialEstudianteItemDto {
     example: '$15/h',
   })
   pricePerHour: string;
+
+  @ApiPropertyOptional({
+    description: 'Ubicación de reunión (solo para Presencial)',
+    example: 'Biblioteca Central, Sala 3',
+    nullable: true,
+  })
+  location: string | null;
 }

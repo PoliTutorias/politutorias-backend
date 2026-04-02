@@ -154,6 +154,8 @@ export class TutoriasService {
         time: primeraHora,
         status: this.mapEstadoToDto(sol.estado),
         pricePerHour: `$${sol.oferta?.precioHora ?? 0}/h`,
+        location:
+          sol.modalidad === 'Presencial' ? sol.acceptedMeetingLocation : null,
       };
     });
 
@@ -243,6 +245,11 @@ export class TutoriasService {
       );
     }
 
+    this.validarTutoriaFinalizada(
+      solicitud,
+      'Solo se puede reportar inasistencia cuando haya finalizado la hora reservada.',
+    );
+
     // 5. Actualizar estado y timestamp
     solicitud.estado = SolicitudEstado.NO_SHOW;
     solicitud.noShowAt = new Date();
@@ -272,6 +279,11 @@ export class TutoriasService {
         'Solo se pueden completar tutorías programadas',
       );
     }
+
+    this.validarTutoriaFinalizada(
+      solicitud,
+      'Solo se puede marcar como completada cuando haya finalizado la hora reservada.',
+    );
 
     // 5. Actualizar estado y timestamp
     solicitud.estado = SolicitudEstado.COMPLETADA;
@@ -314,6 +326,44 @@ export class TutoriasService {
     }
 
     return solicitud;
+  }
+
+  private validarTutoriaFinalizada(
+    solicitud: SolicitudEntity,
+    errorMessage: string,
+  ): void {
+    const bloque = solicitud.horarios?.[0];
+
+    if (!bloque?.fecha || !bloque?.hora) {
+      throw new BadRequestException(
+        'La tutoría no tiene un horario válido para registrar esta acción.',
+      );
+    }
+
+    const endDateTime = this.getEndDateTimeFromBlock(bloque.fecha, bloque.hora);
+
+    if (Number.isNaN(endDateTime.getTime())) {
+      throw new BadRequestException(
+        'La tutoría no tiene un horario válido para registrar esta acción.',
+      );
+    }
+
+    if (new Date().getTime() < endDateTime.getTime()) {
+      throw new BadRequestException(errorMessage);
+    }
+  }
+
+  private getEndDateTimeFromBlock(fecha: string, hora: string): Date {
+    const [year, month, day] = fecha.split('-').map((value) => parseInt(value, 10));
+    const [hours, minutes] = hora.split(':').map((value) => parseInt(value, 10));
+
+    if (
+      [year, month, day, hours, minutes].some((value) => Number.isNaN(value))
+    ) {
+      return new Date(Number.NaN);
+    }
+
+    return new Date(year, month - 1, day, hours + 1, minutes, 0, 0);
   }
 
   /**
@@ -360,6 +410,8 @@ export class TutoriasService {
         time: primeraHora,
         status: this.mapEstadoToDto(sol.estado),
         pricePerHour: `$${sol.oferta?.precioHora ?? 0}/h`,
+        location:
+          sol.modalidad === 'Presencial' ? sol.acceptedMeetingLocation : null,
       };
     });
 

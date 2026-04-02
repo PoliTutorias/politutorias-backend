@@ -565,6 +565,34 @@ describe('TutoriasService', () => {
       expect(solicitudRepository.save).not.toHaveBeenCalled();
     });
 
+    it('debe lanzar BadRequestException si la tutoría aún no finaliza', async () => {
+      jest.useFakeTimers();
+      try {
+        jest.setSystemTime(new Date('2026-04-01T10:30:00'));
+
+        const mockSolicitud = {
+          id: tutoriaId,
+          tutorId,
+          estado: SolicitudEstado.ACEPTADA,
+          horarios: [{ fecha: '2026-04-03', hora: '10:00' }],
+        };
+
+        solicitudRepository.findOne.mockResolvedValue(
+          mockSolicitud as SolicitudEntity,
+        );
+
+        await expect(
+          service.reportarInasistencia(tutoriaId, tutorId),
+        ).rejects.toThrow(
+          'Solo se puede reportar inasistencia cuando haya finalizado la hora reservada.',
+        );
+
+        expect(solicitudRepository.save).not.toHaveBeenCalled();
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
     it('debe actualizar el estado a NO_SHOW y llamar a save() cuando todo es válido', async () => {
       // Arrange: Mock solicitud válida
       const mockSolicitud = {
@@ -712,6 +740,34 @@ describe('TutoriasService', () => {
 
       // No debe llamar a save()
       expect(solicitudRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException if tutorial has not finished yet', async () => {
+      jest.useFakeTimers();
+      try {
+        jest.setSystemTime(new Date('2026-04-01T10:30:00'));
+
+        const mockSolicitud = {
+          id: tutoriaId,
+          tutorId,
+          estado: SolicitudEstado.ACEPTADA,
+          horarios: [{ fecha: '2026-04-03', hora: '10:00' }],
+        };
+
+        solicitudRepository.findOne.mockResolvedValue(
+          mockSolicitud as SolicitudEntity,
+        );
+
+        await expect(
+          service.marcarCompletada(tutoriaId, tutorId),
+        ).rejects.toThrow(
+          'Solo se puede marcar como completada cuando haya finalizado la hora reservada.',
+        );
+
+        expect(solicitudRepository.save).not.toHaveBeenCalled();
+      } finally {
+        jest.useRealTimers();
+      }
     });
 
     // U-04: Happy path

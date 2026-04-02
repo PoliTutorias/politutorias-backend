@@ -8,6 +8,7 @@ import { PerfilProfesionalEntity } from '../perfil/entities/perfil-profesional.e
 import { SolicitudEntity } from '../solicitudes/entities/solicitud.entity';
 import { Tutor } from '../tutors/entities/tutor.entity';
 import { UserEntity } from '../users/entities/user.entity';
+import { ReviewEntity } from '../tutorias/entities/review.entity';
 import { seedDisponibilidad } from './seeds/disponibilidad.seed';
 import { seedExperiencias } from './seeds/experiencias.seed';
 import { seedMaterias } from './seeds/materias.seed';
@@ -23,6 +24,7 @@ import { seedSolicitudHU11 } from './seeds/solicitudes-hu11.seed';
 import { seedSolicitudHU15 } from './seeds/solicitudes-hu15.seed';
 import { seedTutors } from './seeds/tutors.seed';
 import { seedUsers } from './seeds/users.seed';
+import { seedHistorialEstudiante } from './seeds/historial-estudiante.seed';
 
 // Cargar variables de entorno
 config();
@@ -43,6 +45,7 @@ const ALL_ENTITIES = [
   PerfilProfesionalEntity,
   MateriaEntity,
   SolicitudEntity,
+  ReviewEntity,
 ];
 
 /** Conexión sin synchronize: solo para limpiar el esquema viejo */
@@ -82,6 +85,7 @@ async function runSeed() {
     console.log('🧹 Eliminando tablas con esquema anterior...');
     await PreDataSource.initialize();
     await PreDataSource.query(`
+      DROP TABLE IF EXISTS reviews                     CASCADE;
       DROP TABLE IF EXISTS tutor_materias             CASCADE;
       DROP TABLE IF EXISTS tutor_perfiles_profesionales CASCADE;
       DROP TABLE IF EXISTS tutor_experiencias         CASCADE;
@@ -148,6 +152,10 @@ async function runSeed() {
     // HU-11: Solicitudes ACEPTADAS/COMPLETADAS para la agenda del estudiante
     // (debe ir DESPUÉS de seedSolicitudHU15)
     await seedSolicitudHU11(AppDataSource);
+
+    // HU-40: Historial de tutorías recibidas por el estudiante
+    // (debe ir DESPUÉS de seedSolicitudHU11 — crea solicitudes COMPLETADA/NO_SHOW + reviews)
+    await seedHistorialEstudiante(AppDataSource);
 
     console.log('🎉 Seed completado exitosamente');
   } catch (error) {

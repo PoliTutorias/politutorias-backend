@@ -998,8 +998,8 @@ describe('TutoriasService', () => {
 
       expect(result.tutor.name).toBe('Carlos López');
       expect(result.status).toBe('Completada');
-      expect(result.review).not.toBeNull();
-      expect(result.review!.rating).toBe(5);
+      expect(result.resena).not.toBeNull();
+      expect(result.resena!.rating).toBe(5);
       expect(result.meetingLink).toBe('https://zoom.us/j/123');
     });
 
@@ -1030,7 +1030,7 @@ describe('TutoriasService', () => {
       );
 
       expect(result.status).toBe('INASISTENCIA');
-      expect(result.review).toBeNull();
+      expect(result.resena).toBeNull();
       expect(result.location).toBe('Lab 102');
     });
   });

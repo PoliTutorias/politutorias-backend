@@ -12,6 +12,9 @@ class TutorInfoDto {
 }
 
 class ReviewInfoDto {
+  @ApiProperty({ example: 'c1f9b53e-e4b6-4fd6-a1d2-25dfd4123456' })
+  id: string;
+
   @ApiProperty({ example: 4 })
   rating: number;
 
@@ -57,5 +60,5 @@ export class TutoriaDetalleEstudianteDto {
   status: string;
 
   @ApiPropertyOptional({ type: ReviewInfoDto, nullable: true })
-  review: ReviewInfoDto | null;
+  resena: ReviewInfoDto | null;
 }

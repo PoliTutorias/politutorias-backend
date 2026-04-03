@@ -20,5 +20,6 @@ import { ReviewEntity } from './entities/review.entity';
   ],
   controllers: [TutoriasController],
   providers: [TutoriasService],
+  exports: [TutoriasService],
 })
 export class TutoriasModule {}

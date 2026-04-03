@@ -354,8 +354,12 @@ export class TutoriasService {
   }
 
   private getEndDateTimeFromBlock(fecha: string, hora: string): Date {
-    const [year, month, day] = fecha.split('-').map((value) => parseInt(value, 10));
-    const [hours, minutes] = hora.split(':').map((value) => parseInt(value, 10));
+    const [year, month, day] = fecha
+      .split('-')
+      .map((value) => parseInt(value, 10));
+    const [hours, minutes] = hora
+      .split(':')
+      .map((value) => parseInt(value, 10));
 
     if (
       [year, month, day, hours, minutes].some((value) => Number.isNaN(value))
@@ -474,8 +478,9 @@ export class TutoriasService {
       pricePerHour: `$${solicitud.oferta?.precioHora ?? 0}/h`,
       studentMessage: solicitud.mensaje,
       status: this.mapEstadoToDto(solicitud.estado),
-      review: review
+      resena: review
         ? {
+            id: review.id,
             rating: review.rating,
             comment: review.comment,
             createdAt: review.createdAt.toISOString(),
@@ -483,6 +488,15 @@ export class TutoriasService {
         : null,
     };
   }
+
+  async findOneForReview(id: string): Promise<SolicitudEntity | null> {
+    return this.solicitudRepository.findOne({ where: { id } });
+  }
+
+  async linkReviewToTutorial(id: string, reviewId: string): Promise<void> {
+    await this.solicitudRepository.update({ id }, { reviewId });
+  }
+
   /**
    * Mapea el estado de la base de datos al formato esperado por el DTO
    */

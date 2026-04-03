@@ -89,6 +89,9 @@ export class SolicitudEntity {
   @Column({ type: 'timestamp', nullable: true })
   noShowAt: Date | null;
 
+  @Column({ type: 'uuid', nullable: true })
+  reviewId: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -44,6 +44,7 @@ async function bootstrap() {
       'Perfil profesional del tutor — materias y experiencias (HU42)',
     )
     .addTag('solicitudes', 'Enviar solicitud de tutoría (HU-06)')
+    .addTag('reviews', 'Reseñas de tutorías completadas (HU10)')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

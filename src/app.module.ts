@@ -39,6 +39,7 @@ import { UserEntity } from './users/entities/user.entity';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
         entities: [
+          UserEntity,
           Oferta,
           Tutor,
           AvailabilityEntity,

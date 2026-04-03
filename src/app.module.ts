@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
 import { DisponibilidadModule } from './disponibilidad/disponibilidad.module';
 import { AvailabilityEntity } from './disponibilidad/entities/availability.entity';
 import { ExperienciaEntity } from './experiencias/entities/experiencia.entity';
@@ -20,6 +21,7 @@ import { TutoriasModule } from './tutorias/tutorias.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { Tutor } from './tutors/entities/tutor.entity';
 import { TutorsModule } from './tutors/tutors.module';
+import { UserEntity } from './users/entities/user.entity';
 
 @Module({
   imports: [
@@ -37,6 +39,7 @@ import { TutorsModule } from './tutors/tutors.module';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
         entities: [
+          UserEntity,
           Oferta,
           Tutor,
           AvailabilityEntity,
@@ -54,6 +57,7 @@ import { TutorsModule } from './tutors/tutors.module';
       }),
       inject: [ConfigService],
     }),
+    AuthModule,
     OfertasModule,
     OffersModule,
     TutorsModule,

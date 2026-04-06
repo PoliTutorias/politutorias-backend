@@ -24,8 +24,11 @@ import { ReviewEntity } from '../../tutorias/entities/review.entity';
  */
 
 const TUTOR_001 = '550e8400-e29b-41d4-a716-446655440001'; // Juan Carlos Pérez
+const TUTOR_002 = '550e8400-e29b-41d4-a716-446655440002'; // María Fernanda González
 const TUTOR_003 = '550e8400-e29b-41d4-a716-446655440003'; // Carlos Alberto Rodríguez
+const TUTOR_004 = '550e8400-e29b-41d4-a716-446655440004'; // Ana Lucía Martínez
 const TUTOR_005 = '550e8400-e29b-41d4-a716-446655440005'; // Roberto Alejandro Silva
+const TUTOR_006 = '550e8400-e29b-41d4-a716-446655440006'; // Laura Daniela Torres
 
 /**
  * ID del estudiante de prueba para HU-40.
@@ -47,6 +50,22 @@ const UUID_NS_002 = 'a1b2c3d4-0006-4000-8006-aa0000000006';
 const UUID_ACC_001 = 'a1b2c3d4-0007-4000-8007-aa0000000007';
 const UUID_OTHER = 'a1b2c3d4-0099-4000-8099-aa0000000099';
 
+// ── HU-10: 5 tutorías COMPLETADAS adicionales SIN reseña ─────────────────────
+// Permiten probar el botón "Calificar" desde el historial del estudiante.
+const UUID_COMP_CAL_001 = 'a1b2c3d4-0010-4000-8010-aa0000000010';
+const UUID_COMP_CAL_002 = 'a1b2c3d4-0011-4000-8011-aa0000000011';
+const UUID_COMP_CAL_003 = 'a1b2c3d4-0012-4000-8012-aa0000000012';
+const UUID_COMP_CAL_004 = 'a1b2c3d4-0013-4000-8013-aa0000000013';
+const UUID_COMP_CAL_005 = 'a1b2c3d4-0014-4000-8014-aa0000000014';
+
+// ── HU-11: 3 tutorías ACEPTADAS futuras ──────────────────────────────────────
+// Permiten probar la sección "Próximas" de la agenda del estudiante.
+// Fechas en 2099 para garantizar que siempre sean futuras independientemente
+// de cuándo se ejecute el seed.
+const UUID_ACE_PROX_001 = 'a1b2c3d4-0020-4000-8020-aa0000000020';
+const UUID_ACE_PROX_002 = 'a1b2c3d4-0021-4000-8021-aa0000000021';
+const UUID_ACE_PROX_003 = 'a1b2c3d4-0022-4000-8022-aa0000000022';
+
 // Escenarios HU-10 para pruebas manuales/e2e del endpoint POST /api/reviews.
 export const HU10_SCENARIOS = {
   // Exito: tutoría completada del estudiante autenticado y sin reseña previa.
@@ -60,15 +79,18 @@ export const HU10_SCENARIOS = {
 } as const;
 
 /**
- * Seed de Solicitudes y Reseñas para HU-40 — Historial del estudiante.
+ * Seed de Solicitudes y Reseñas para HU-40 / HU-10 / HU-11 — Historial y Agenda del estudiante.
  *
- * Crea solicitudes en estado COMPLETADA y NO_SHOW para el endpoint
- * GET /api/tutorias/estudiante/historial del estudiante autenticado.
+ * Crea solicitudes en distintos estados para el estudiante Patricio Chancusig.
  *
- * Sesiones del estudiante 'estudiante-hu40-001':
- *   - 4 COMPLETADAS (3 con reseña calificada, 1 sin → botón "Calificar")
+ * Sesiones del estudiante (Patricio Chancusig — ESTUDIANTE_HU40_ID):
+ *   HU-40 / HU-10 (Historial):
+ *   - 9 COMPLETADAS (3 con reseña calificada, 6 sin reseña → botón "Calificar")
  *   - 2 NO_SHOW (inasistencias reportadas por el tutor)
- *   - 1 ACEPTADA (escenario HU-10: no se puede calificar por estado)
+ *   - 1 ACEPTADA con fecha pasada (escenario HU-10: no calificable por estado)
+ *
+ *   HU-11 (Agenda — sección "Próximas"):
+ *   - 3 ACEPTADAS con fechas en 2099 (siempre futuras)
  *
  * Sesiones de otro estudiante (aislamiento):
  *   - 1 COMPLETADA para 'estudiante-hu40-999' (no aparece en historial)
@@ -94,6 +116,11 @@ export async function seedHistorialEstudiante(
       titulo: 'Circuitos Eléctricos - Análisis AC/DC',
     },
     { key: 'oferta-python', titulo: 'Programación en Python - Desde Cero' },
+    { key: 'oferta-sql', titulo: 'Base de Datos y SQL Avanzado' },
+    { key: 'oferta-algoritmos', titulo: 'Estructuras de Datos y Algoritmos' },
+    { key: 'oferta-vectorial', titulo: 'Cálculo Vectorial y Multivariable' },
+    { key: 'oferta-react', titulo: 'Desarrollo Web con React y Node.js' },
+    { key: 'oferta-ingles', titulo: 'Inglés Técnico para Ingeniería' },
   ] as const;
 
   const ofertaIdByLabel = new Map<string, string>();
@@ -266,6 +293,171 @@ export async function seedHistorialEstudiante(
     },
 
     // ─────────────────────────────────────────────────────────────────────────
+    // HU-10: 5 TUTORÍAS COMPLETADAS ADICIONALES SIN RESEÑA
+    // Permiten probar el botón "Calificar" (dejar reseña) desde el historial
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // CAL1 — Completada · SQL Avanzado · Roberto Silva · Virtual
+    //   → SIN reseña → botón "Calificar" habilitado
+    {
+      id: UUID_COMP_CAL_001,
+      estudianteId: ESTUDIANTE_HU40_ID,
+      ofertaId: getOfertaId('oferta-sql'),
+      tutorId: TUTOR_005,
+      nombreEstudiante: 'Patricio Chancusig',
+      mensaje:
+        'Necesito ayuda con queries avanzados y optimización en PostgreSQL.',
+      modalidad: 'Virtual',
+      horarios: [{ fecha: '2026-03-12', hora: '10:00' }],
+      estado: SolicitudEstado.COMPLETADA,
+      acceptedMeetingLink: 'https://zoom.us/j/poli-sql-hu10-cal1',
+      acceptedMeetingLocation: null,
+      acceptedAt: new Date('2026-03-11T08:00:00.000Z'),
+      completedAt: new Date('2026-03-12T11:00:00.000Z'),
+      noShowAt: null,
+    },
+
+    // CAL2 — Completada · Estructuras de Datos · Ana Lucía Martínez · Presencial
+    //   → SIN reseña → botón "Calificar" habilitado
+    {
+      id: UUID_COMP_CAL_002,
+      estudianteId: ESTUDIANTE_HU40_ID,
+      ofertaId: getOfertaId('oferta-algoritmos'),
+      tutorId: TUTOR_004,
+      nombreEstudiante: 'Patricio Chancusig',
+      mensaje: 'Repaso de árboles binarios y grafos para el examen final.',
+      modalidad: 'Presencial',
+      horarios: [{ fecha: '2026-03-14', hora: '15:00' }],
+      estado: SolicitudEstado.COMPLETADA,
+      acceptedMeetingLink: null,
+      acceptedMeetingLocation: 'Aula 201, Edificio FIS, Piso 2',
+      acceptedAt: new Date('2026-03-13T09:00:00.000Z'),
+      completedAt: new Date('2026-03-14T16:00:00.000Z'),
+      noShowAt: null,
+    },
+
+    // CAL3 — Completada · Cálculo Vectorial · Juan Carlos Pérez · Virtual
+    //   → SIN reseña → botón "Calificar" habilitado
+    {
+      id: UUID_COMP_CAL_003,
+      estudianteId: ESTUDIANTE_HU40_ID,
+      ofertaId: getOfertaId('oferta-vectorial'),
+      tutorId: TUTOR_001,
+      nombreEstudiante: 'Patricio Chancusig',
+      mensaje: 'Ayuda con integrales de línea y el teorema de Stokes.',
+      modalidad: 'Virtual',
+      horarios: [{ fecha: '2026-03-18', hora: '11:00' }],
+      estado: SolicitudEstado.COMPLETADA,
+      acceptedMeetingLink: 'https://meet.google.com/poli-vectorial-hu10',
+      acceptedMeetingLocation: null,
+      acceptedAt: new Date('2026-03-17T08:00:00.000Z'),
+      completedAt: new Date('2026-03-18T12:00:00.000Z'),
+      noShowAt: null,
+    },
+
+    // CAL4 — Completada · React y Node.js · María Fernanda González · Virtual
+    //   → SIN reseña → botón "Calificar" habilitado
+    {
+      id: UUID_COMP_CAL_004,
+      estudianteId: ESTUDIANTE_HU40_ID,
+      ofertaId: getOfertaId('oferta-react'),
+      tutorId: TUTOR_002,
+      nombreEstudiante: 'Patricio Chancusig',
+      mensaje: 'Necesito entender el patrón de Server Components en Next.js.',
+      modalidad: 'Virtual',
+      horarios: [{ fecha: '2026-03-20', hora: '14:00' }],
+      estado: SolicitudEstado.COMPLETADA,
+      acceptedMeetingLink: 'https://zoom.us/j/poli-react-hu10-cal4',
+      acceptedMeetingLocation: null,
+      acceptedAt: new Date('2026-03-19T10:00:00.000Z'),
+      completedAt: new Date('2026-03-20T15:00:00.000Z'),
+      noShowAt: null,
+    },
+
+    // CAL5 — Completada · Inglés Técnico · Laura Daniela Torres · Presencial
+    //   → SIN reseña → botón "Calificar" habilitado
+    {
+      id: UUID_COMP_CAL_005,
+      estudianteId: ESTUDIANTE_HU40_ID,
+      ofertaId: getOfertaId('oferta-ingles'),
+      tutorId: TUTOR_006,
+      nombreEstudiante: 'Patricio Chancusig',
+      mensaje: 'Preparación para presentación en inglés del proyecto de grado.',
+      modalidad: 'Presencial',
+      horarios: [{ fecha: '2026-03-22', hora: '09:00' }],
+      estado: SolicitudEstado.COMPLETADA,
+      acceptedMeetingLink: null,
+      acceptedMeetingLocation: 'Sala de Idiomas, Edificio FCA, Piso 3',
+      acceptedAt: new Date('2026-03-21T08:00:00.000Z'),
+      completedAt: new Date('2026-03-22T10:00:00.000Z'),
+      noShowAt: null,
+    },
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // HU-11: TUTORÍAS ACEPTADAS FUTURAS (sección "Próximas" de la agenda)
+    // Fechas en 2099 → siempre futuras, independiente de cuando ejecute el seed
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // PROX1 — Aceptada · Cálculo Diferencial · Juan Carlos Pérez · Virtual
+    //   Fecha: miércoles 8 de abril 2026 — 10:00
+    {
+      id: UUID_ACE_PROX_001,
+      estudianteId: ESTUDIANTE_HU40_ID,
+      ofertaId: getOfertaId('oferta-calc'),
+      tutorId: TUTOR_001,
+      nombreEstudiante: 'Patricio Chancusig',
+      mensaje: 'Repasar integrales y derivadas para el parcial final.',
+      modalidad: 'Virtual',
+      horarios: [{ fecha: '2026-04-08', hora: '10:00' }],
+      estado: SolicitudEstado.ACEPTADA,
+      acceptedMeetingLink: 'https://zoom.us/j/poli-calc-prox-001',
+      acceptedMeetingLocation: null,
+      acceptedAt: new Date('2026-04-07T08:00:00.000Z'),
+      completedAt: null,
+      noShowAt: null,
+    },
+
+    // PROX2 — Aceptada · Python · María Fernanda González · Virtual
+    //   Fecha: viernes 10 de abril 2026 — 14:00
+    {
+      id: UUID_ACE_PROX_002,
+      estudianteId: ESTUDIANTE_HU40_ID,
+      ofertaId: getOfertaId('oferta-python'),
+      tutorId: TUTOR_002,
+      nombreEstudiante: 'Patricio Chancusig',
+      mensaje:
+        'Quiero aprender pandas y visualización de datos con matplotlib.',
+      modalidad: 'Virtual',
+      horarios: [{ fecha: '2026-04-10', hora: '14:00' }],
+      estado: SolicitudEstado.ACEPTADA,
+      acceptedMeetingLink: 'https://meet.google.com/poli-python-prox-002',
+      acceptedMeetingLocation: null,
+      acceptedAt: new Date('2026-04-09T10:00:00.000Z'),
+      completedAt: null,
+      noShowAt: null,
+    },
+
+    // PROX3 — Aceptada · Álgebra Lineal · Carlos Rodríguez · Presencial
+    //   Fecha: sábado 12 de abril 2026 — 09:00
+    {
+      id: UUID_ACE_PROX_003,
+      estudianteId: ESTUDIANTE_HU40_ID,
+      ofertaId: getOfertaId('oferta-algebra'),
+      tutorId: TUTOR_003,
+      nombreEstudiante: 'Patricio Chancusig',
+      mensaje:
+        'Necesito ayuda con vectores propios y diagonalización de matrices.',
+      modalidad: 'Presencial',
+      horarios: [{ fecha: '2026-04-12', hora: '09:00' }],
+      estado: SolicitudEstado.ACEPTADA,
+      acceptedMeetingLink: null,
+      acceptedMeetingLocation: 'Biblioteca Central, Piso 2, Sala 4',
+      acceptedAt: new Date('2026-04-11T08:00:00.000Z'),
+      completedAt: null,
+      noShowAt: null,
+    },
+
+    // ─────────────────────────────────────────────────────────────────────────
     // SESIÓN DE OTRO ESTUDIANTE (aislamiento)
     // No debe aparecer en el historial de 'estudiante-hu40-001'
     // ─────────────────────────────────────────────────────────────────────────
@@ -293,12 +485,13 @@ export async function seedHistorialEstudiante(
     const entity = solicitudRepository.create(s);
     await solicitudRepository.save(entity);
   }
-  console.log(`✅ ${solicitudesData.length} solicitudes HU-40 insertadas`);
   console.log(
-    `   → ${ESTUDIANTE_HU40_ID} tiene 4 COMPLETADAS + 2 NO_SHOW + 1 ACEPTADA`,
+    `✅ ${solicitudesData.length} solicitudes HU-40/HU-11 insertadas`,
+  );
+  console.log(
+    `   → ${ESTUDIANTE_HU40_ID} tiene 9 COMPLETADAS (6 sin reseña → "Calificar") + 2 NO_SHOW + 1 ACEPTADA pasada + 3 ACEPTADAS futuras`,
   );
   console.log(`   → estudiante-hu40-999 tiene 1 sesión (aislamiento)`);
-
   // ── Reseñas (ReviewEntity) ─────────────────────────────────────────────────
   // Solo se crean reseñas para las solicitudes COMPLETADAS ya calificadas.
   // UUID_COMP_003 (Cálculo) queda sin reseña → frontend muestra botón "Calificar".

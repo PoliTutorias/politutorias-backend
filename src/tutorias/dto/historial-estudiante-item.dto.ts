@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ReviewInfoDto } from './tutoria-detalle-estudiante.dto';
 
 export class HistorialEstudianteItemDto {
   @ApiProperty({
@@ -45,9 +46,11 @@ export class HistorialEstudianteItemDto {
   pricePerHour: string;
 
   @ApiPropertyOptional({
-    description: 'Ubicación de reunión (solo para Presencial)',
     example: 'Biblioteca Central, Sala 3',
     nullable: true,
   })
   location: string | null;
+
+  @ApiPropertyOptional({ type: ReviewInfoDto, nullable: true })
+  resena: ReviewInfoDto | null;
 }

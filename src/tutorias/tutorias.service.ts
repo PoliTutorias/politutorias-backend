@@ -416,8 +416,31 @@ export class TutoriasService {
         pricePerHour: `$${sol.oferta?.precioHora ?? 0}/h`,
         location:
           sol.modalidad === 'Presencial' ? sol.acceptedMeetingLocation : null,
+        resena: null,
       };
     });
+
+    // Batch-load reviews for all solicitudes in one query
+    const solicitudIds = solicitudes.map((s) => s.id);
+    if (solicitudIds.length > 0) {
+      const reviews = await this.reviewRepository.find({
+        where: { solicitudId: In(solicitudIds) },
+      });
+      const reviewBySolicitudId = new Map(
+        reviews.map((r) => [r.solicitudId, r]),
+      );
+      items.forEach((item) => {
+        const review = reviewBySolicitudId.get(item.id);
+        if (review) {
+          item.resena = {
+            id: review.id,
+            rating: review.rating,
+            comment: review.comment,
+            createdAt: review.createdAt.toISOString(),
+          };
+        }
+      });
+    }
 
     const lastPage = Math.ceil(total / limit) || 1;
 

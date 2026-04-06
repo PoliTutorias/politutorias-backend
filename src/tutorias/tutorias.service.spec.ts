@@ -55,6 +55,7 @@ describe('TutoriasService', () => {
         {
           provide: getRepositoryToken(ReviewEntity),
           useValue: {
+            find: jest.fn(),
             findOne: jest.fn(),
           },
         },
@@ -911,6 +912,7 @@ describe('TutoriasService', () => {
       };
 
       solicitudRepository.createQueryBuilder.mockReturnValue(mockQB as never);
+      reviewRepository.find.mockResolvedValue([]);
 
       const result = await service.findHistorialByStudent(studentId, params);
 
@@ -935,6 +937,7 @@ describe('TutoriasService', () => {
       };
 
       solicitudRepository.createQueryBuilder.mockReturnValue(mockQB as never);
+      reviewRepository.find.mockResolvedValue([]);
 
       const result = await service.findHistorialByStudent(studentId, {
         page: 1,

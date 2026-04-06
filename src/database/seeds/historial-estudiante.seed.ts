@@ -305,7 +305,8 @@ export async function seedHistorialEstudiante(
       ofertaId: getOfertaId('oferta-sql'),
       tutorId: TUTOR_005,
       nombreEstudiante: 'Patricio Chancusig',
-      mensaje: 'Necesito ayuda con queries avanzados y optimización en PostgreSQL.',
+      mensaje:
+        'Necesito ayuda con queries avanzados y optimización en PostgreSQL.',
       modalidad: 'Virtual',
       horarios: [{ fecha: '2026-03-12', hora: '10:00' }],
       estado: SolicitudEstado.COMPLETADA,
@@ -424,7 +425,8 @@ export async function seedHistorialEstudiante(
       ofertaId: getOfertaId('oferta-python'),
       tutorId: TUTOR_002,
       nombreEstudiante: 'Patricio Chancusig',
-      mensaje: 'Quiero aprender pandas y visualización de datos con matplotlib.',
+      mensaje:
+        'Quiero aprender pandas y visualización de datos con matplotlib.',
       modalidad: 'Virtual',
       horarios: [{ fecha: '2026-04-10', hora: '14:00' }],
       estado: SolicitudEstado.ACEPTADA,
@@ -443,7 +445,8 @@ export async function seedHistorialEstudiante(
       ofertaId: getOfertaId('oferta-algebra'),
       tutorId: TUTOR_003,
       nombreEstudiante: 'Patricio Chancusig',
-      mensaje: 'Necesito ayuda con vectores propios y diagonalización de matrices.',
+      mensaje:
+        'Necesito ayuda con vectores propios y diagonalización de matrices.',
       modalidad: 'Presencial',
       horarios: [{ fecha: '2026-04-12', hora: '09:00' }],
       estado: SolicitudEstado.ACEPTADA,
@@ -482,7 +485,9 @@ export async function seedHistorialEstudiante(
     const entity = solicitudRepository.create(s);
     await solicitudRepository.save(entity);
   }
-  console.log(`✅ ${solicitudesData.length} solicitudes HU-40/HU-11 insertadas`);
+  console.log(
+    `✅ ${solicitudesData.length} solicitudes HU-40/HU-11 insertadas`,
+  );
   console.log(
     `   → ${ESTUDIANTE_HU40_ID} tiene 9 COMPLETADAS (6 sin reseña → "Calificar") + 2 NO_SHOW + 1 ACEPTADA pasada + 3 ACEPTADAS futuras`,
   );

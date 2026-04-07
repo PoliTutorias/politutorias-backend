@@ -22,6 +22,7 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { Tutor } from './tutors/entities/tutor.entity';
 import { TutorsModule } from './tutors/tutors.module';
 import { UserEntity } from './users/entities/user.entity';
+import { AgendaModule } from './agenda/agenda.module';
 import { AgendaEstudianteModule } from './agenda-estudiante/agenda-estudiante.module';
 
 @Module({
@@ -68,6 +69,7 @@ import { AgendaEstudianteModule } from './agenda-estudiante/agenda-estudiante.mo
     SolicitudesModule,
     TutoriasModule,
     ReviewsModule,
+    AgendaModule,
     AgendaEstudianteModule,
   ],
   controllers: [AppController],

@@ -50,6 +50,32 @@ const UUID_NS_002 = 'a1b2c3d4-0006-4000-8006-aa0000000006';
 const UUID_ACC_001 = 'a1b2c3d4-0007-4000-8007-aa0000000007';
 const UUID_OTHER = 'a1b2c3d4-0099-4000-8099-aa0000000099';
 
+// ── HU-22: Solicitudes extra para paginación de reseñas ──────────────────────
+// 7 solicitudes adicionales por tutor → cada tutor queda con ≥8 reseñas,
+// suficiente para probar el botón "Ver más reseñas" (paginación de 5).
+// Estudiantes ficticios S010–S016 (no son users reales, estudianteId es varchar libre).
+const UUID_HU22_T1_001 = 'a1b2c3d4-0030-4000-8030-aa0000000030';
+const UUID_HU22_T1_002 = 'a1b2c3d4-0031-4000-8031-aa0000000031';
+const UUID_HU22_T1_003 = 'a1b2c3d4-0032-4000-8032-aa0000000032';
+const UUID_HU22_T1_004 = 'a1b2c3d4-0033-4000-8033-aa0000000033';
+const UUID_HU22_T1_005 = 'a1b2c3d4-0034-4000-8034-aa0000000034';
+const UUID_HU22_T1_006 = 'a1b2c3d4-0035-4000-8035-aa0000000035';
+const UUID_HU22_T1_007 = 'a1b2c3d4-0036-4000-8036-aa0000000036';
+const UUID_HU22_T3_001 = 'a1b2c3d4-0040-4000-8040-aa0000000040';
+const UUID_HU22_T3_002 = 'a1b2c3d4-0041-4000-8041-aa0000000041';
+const UUID_HU22_T3_003 = 'a1b2c3d4-0042-4000-8042-aa0000000042';
+const UUID_HU22_T3_004 = 'a1b2c3d4-0043-4000-8043-aa0000000043';
+const UUID_HU22_T3_005 = 'a1b2c3d4-0044-4000-8044-aa0000000044';
+const UUID_HU22_T3_006 = 'a1b2c3d4-0045-4000-8045-aa0000000045';
+const UUID_HU22_T3_007 = 'a1b2c3d4-0046-4000-8046-aa0000000046';
+const UUID_HU22_T5_001 = 'a1b2c3d4-0050-4000-8050-aa0000000050';
+const UUID_HU22_T5_002 = 'a1b2c3d4-0051-4000-8051-aa0000000051';
+const UUID_HU22_T5_003 = 'a1b2c3d4-0052-4000-8052-aa0000000052';
+const UUID_HU22_T5_004 = 'a1b2c3d4-0053-4000-8053-aa0000000053';
+const UUID_HU22_T5_005 = 'a1b2c3d4-0054-4000-8054-aa0000000054';
+const UUID_HU22_T5_006 = 'a1b2c3d4-0055-4000-8055-aa0000000055';
+const UUID_HU22_T5_007 = 'a1b2c3d4-0056-4000-8056-aa0000000056';
+
 // ── HU-10: 5 tutorías COMPLETADAS adicionales SIN reseña ─────────────────────
 // Permiten probar el botón "Calificar" desde el historial del estudiante.
 const UUID_COMP_CAL_001 = 'a1b2c3d4-0010-4000-8010-aa0000000010';
@@ -541,5 +567,315 @@ export async function seedHistorialEstudiante(
   console.log(`✅ ${reviews.length} reseñas HU-40 insertadas`);
   console.log(
     `   → ${UUID_COMP_003} (Cálculo) queda sin reseña → botón "Calificar" visible`,
+  );
+
+  // ── HU-22: Solicitudes y reseñas extra para paginación ────────────────────
+  // Garantiza ≥8 reseñas por tutor para probar el botón "Ver más reseñas".
+  // Estudiantes ficticios: sus IDs son varchar, no requieren user real en BD.
+  const S = {
+    s010: '00000000-0000-4000-a000-000000000010',
+    s011: '00000000-0000-4000-a000-000000000011',
+    s012: '00000000-0000-4000-a000-000000000012',
+    s013: '00000000-0000-4000-a000-000000000013',
+    s014: '00000000-0000-4000-a000-000000000014',
+    s015: '00000000-0000-4000-a000-000000000015',
+    s016: '00000000-0000-4000-a000-000000000016',
+  };
+
+  type SolicitudRow = {
+    id: string;
+    estudianteId: string;
+    nombreEstudiante: string;
+    tutorId: string;
+    ofertaKey: string;
+    fecha: string;
+    hora: string;
+    rating: number;
+    comment: string;
+  };
+
+  const extraRows: SolicitudRow[] = [
+    // ── TUTOR_001 (Juan Carlos Pérez) — 7 reseñas extra → total 8 ────────────
+    {
+      id: UUID_HU22_T1_001,
+      estudianteId: S.s010,
+      nombreEstudiante: 'Sofía Ramírez',
+      tutorId: TUTOR_001,
+      ofertaKey: 'oferta-calc',
+      fecha: '2026-02-03',
+      hora: '09:00',
+      rating: 5,
+      comment: 'Explica muy bien los límites y derivadas.',
+    },
+    {
+      id: UUID_HU22_T1_002,
+      estudianteId: S.s011,
+      nombreEstudiante: 'Diego Herrera',
+      tutorId: TUTOR_001,
+      ofertaKey: 'oferta-vectorial',
+      fecha: '2026-02-05',
+      hora: '10:00',
+      rating: 4,
+      comment: 'Buen manejo del teorema de Green.',
+    },
+    {
+      id: UUID_HU22_T1_003,
+      estudianteId: S.s012,
+      nombreEstudiante: 'Valentina Mora',
+      tutorId: TUTOR_001,
+      ofertaKey: 'oferta-algebra',
+      fecha: '2026-02-07',
+      hora: '11:00',
+      rating: 5,
+      comment: 'Perfecta explicación de espacios vectoriales.',
+    },
+    {
+      id: UUID_HU22_T1_004,
+      estudianteId: S.s013,
+      nombreEstudiante: 'Andrés Castillo',
+      tutorId: TUTOR_001,
+      ofertaKey: 'oferta-calc',
+      fecha: '2026-02-10',
+      hora: '14:00',
+      rating: 5,
+      comment: 'Muy paciente y claro con las integrales.',
+    },
+    {
+      id: UUID_HU22_T1_005,
+      estudianteId: S.s014,
+      nombreEstudiante: 'Isabella Torres',
+      tutorId: TUTOR_001,
+      ofertaKey: 'oferta-vectorial',
+      fecha: '2026-02-12',
+      hora: '15:00',
+      rating: 3,
+      comment: 'Buena clase pero un poco rápida.',
+    },
+    {
+      id: UUID_HU22_T1_006,
+      estudianteId: S.s015,
+      nombreEstudiante: 'Sebastian Ríos',
+      tutorId: TUTOR_001,
+      ofertaKey: 'oferta-algebra',
+      fecha: '2026-02-15',
+      hora: '09:00',
+      rating: 5,
+      comment: 'Excelente tutor, quedé con todo claro.',
+    },
+    {
+      id: UUID_HU22_T1_007,
+      estudianteId: S.s016,
+      nombreEstudiante: 'Camila Vega',
+      tutorId: TUTOR_001,
+      ofertaKey: 'oferta-calc',
+      fecha: '2026-02-18',
+      hora: '10:00',
+      rating: 4,
+      comment: 'Muy buen repaso para el parcial.',
+    },
+
+    // ── TUTOR_003 (Carlos Alberto Rodríguez) — 7 reseñas extra → total 8 ────
+    {
+      id: UUID_HU22_T3_001,
+      estudianteId: S.s010,
+      nombreEstudiante: 'Sofía Ramírez',
+      tutorId: TUTOR_003,
+      ofertaKey: 'oferta-algebra',
+      fecha: '2026-02-04',
+      hora: '09:00',
+      rating: 5,
+      comment: 'El mejor tutor de álgebra lineal que he tenido.',
+    },
+    {
+      id: UUID_HU22_T3_002,
+      estudianteId: S.s011,
+      nombreEstudiante: 'Diego Herrera',
+      tutorId: TUTOR_003,
+      ofertaKey: 'oferta-fisica',
+      fecha: '2026-02-06',
+      hora: '10:00',
+      rating: 4,
+      comment: 'Muy buen dominio de la cinemática.',
+    },
+    {
+      id: UUID_HU22_T3_003,
+      estudianteId: S.s012,
+      nombreEstudiante: 'Valentina Mora',
+      tutorId: TUTOR_003,
+      ofertaKey: 'oferta-python',
+      fecha: '2026-02-08',
+      hora: '11:00',
+      rating: 5,
+      comment: 'Aprendí pandas en una sola sesión.',
+    },
+    {
+      id: UUID_HU22_T3_004,
+      estudianteId: S.s013,
+      nombreEstudiante: 'Andrés Castillo',
+      tutorId: TUTOR_003,
+      ofertaKey: 'oferta-algebra',
+      fecha: '2026-02-11',
+      hora: '14:00',
+      rating: 3,
+      comment: 'Bien, aunque esperaba más ejercicios prácticos.',
+    },
+    {
+      id: UUID_HU22_T3_005,
+      estudianteId: S.s014,
+      nombreEstudiante: 'Isabella Torres',
+      tutorId: TUTOR_003,
+      ofertaKey: 'oferta-fisica',
+      fecha: '2026-02-13',
+      hora: '15:00',
+      rating: 5,
+      comment: 'Explica con ejemplos muy claros y reales.',
+    },
+    {
+      id: UUID_HU22_T3_006,
+      estudianteId: S.s015,
+      nombreEstudiante: 'Sebastian Ríos',
+      tutorId: TUTOR_003,
+      ofertaKey: 'oferta-python',
+      fecha: '2026-02-16',
+      hora: '09:00',
+      rating: 4,
+      comment: 'Buena introducción a estructuras de datos en Python.',
+    },
+    {
+      id: UUID_HU22_T3_007,
+      estudianteId: S.s016,
+      nombreEstudiante: 'Camila Vega',
+      tutorId: TUTOR_003,
+      ofertaKey: 'oferta-algebra',
+      fecha: '2026-02-19',
+      hora: '10:00',
+      rating: 5,
+      comment: 'Domina el tema completamente. Muy recomendado.',
+    },
+
+    // ── TUTOR_005 (Roberto Alejandro Silva) — 7 reseñas extra → total 8 ─────
+    {
+      id: UUID_HU22_T5_001,
+      estudianteId: S.s010,
+      nombreEstudiante: 'Sofía Ramírez',
+      tutorId: TUTOR_005,
+      ofertaKey: 'oferta-circuitos',
+      fecha: '2026-02-03',
+      hora: '16:00',
+      rating: 5,
+      comment: 'Análisis de circuitos muy detallado.',
+    },
+    {
+      id: UUID_HU22_T5_002,
+      estudianteId: S.s011,
+      nombreEstudiante: 'Diego Herrera',
+      tutorId: TUTOR_005,
+      ofertaKey: 'oferta-sql',
+      fecha: '2026-02-05',
+      hora: '17:00',
+      rating: 4,
+      comment: 'Buen repaso de queries con JOINs complejos.',
+    },
+    {
+      id: UUID_HU22_T5_003,
+      estudianteId: S.s012,
+      nombreEstudiante: 'Valentina Mora',
+      tutorId: TUTOR_005,
+      ofertaKey: 'oferta-circuitos',
+      fecha: '2026-02-07',
+      hora: '09:00',
+      rating: 5,
+      comment: 'Explica muy bien la ley de Kirchhoff.',
+    },
+    {
+      id: UUID_HU22_T5_004,
+      estudianteId: S.s013,
+      nombreEstudiante: 'Andrés Castillo',
+      tutorId: TUTOR_005,
+      ofertaKey: 'oferta-sql',
+      fecha: '2026-02-09',
+      hora: '10:00',
+      rating: 4,
+      comment: 'Aprendí índices y optimización de queries.',
+    },
+    {
+      id: UUID_HU22_T5_005,
+      estudianteId: S.s014,
+      nombreEstudiante: 'Isabella Torres',
+      tutorId: TUTOR_005,
+      ofertaKey: 'oferta-circuitos',
+      fecha: '2026-02-12',
+      hora: '11:00',
+      rating: 3,
+      comment: 'Bien, aunque la sesión fue un poco corta.',
+    },
+    {
+      id: UUID_HU22_T5_006,
+      estudianteId: S.s015,
+      nombreEstudiante: 'Sebastian Ríos',
+      tutorId: TUTOR_005,
+      ofertaKey: 'oferta-sql',
+      fecha: '2026-02-14',
+      hora: '14:00',
+      rating: 5,
+      comment: 'Excelente. Ahora entiendo las transacciones.',
+    },
+    {
+      id: UUID_HU22_T5_007,
+      estudianteId: S.s016,
+      nombreEstudiante: 'Camila Vega',
+      tutorId: TUTOR_005,
+      ofertaKey: 'oferta-circuitos',
+      fecha: '2026-02-17',
+      hora: '15:00',
+      rating: 5,
+      comment: 'Perfecta explicación de circuitos en AC.',
+    },
+  ];
+
+  console.log(
+    '🌱 Insertando solicitudes y reseñas extra HU-22 (paginación)...',
+  );
+  for (const row of extraRows) {
+    const ofertaId =
+      ofertaIdByLabel.get(row.ofertaKey) ??
+      'b2c3d4e5-f6a7-4890-b234-567890abcdef';
+
+    const sol = solicitudRepository.create({
+      id: row.id,
+      estudianteId: row.estudianteId,
+      ofertaId,
+      tutorId: row.tutorId,
+      nombreEstudiante: row.nombreEstudiante,
+      mensaje: row.comment,
+      modalidad: 'Virtual',
+      horarios: [{ fecha: row.fecha, hora: row.hora }],
+      estado: SolicitudEstado.COMPLETADA,
+      acceptedMeetingLink: null,
+      acceptedMeetingLocation: null,
+      acceptedAt: new Date(`${row.fecha}T08:00:00.000Z`),
+      completedAt: new Date(
+        `${row.fecha}T${row.hora.replace(':', ':')}:00.000Z`,
+      ),
+      noShowAt: null,
+    });
+    await solicitudRepository.save(sol);
+
+    const rev = reviewRepository.create({
+      solicitudId: row.id,
+      estudianteId: row.estudianteId,
+      tutorId: row.tutorId,
+      rating: row.rating,
+      comment: row.comment,
+    });
+    const savedRev = await reviewRepository.save(rev);
+
+    await solicitudRepository.update({ id: row.id }, { reviewId: savedRev.id });
+  }
+  console.log(
+    `✅ ${extraRows.length} solicitudes+reseñas HU-22 extra insertadas`,
+  );
+  console.log(
+    '   → TUTOR_001, TUTOR_003, TUTOR_005 tienen ahora ≥8 reseñas cada uno',
   );
 }

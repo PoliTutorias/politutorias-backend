@@ -46,6 +46,7 @@ export class HistorialEstudianteItemDto {
   pricePerHour: string;
 
   @ApiPropertyOptional({
+    description: 'Ubicación de reunión (solo para Presencial)',
     example: 'Biblioteca Central, Sala 3',
     nullable: true,
   })

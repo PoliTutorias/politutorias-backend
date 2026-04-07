@@ -25,6 +25,7 @@ import {
   ReviewSummaryDto,
   StarDistributionDto,
   TutorReviewsResponseDto,
+  TutorStatsDto,
 } from './dto/tutor-reviews-response.dto';
 
 @Injectable()
@@ -143,9 +144,36 @@ export class ReviewsService {
       };
     });
 
+    // 6. Calcular estadísticas del tutor (tutorías completadas, materias, % que califican)
+    const completedTutorias = await this.solicitudRepository.count({
+      where: { tutorId, estado: SolicitudEstado.COMPLETADA },
+    });
+
+    const subjectsRaw = await this.solicitudRepository
+      .createQueryBuilder('s')
+      .leftJoin('s.oferta', 'oferta')
+      .select('DISTINCT oferta.titulo', 'titulo')
+      .where('s.tutorId = :tutorId', { tutorId })
+      .andWhere('s.estado = :estado', { estado: SolicitudEstado.COMPLETADA })
+      .getRawMany<{ titulo: string }>();
+
+    const uniqueSubjects = subjectsRaw.length;
+
+    const ratingParticipation =
+      completedTutorias > 0
+        ? Math.round((summary.totalReviews / completedTutorias) * 100)
+        : 0;
+
+    const tutorStats: TutorStatsDto = {
+      completedTutorias,
+      uniqueSubjects,
+      ratingParticipation,
+    };
+
     return {
       reviews: reviewItems,
       summary,
+      tutorStats,
       total,
       page,
       limit,

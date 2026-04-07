@@ -86,12 +86,36 @@ export class ReviewSummaryDto {
   starDistribution: StarDistributionDto;
 }
 
+export class TutorStatsDto {
+  @ApiProperty({
+    example: 12,
+    description: 'Total de tutorías completadas por el tutor',
+  })
+  completedTutorias: number;
+
+  @ApiProperty({
+    example: 4,
+    description: 'Número de materias únicas impartidas',
+  })
+  uniqueSubjects: number;
+
+  @ApiProperty({
+    example: 92,
+    description:
+      'Porcentaje de estudiantes de tutorías completadas que dejaron reseña',
+  })
+  ratingParticipation: number;
+}
+
 export class TutorReviewsResponseDto {
   @ApiProperty({ type: [ReviewItemDto] })
   reviews: ReviewItemDto[];
 
   @ApiProperty({ type: ReviewSummaryDto })
   summary: ReviewSummaryDto;
+
+  @ApiProperty({ type: TutorStatsDto })
+  tutorStats: TutorStatsDto;
 
   @ApiProperty({
     example: 120,

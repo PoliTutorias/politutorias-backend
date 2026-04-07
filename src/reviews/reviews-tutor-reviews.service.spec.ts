@@ -45,6 +45,10 @@ describe('ReviewsService — getTutorReviews (HU-22)', () => {
   };
   let tutorRepositoryMock: { findOne: jest.Mock };
   let userRepositoryMock: { createQueryBuilder: jest.Mock };
+  let solicitudRepositoryMock: {
+    count: jest.Mock;
+    createQueryBuilder: jest.Mock;
+  };
 
   const tutoriasServiceMock = {
     findOneForReview: jest.fn(),
@@ -67,6 +71,13 @@ describe('ReviewsService — getTutorReviews (HU-22)', () => {
       createQueryBuilder: jest.fn().mockReturnValue(userQb),
     };
 
+    const solicitudQb = createMockQb();
+    solicitudQb.getRawMany.mockResolvedValue([]);
+    solicitudRepositoryMock = {
+      count: jest.fn().mockResolvedValue(0),
+      createQueryBuilder: jest.fn().mockReturnValue(solicitudQb),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ReviewsService,
@@ -76,7 +87,7 @@ describe('ReviewsService — getTutorReviews (HU-22)', () => {
         },
         {
           provide: getRepositoryToken(SolicitudEntity),
-          useValue: {},
+          useValue: solicitudRepositoryMock,
         },
         {
           provide: getRepositoryToken(Oferta),

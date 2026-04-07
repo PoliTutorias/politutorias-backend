@@ -2,7 +2,13 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { SolicitudEstado } from '../solicitudes/entities/solicitud.entity';
+import {
+  SolicitudEntity,
+  SolicitudEstado,
+} from '../solicitudes/entities/solicitud.entity';
+import { Oferta } from '../ofertas/domain/entities/oferta.entity';
+import { UserEntity } from '../users/entities/user.entity';
+import { Tutor } from '../tutors/entities/tutor.entity';
 import { ReviewEntity } from '../tutorias/entities/review.entity';
 import { TutoriasService } from '../tutorias/tutorias.service';
 import { ReviewsService } from './reviews.service';
@@ -22,6 +28,7 @@ describe('ReviewsService', () => {
     const reviewRepositoryMock = {
       create: jest.fn(),
       save: jest.fn(),
+      createQueryBuilder: jest.fn(),
     };
 
     tutoriasService = {
@@ -35,6 +42,22 @@ describe('ReviewsService', () => {
         {
           provide: getRepositoryToken(ReviewEntity),
           useValue: reviewRepositoryMock,
+        },
+        {
+          provide: getRepositoryToken(SolicitudEntity),
+          useValue: {},
+        },
+        {
+          provide: getRepositoryToken(Oferta),
+          useValue: {},
+        },
+        {
+          provide: getRepositoryToken(UserEntity),
+          useValue: { createQueryBuilder: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(Tutor),
+          useValue: { findOne: jest.fn() },
         },
         {
           provide: TutoriasService,

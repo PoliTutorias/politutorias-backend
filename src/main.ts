@@ -45,6 +45,7 @@ async function bootstrap() {
     )
     .addTag('solicitudes', 'Enviar solicitud de tutoría (HU-06)')
     .addTag('reviews', 'Reseñas de tutorías completadas (HU10)')
+    .addTag('tutor-reviews', 'Consulta pública de reseñas del tutor (HU22)')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

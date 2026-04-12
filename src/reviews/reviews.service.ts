@@ -80,6 +80,7 @@ export class ReviewsService {
         'solicitud.id',
         'solicitud.estudianteId',
         'solicitud.ofertaId',
+        'solicitud.nombreEstudiante',
       ])
       .addSelect(['oferta.titulo'])
       .where('review.tutorId = :tutorId', { tutorId });
@@ -121,7 +122,8 @@ export class ReviewsService {
     // 5. Mapear a DTOs de respuesta
     const reviewItems: ReviewItemDto[] = reviews.map((r) => {
       const student = studentsMap.get(r.estudianteId);
-      const fullName = student?.name ?? 'Anónimo';
+      const fullName =
+        student?.name ?? r.solicitud?.nombreEstudiante ?? 'Anónimo';
       const nameParts = fullName.split(' ');
       const firstName = nameParts[0] ?? 'Anónimo';
       const lastName = nameParts.length > 1 ? `${nameParts[1].charAt(0)}.` : '';

@@ -69,7 +69,7 @@ export async function seedSolicitudHU11(dataSource: DataSource): Promise<void> {
     // SESIONES FUTURAS (ACEPTADA) → "proximas"
     // ─────────────────────────────────────────────────────────────
 
-    // S1 — Futura Virtual — Cálculo — 27 marzo 2026 — 10:00
+    // S1 — Futura Virtual — Cálculo — 14 abril 2026 — 10:00
     {
       estudianteId: 'estudiante-hu11-001',
       ofertaId: getOfertaId('oferta-calc'),
@@ -78,14 +78,14 @@ export async function seedSolicitudHU11(dataSource: DataSource): Promise<void> {
       mensaje:
         'Necesito ayuda con límites y derivadas para el examen del próximo mes.',
       modalidad: 'Virtual',
-      horarios: [{ fecha: '2026-03-27', hora: '10:00' }],
+      horarios: [{ fecha: '2026-04-14', hora: '10:00' }],
       estado: SolicitudEstado.ACEPTADA,
       acceptedMeetingLink: 'https://zoom.us/j/poli-calc-hu11-001',
       acceptedMeetingLocation: null,
-      acceptedAt: new Date('2026-03-22T08:00:00.000Z'),
+      acceptedAt: new Date('2026-04-13T08:00:00.000Z'),
     },
 
-    // S2 — Futura Presencial — Álgebra — 15 agosto 2099 — 09:00
+    // S2 — Futura Presencial — Álgebra — 16 abril 2026 — 09:00
     {
       estudianteId: 'estudiante-hu11-001',
       ofertaId: getOfertaId('oferta-algebra'),
@@ -93,14 +93,14 @@ export async function seedSolicitudHU11(dataSource: DataSource): Promise<void> {
       nombreEstudiante: 'María García',
       mensaje: 'Quiero repasar vectores propios antes del parcial.',
       modalidad: 'Presencial',
-      horarios: [{ fecha: '2099-08-15', hora: '09:00' }],
+      horarios: [{ fecha: '2026-04-16', hora: '09:00' }],
       estado: SolicitudEstado.ACEPTADA,
       acceptedMeetingLink: null,
       acceptedMeetingLocation: 'Biblioteca Central, Piso 2',
-      acceptedAt: new Date('2099-08-10T08:00:00.000Z'),
+      acceptedAt: new Date('2026-04-15T08:00:00.000Z'),
     },
 
-    // S3 — Futura Virtual — Python — 1 septiembre 2099 — 14:00
+    // S3 — Futura Virtual — Python — 21 abril 2026 — 14:00
     {
       estudianteId: 'estudiante-hu11-001',
       ofertaId: getOfertaId('oferta-python'),
@@ -108,11 +108,11 @@ export async function seedSolicitudHU11(dataSource: DataSource): Promise<void> {
       nombreEstudiante: 'María García',
       mensaje: 'Quiero aprender pandas y matplotlib para mi proyecto de datos.',
       modalidad: 'Virtual',
-      horarios: [{ fecha: '2099-09-01', hora: '14:00' }],
+      horarios: [{ fecha: '2026-04-21', hora: '14:00' }],
       estado: SolicitudEstado.ACEPTADA,
       acceptedMeetingLink: 'https://meet.google.com/poli-python-hu11-003',
       acceptedMeetingLocation: null,
-      acceptedAt: new Date('2099-08-25T10:00:00.000Z'),
+      acceptedAt: new Date('2026-04-20T10:00:00.000Z'),
     },
 
     // ─────────────────────────────────────────────────────────────
@@ -178,11 +178,11 @@ export async function seedSolicitudHU11(dataSource: DataSource): Promise<void> {
       nombreEstudiante: 'Otro Estudiante',
       mensaje: 'Sesión de otro estudiante para probar aislamiento.',
       modalidad: 'Virtual',
-      horarios: [{ fecha: '2099-10-01', hora: '10:00' }],
+      horarios: [{ fecha: '2026-04-23', hora: '10:00' }],
       estado: SolicitudEstado.ACEPTADA,
       acceptedMeetingLink: 'https://zoom.us/j/poli-other-001',
       acceptedMeetingLocation: null,
-      acceptedAt: new Date('2099-09-25T08:00:00.000Z'),
+      acceptedAt: new Date('2026-04-22T08:00:00.000Z'),
     },
   ];
 

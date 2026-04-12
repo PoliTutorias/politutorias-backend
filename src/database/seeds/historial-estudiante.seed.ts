@@ -212,7 +212,7 @@ export async function seedHistorialEstudiante(
       modalidad: 'Virtual',
       horarios: [{ fecha: '2026-03-01', hora: '10:00' }],
       estado: SolicitudEstado.COMPLETADA,
-      acceptedMeetingLink: null,
+      acceptedMeetingLink: 'https://meet.google.com/poli-fisica-hu40-002',
       acceptedMeetingLocation: null,
       acceptedAt: new Date('2026-02-28T10:00:00.000Z'),
       completedAt: new Date('2026-03-01T11:00:00.000Z'),
@@ -425,7 +425,7 @@ export async function seedHistorialEstudiante(
     // ─────────────────────────────────────────────────────────────────────────
 
     // PROX1 — Aceptada · Cálculo Diferencial · Juan Carlos Pérez · Virtual
-    //   Fecha: miércoles 8 de abril 2026 — 10:00
+    //   Fecha: lunes 14 de abril 2026 — 10:00
     {
       id: UUID_ACE_PROX_001,
       estudianteId: ESTUDIANTE_HU40_ID,
@@ -434,17 +434,17 @@ export async function seedHistorialEstudiante(
       nombreEstudiante: 'Patricio Chancusig',
       mensaje: 'Repasar integrales y derivadas para el parcial final.',
       modalidad: 'Virtual',
-      horarios: [{ fecha: '2026-04-08', hora: '10:00' }],
+      horarios: [{ fecha: '2026-04-14', hora: '10:00' }],
       estado: SolicitudEstado.ACEPTADA,
       acceptedMeetingLink: 'https://zoom.us/j/poli-calc-prox-001',
       acceptedMeetingLocation: null,
-      acceptedAt: new Date('2026-04-07T08:00:00.000Z'),
+      acceptedAt: new Date('2026-04-13T08:00:00.000Z'),
       completedAt: null,
       noShowAt: null,
     },
 
     // PROX2 — Aceptada · Python · María Fernanda González · Virtual
-    //   Fecha: viernes 10 de abril 2026 — 14:00
+    //   Fecha: miércoles 16 de abril 2026 — 14:00
     {
       id: UUID_ACE_PROX_002,
       estudianteId: ESTUDIANTE_HU40_ID,
@@ -454,17 +454,17 @@ export async function seedHistorialEstudiante(
       mensaje:
         'Quiero aprender pandas y visualización de datos con matplotlib.',
       modalidad: 'Virtual',
-      horarios: [{ fecha: '2026-04-10', hora: '14:00' }],
+      horarios: [{ fecha: '2026-04-16', hora: '14:00' }],
       estado: SolicitudEstado.ACEPTADA,
       acceptedMeetingLink: 'https://meet.google.com/poli-python-prox-002',
       acceptedMeetingLocation: null,
-      acceptedAt: new Date('2026-04-09T10:00:00.000Z'),
+      acceptedAt: new Date('2026-04-15T10:00:00.000Z'),
       completedAt: null,
       noShowAt: null,
     },
 
     // PROX3 — Aceptada · Álgebra Lineal · Carlos Rodríguez · Presencial
-    //   Fecha: sábado 12 de abril 2026 — 09:00
+    //   Fecha: sábado 19 de abril 2026 — 09:00
     {
       id: UUID_ACE_PROX_003,
       estudianteId: ESTUDIANTE_HU40_ID,
@@ -474,11 +474,11 @@ export async function seedHistorialEstudiante(
       mensaje:
         'Necesito ayuda con vectores propios y diagonalización de matrices.',
       modalidad: 'Presencial',
-      horarios: [{ fecha: '2026-04-12', hora: '09:00' }],
+      horarios: [{ fecha: '2026-04-19', hora: '09:00' }],
       estado: SolicitudEstado.ACEPTADA,
       acceptedMeetingLink: null,
       acceptedMeetingLocation: 'Biblioteca Central, Piso 2, Sala 4',
-      acceptedAt: new Date('2026-04-11T08:00:00.000Z'),
+      acceptedAt: new Date('2026-04-18T08:00:00.000Z'),
       completedAt: null,
       noShowAt: null,
     },

@@ -1,26 +1,26 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { In, Repository } from 'typeorm';
+import { Oferta } from '../ofertas/domain/entities/oferta.entity';
 import {
   SolicitudEntity,
   SolicitudEstado,
 } from '../solicitudes/entities/solicitud.entity';
-import { Oferta } from '../ofertas/domain/entities/oferta.entity';
 import { Tutor } from '../tutors/entities/tutor.entity';
-import { ReviewEntity } from './entities/review.entity';
+import { HistorialEstudianteItemDto } from './dto/historial-estudiante-item.dto';
+import { HistorialEstudianteQueryDto } from './dto/historial-estudiante-query.dto';
+import { HistorialEstudianteResponseDto } from './dto/historial-estudiante-response.dto';
+import { HistoryItemDto } from './dto/history-item.dto';
 import { HistoryQueryParamsDto } from './dto/history-query-params.dto';
 import { HistoryResponseDto } from './dto/history-response.dto';
 import { HistorySummaryDto } from './dto/history-summary.dto';
-import { TutorialDetailDto } from './dto/tutorial-detail.dto';
-import { HistoryItemDto } from './dto/history-item.dto';
-import { HistorialEstudianteQueryDto } from './dto/historial-estudiante-query.dto';
-import { HistorialEstudianteResponseDto } from './dto/historial-estudiante-response.dto';
-import { HistorialEstudianteItemDto } from './dto/historial-estudiante-item.dto';
 import { TutoriaDetalleEstudianteDto } from './dto/tutoria-detalle-estudiante.dto';
+import { TutorialDetailDto } from './dto/tutorial-detail.dto';
+import { ReviewEntity } from './entities/review.entity';
 
 @Injectable()
 export class TutoriasService {
@@ -36,54 +36,90 @@ export class TutoriasService {
   ) {}
 
   /**
+   * Determina si una solicitud ACEPTADA ya finalizó su hora reservada
+   * (fecha + hora + 1h <= ahora). Reutiliza getEndDateTimeFromBlock.
+   */
+  private isTutoriaFinalizada(solicitud: SolicitudEntity): boolean {
+    const bloque = solicitud.horarios?.[0];
+    if (!bloque?.fecha || !bloque?.hora) return false;
+    const endDateTime = this.getEndDateTimeFromBlock(bloque.fecha, bloque.hora);
+    if (Number.isNaN(endDateTime.getTime())) return false;
+    return new Date().getTime() >= endDateTime.getTime();
+  }
+
+  /**
    * Obtiene el resumen de métricas del tutor
+   * Para ACEPTADAS, solo cuenta las que ya finalizaron su hora reservada.
    */
   async getSummary(tutorId: string): Promise<HistorySummaryDto> {
-    // Total de tutorías completadas, aceptadas o con inasistencia
-    const totalCompleted = await this.solicitudRepository.count({
+    // Total de tutorías COMPLETADA y NO_SHOW (ya confirmadas)
+    const confirmedCount = await this.solicitudRepository.count({
       where: {
         tutorId,
-        estado: In([
-          SolicitudEstado.COMPLETADA,
-          SolicitudEstado.ACEPTADA,
-          SolicitudEstado.NO_SHOW,
-        ]),
+        estado: In([SolicitudEstado.COMPLETADA, SolicitudEstado.NO_SHOW]),
       },
     });
 
+    // Para ACEPTADAS, necesitamos filtrar en memoria las que ya finalizaron
+    const aceptadas = await this.solicitudRepository.find({
+      where: { tutorId, estado: SolicitudEstado.ACEPTADA },
+    });
+    const aceptadasFinalizadas = (aceptadas ?? []).filter((s) =>
+      this.isTutoriaFinalizada(s),
+    );
+
+    const totalCompleted = confirmedCount + aceptadasFinalizadas.length;
+
     // Total de materias únicas (DISTINCT oferta.titulo)
-    const materias = await this.solicitudRepository
+    // Incluir COMPLETADA, NO_SHOW, y ACEPTADAS finalizadas
+    const allCompletedAndNoShow = await this.solicitudRepository
       .createQueryBuilder('s')
       .leftJoin('s.oferta', 'oferta')
       .select('DISTINCT oferta.titulo', 'materia')
       .where('s.tutorId = :tutorId', { tutorId })
       .andWhere('s.estado IN (:...estados)', {
-        estados: [
-          SolicitudEstado.COMPLETADA,
-          SolicitudEstado.ACEPTADA,
-          SolicitudEstado.NO_SHOW,
-        ],
+        estados: [SolicitudEstado.COMPLETADA, SolicitudEstado.NO_SHOW],
       })
       .getRawMany();
 
+    // Agregar materias de aceptadas finalizadas (sin duplicar)
+    const materiasSet = new Set<string>(
+      (allCompletedAndNoShow as Array<{ materia: string | null }>)
+        .map((r) => r.materia)
+        .filter((materia): materia is string => materia !== null),
+    );
+    for (const sol of aceptadasFinalizadas) {
+      const oferta = await this.ofertaRepository.findOne({
+        where: { id: sol.ofertaId },
+      });
+      if (oferta?.titulo) materiasSet.add(oferta.titulo);
+    }
+
     // Total de estudiantes únicos (DISTINCT estudianteId)
-    const estudiantes = await this.solicitudRepository
+    const estudiantesConfirmed = await this.solicitudRepository
       .createQueryBuilder('s')
-      .select('DISTINCT s.estudianteId')
+      .select('DISTINCT s.estudianteId', 'estudianteId')
       .where('s.tutorId = :tutorId', { tutorId })
       .andWhere('s.estado IN (:...estados)', {
-        estados: [
-          SolicitudEstado.COMPLETADA,
-          SolicitudEstado.ACEPTADA,
-          SolicitudEstado.NO_SHOW,
-        ],
+        estados: [SolicitudEstado.COMPLETADA, SolicitudEstado.NO_SHOW],
       })
       .getRawMany();
+
+    const estudiantesSet = new Set<string>(
+      (estudiantesConfirmed as Array<{ estudianteId: string | null }>)
+        .map((r) => r.estudianteId)
+        .filter(
+          (estudianteId): estudianteId is string => estudianteId !== null,
+        ),
+    );
+    for (const sol of aceptadasFinalizadas) {
+      if (sol.estudianteId) estudiantesSet.add(sol.estudianteId);
+    }
 
     return {
       totalCompleted,
-      totalSubjects: materias.length,
-      totalStudents: estudiantes.length,
+      totalSubjects: materiasSet.size,
+      totalStudents: estudiantesSet.size,
     };
   }
 
@@ -96,28 +132,13 @@ export class TutoriasService {
   ): Promise<HistoryResponseDto> {
     const page = params.page ?? 1;
     const limit = params.limit ?? 5;
-    const skip = (page - 1) * limit;
 
     // Obtener summary
     const summary = await this.getSummary(tutorId);
 
-    // Filtrar solo tutorías completadas, aceptadas o con inasistencia
-    const where = {
-      tutorId,
-      estado: In([
-        SolicitudEstado.COMPLETADA,
-        SolicitudEstado.ACEPTADA,
-        SolicitudEstado.NO_SHOW,
-      ]),
-    };
-
-    // Contar total
-    const total = await this.solicitudRepository.count({ where });
-
-    // Obtener solicitudes paginadas con relación a oferta
-    // Ordenar por el timestamp más reciente (completedAt, noShowAt, o acceptedAt)
-    // Uso de subconsultas múltiples para evitar problemas con COALESCE en addOrderBy
-    const queryBuilder = this.solicitudRepository
+    // Obtener TODAS las solicitudes COMPLETADA, ACEPTADA y NO_SHOW
+    // Luego filtraremos las ACEPTADAS que aún no han finalizado
+    const allSolicitudes = await this.solicitudRepository
       .createQueryBuilder('s')
       .leftJoinAndSelect('s.oferta', 'oferta')
       .where('s.tutorId = :tutorId', { tutorId })
@@ -127,24 +148,31 @@ export class TutoriasService {
           SolicitudEstado.ACEPTADA,
           SolicitudEstado.NO_SHOW,
         ],
-      });
-
-    // Ordenar usando múltiples criterios para evitar problemas con COALESCE
-    // Primero por completedAt (las completadas al final por ser más recientes)
-    // Luego por noShowAt (inasistencias)
-    // Finalmente por acceptedAt (aceptadas sin confirmar)
-    queryBuilder
+      })
       .addOrderBy('s.completedAt', 'DESC', 'NULLS LAST')
       .addOrderBy('s.noShowAt', 'DESC', 'NULLS LAST')
-      .addOrderBy('s.acceptedAt', 'DESC', 'NULLS LAST');
+      .addOrderBy('s.acceptedAt', 'DESC', 'NULLS LAST')
+      .getMany();
 
-    const solicitudes = await queryBuilder.skip(skip).take(limit).getMany();
+    // Filtrar: para ACEPTADAS, solo incluir las que ya finalizaron su hora
+    const filtered = allSolicitudes.filter((sol) => {
+      if (sol.estado === SolicitudEstado.ACEPTADA) {
+        return this.isTutoriaFinalizada(sol);
+      }
+      return true; // COMPLETADA y NO_SHOW siempre se muestran
+    });
 
-    // Mapear a HistoryItemDto
+    const total = filtered.length;
+
+    // Paginar manualmente
+    const skip = (page - 1) * limit;
+    const solicitudes = filtered.slice(skip, skip + limit);
+
+    // Mapear a HistoryItemDto (con comparación case-insensitive de modalidad)
     const items: HistoryItemDto[] = solicitudes.map((sol) => {
-      // Extraer la primera fecha y hora de horarios
       const primeraFecha = sol.horarios?.[0]?.fecha ?? '';
       const primeraHora = sol.horarios?.[0]?.hora ?? '';
+      const modalidadUpper = (sol.modalidad ?? '').toUpperCase();
 
       return {
         id: sol.id,
@@ -155,12 +183,11 @@ export class TutoriasService {
         status: this.mapEstadoToDto(sol.estado),
         pricePerHour: `$${sol.oferta?.precioHora ?? 0}/h`,
         location:
-          sol.modalidad === 'Presencial' ? sol.acceptedMeetingLocation : null,
+          modalidadUpper === 'PRESENCIAL' ? sol.acceptedMeetingLocation : null,
       };
     });
 
-    // Calcular lastPage
-    const lastPage = Math.ceil(total / limit);
+    const lastPage = Math.ceil(total / limit) || 1;
 
     return {
       summary,
@@ -204,6 +231,14 @@ export class TutoriasService {
     const studentName = solicitud.nombreEstudiante ?? 'Estudiante';
     const studentAvatar = this.generateAvatarUrl(studentName);
 
+    // Comparación case-insensitive de modalidad (Fix: #2)
+    const modalidadUpper = (solicitud.modalidad ?? '').toUpperCase();
+
+    // Cargar review si existe (Fix: #3 - Reseña del estudiante)
+    const review = await this.reviewRepository.findOne({
+      where: { solicitudId: id },
+    });
+
     return {
       id: solicitud.id,
       student: {
@@ -215,15 +250,17 @@ export class TutoriasService {
       time: formattedTime,
       modality: solicitud.modalidad ?? 'Virtual',
       meetingLink:
-        solicitud.modalidad === 'Virtual'
-          ? solicitud.acceptedMeetingLink
-          : null,
+        modalidadUpper === 'VIRTUAL' ? solicitud.acceptedMeetingLink : null,
       location:
-        solicitud.modalidad === 'Presencial'
+        modalidadUpper === 'PRESENCIAL'
           ? solicitud.acceptedMeetingLocation
           : null,
       pricePerHour: `$${solicitud.oferta?.precioHora ?? 0}/h`,
       studentMessage: solicitud.mensaje,
+      status: this.mapEstadoToDto(solicitud.estado),
+      calificacionEstudiante: review ? review.rating : null,
+      comentarioEstudiante: review ? review.comment : null,
+      resenaFecha: review ? review.createdAt.toISOString() : null,
     };
   }
 
@@ -405,6 +442,7 @@ export class TutoriasService {
     const items: HistorialEstudianteItemDto[] = solicitudes.map((sol) => {
       const primeraFecha = sol.horarios?.[0]?.fecha ?? '';
       const primeraHora = sol.horarios?.[0]?.hora ?? '';
+      const modalidadUpper = (sol.modalidad ?? '').toUpperCase();
 
       return {
         id: sol.id,
@@ -415,7 +453,7 @@ export class TutoriasService {
         status: this.mapEstadoToDto(sol.estado),
         pricePerHour: `$${sol.oferta?.precioHora ?? 0}/h`,
         location:
-          sol.modalidad === 'Presencial' ? sol.acceptedMeetingLocation : null,
+          modalidadUpper === 'PRESENCIAL' ? sol.acceptedMeetingLocation : null,
         resena: null,
       };
     });
@@ -491,11 +529,11 @@ export class TutoriasService {
       time: formattedTime,
       modality: solicitud.modalidad ?? 'Virtual',
       meetingLink:
-        solicitud.modalidad === 'Virtual'
+        (solicitud.modalidad ?? '').toUpperCase() === 'VIRTUAL'
           ? solicitud.acceptedMeetingLink
           : null,
       location:
-        solicitud.modalidad === 'Presencial'
+        (solicitud.modalidad ?? '').toUpperCase() === 'PRESENCIAL'
           ? solicitud.acceptedMeetingLocation
           : null,
       pricePerHour: `$${solicitud.oferta?.precioHora ?? 0}/h`,

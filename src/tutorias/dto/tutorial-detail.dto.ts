@@ -78,4 +78,32 @@ export class TutorialDetailDto {
     example: 'Necesito ayuda con límites y derivadas',
   })
   studentMessage: string;
+
+  @ApiProperty({
+    description: 'Estado de la tutoría',
+    example: 'Completada',
+    nullable: true,
+  })
+  status: string;
+
+  @ApiProperty({
+    description: 'Calificación del estudiante (1-5)',
+    example: 5,
+    nullable: true,
+  })
+  calificacionEstudiante: number | null;
+
+  @ApiProperty({
+    description: 'Comentario/reseña del estudiante',
+    example: 'Excelente tutor, muy paciente.',
+    nullable: true,
+  })
+  comentarioEstudiante: string | null;
+
+  @ApiProperty({
+    description: 'Fecha de la reseña del estudiante (ISO)',
+    example: '2026-03-01T10:00:00.000Z',
+    nullable: true,
+  })
+  resenaFecha: string | null;
 }

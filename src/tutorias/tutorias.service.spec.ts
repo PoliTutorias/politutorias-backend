@@ -5,8 +5,8 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Oferta } from '../ofertas/domain/entities/oferta.entity';
 import {
-    SolicitudEntity,
-    SolicitudEstado,
+  SolicitudEntity,
+  SolicitudEstado,
 } from '../solicitudes/entities/solicitud.entity';
 import { Tutor } from '../tutors/entities/tutor.entity';
 import { HistoryQueryParamsDto } from './dto/history-query-params.dto';

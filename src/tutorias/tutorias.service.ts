@@ -1,26 +1,26 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { In, Repository } from 'typeorm';
+import { Oferta } from '../ofertas/domain/entities/oferta.entity';
 import {
   SolicitudEntity,
   SolicitudEstado,
 } from '../solicitudes/entities/solicitud.entity';
-import { Oferta } from '../ofertas/domain/entities/oferta.entity';
 import { Tutor } from '../tutors/entities/tutor.entity';
-import { ReviewEntity } from './entities/review.entity';
+import { HistorialEstudianteItemDto } from './dto/historial-estudiante-item.dto';
+import { HistorialEstudianteQueryDto } from './dto/historial-estudiante-query.dto';
+import { HistorialEstudianteResponseDto } from './dto/historial-estudiante-response.dto';
+import { HistoryItemDto } from './dto/history-item.dto';
 import { HistoryQueryParamsDto } from './dto/history-query-params.dto';
 import { HistoryResponseDto } from './dto/history-response.dto';
 import { HistorySummaryDto } from './dto/history-summary.dto';
-import { TutorialDetailDto } from './dto/tutorial-detail.dto';
-import { HistoryItemDto } from './dto/history-item.dto';
-import { HistorialEstudianteQueryDto } from './dto/historial-estudiante-query.dto';
-import { HistorialEstudianteResponseDto } from './dto/historial-estudiante-response.dto';
-import { HistorialEstudianteItemDto } from './dto/historial-estudiante-item.dto';
 import { TutoriaDetalleEstudianteDto } from './dto/tutoria-detalle-estudiante.dto';
+import { TutorialDetailDto } from './dto/tutorial-detail.dto';
+import { ReviewEntity } from './entities/review.entity';
 
 @Injectable()
 export class TutoriasService {
@@ -86,7 +86,7 @@ export class TutoriasService {
     const materiasSet = new Set<string>(
       (allCompletedAndNoShow as Array<{ materia: string | null }>)
         .map((r) => r.materia)
-        .filter(Boolean),
+        .filter((materia): materia is string => materia !== null),
     );
     for (const sol of aceptadasFinalizadas) {
       const oferta = await this.ofertaRepository.findOne({
@@ -108,7 +108,9 @@ export class TutoriasService {
     const estudiantesSet = new Set<string>(
       (estudiantesConfirmed as Array<{ estudianteId: string | null }>)
         .map((r) => r.estudianteId)
-        .filter(Boolean),
+        .filter(
+          (estudianteId): estudianteId is string => estudianteId !== null,
+        ),
     );
     for (const sol of aceptadasFinalizadas) {
       if (sol.estudianteId) estudiantesSet.add(sol.estudianteId);

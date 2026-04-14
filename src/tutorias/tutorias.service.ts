@@ -56,10 +56,7 @@ export class TutoriasService {
     const confirmedCount = await this.solicitudRepository.count({
       where: {
         tutorId,
-        estado: In([
-          SolicitudEstado.COMPLETADA,
-          SolicitudEstado.NO_SHOW,
-        ]),
+        estado: In([SolicitudEstado.COMPLETADA, SolicitudEstado.NO_SHOW]),
       },
     });
 
@@ -67,7 +64,7 @@ export class TutoriasService {
     const aceptadas = await this.solicitudRepository.find({
       where: { tutorId, estado: SolicitudEstado.ACEPTADA },
     });
-    const aceptadasFinalizadas = aceptadas.filter((s) =>
+    const aceptadasFinalizadas = (aceptadas ?? []).filter((s) =>
       this.isTutoriaFinalizada(s),
     );
 
@@ -81,16 +78,15 @@ export class TutoriasService {
       .select('DISTINCT oferta.titulo', 'materia')
       .where('s.tutorId = :tutorId', { tutorId })
       .andWhere('s.estado IN (:...estados)', {
-        estados: [
-          SolicitudEstado.COMPLETADA,
-          SolicitudEstado.NO_SHOW,
-        ],
+        estados: [SolicitudEstado.COMPLETADA, SolicitudEstado.NO_SHOW],
       })
       .getRawMany();
 
     // Agregar materias de aceptadas finalizadas (sin duplicar)
     const materiasSet = new Set<string>(
-      allCompletedAndNoShow.map((r) => r.materia).filter(Boolean),
+      (allCompletedAndNoShow as Array<{ materia: string | null }>)
+        .map((r) => r.materia)
+        .filter(Boolean),
     );
     for (const sol of aceptadasFinalizadas) {
       const oferta = await this.ofertaRepository.findOne({
@@ -105,15 +101,14 @@ export class TutoriasService {
       .select('DISTINCT s.estudianteId', 'estudianteId')
       .where('s.tutorId = :tutorId', { tutorId })
       .andWhere('s.estado IN (:...estados)', {
-        estados: [
-          SolicitudEstado.COMPLETADA,
-          SolicitudEstado.NO_SHOW,
-        ],
+        estados: [SolicitudEstado.COMPLETADA, SolicitudEstado.NO_SHOW],
       })
       .getRawMany();
 
     const estudiantesSet = new Set<string>(
-      estudiantesConfirmed.map((r) => r.estudianteId).filter(Boolean),
+      (estudiantesConfirmed as Array<{ estudianteId: string | null }>)
+        .map((r) => r.estudianteId)
+        .filter(Boolean),
     );
     for (const sol of aceptadasFinalizadas) {
       if (sol.estudianteId) estudiantesSet.add(sol.estudianteId);
@@ -186,9 +181,7 @@ export class TutoriasService {
         status: this.mapEstadoToDto(sol.estado),
         pricePerHour: `$${sol.oferta?.precioHora ?? 0}/h`,
         location:
-          modalidadUpper === 'PRESENCIAL'
-            ? sol.acceptedMeetingLocation
-            : null,
+          modalidadUpper === 'PRESENCIAL' ? sol.acceptedMeetingLocation : null,
       };
     });
 
@@ -255,9 +248,7 @@ export class TutoriasService {
       time: formattedTime,
       modality: solicitud.modalidad ?? 'Virtual',
       meetingLink:
-        modalidadUpper === 'VIRTUAL'
-          ? solicitud.acceptedMeetingLink
-          : null,
+        modalidadUpper === 'VIRTUAL' ? solicitud.acceptedMeetingLink : null,
       location:
         modalidadUpper === 'PRESENCIAL'
           ? solicitud.acceptedMeetingLocation

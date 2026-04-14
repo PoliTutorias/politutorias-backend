@@ -4,13 +4,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Oferta } from '../ofertas/domain/entities/oferta.entity';
-import { Tutor } from '../tutors/entities/tutor.entity';
-import { ReviewEntity } from './entities/review.entity';
 import {
-  SolicitudEntity,
-  SolicitudEstado,
+    SolicitudEntity,
+    SolicitudEstado,
 } from '../solicitudes/entities/solicitud.entity';
+import { Tutor } from '../tutors/entities/tutor.entity';
 import { HistoryQueryParamsDto } from './dto/history-query-params.dto';
+import { ReviewEntity } from './entities/review.entity';
 import { TutoriasService } from './tutorias.service';
 
 /**
@@ -234,7 +234,18 @@ describe('TutoriasService', () => {
       const tutorId = 'tutor-123';
       const params: HistoryQueryParamsDto = { page: 1, limit: 5 };
 
-      solicitudRepository.count.mockResolvedValue(25);
+      const mockSolicitudes = Array.from({ length: 25 }, (_, index) => ({
+        id: `sol-${index + 1}`,
+        tutorId,
+        estudianteId: `student-${index + 1}`,
+        nombreEstudiante: `Estudiante ${index + 1}`,
+        estado: SolicitudEstado.COMPLETADA,
+        horarios: [{ fecha: '2024-05-20', hora: '14:00' }],
+        oferta: {
+          titulo: 'Cálculo',
+          precioHora: 15,
+        },
+      }));
 
       const mockQueryBuilder = {
         leftJoin: jest.fn().mockReturnThis(),
@@ -247,7 +258,7 @@ describe('TutoriasService', () => {
         skip: jest.fn().mockReturnThis(),
         take: jest.fn().mockReturnThis(),
         getRawMany: jest.fn().mockResolvedValue([]),
-        getMany: jest.fn().mockResolvedValue([]),
+        getMany: jest.fn().mockResolvedValue(mockSolicitudes),
       };
 
       solicitudRepository.createQueryBuilder.mockReturnValue(
@@ -426,6 +437,7 @@ describe('TutoriasService', () => {
       const tutorId = 'tutor-123';
 
       solicitudRepository.count.mockResolvedValue(10);
+      solicitudRepository.find.mockResolvedValue([]);
 
       const mockQueryBuilder = {
         leftJoin: jest.fn().mockReturnThis(),
@@ -464,6 +476,7 @@ describe('TutoriasService', () => {
       const tutorId = 'tutor-123';
 
       solicitudRepository.count.mockResolvedValue(10);
+      solicitudRepository.find.mockResolvedValue([]);
 
       const mockQueryBuilder = {
         leftJoin: jest.fn().mockReturnThis(),
